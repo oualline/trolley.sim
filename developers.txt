@@ -1,0 +1,66 @@
+For developers
+==============
+
+This code is released under the GPL which means you can
+view the source code and modify it.  The only restriction
+is that if you do improve it and distribute the improvements
+you must distribute the source code too.
+
+You should have a working knowledge of Python and QT4 to
+work on this code.
+
+Github
+======
+
+The program is hosted on Github at: https://github.com/oualline/trolley.sim.git
+
+Log File
+========
+
+The log file is in /tmp/trolley.log (Linux) or 
+$TEMP\trolley.log on Windows.   You must set TEMP on
+Windows to get the log file.  It contains a ton of 
+information about what's going on with the program.
+
+Internals
+=========
+
+Position is the position in the media file.  It is a number 
+from 0.0 to 1.0.  Speed is measure as playback speed with 1.0
+being normal speed.  (The speed of a fairly slow trolley.)
+
+User Interface
+==============
+
+The user interface responds to the following keyboard 
+commands:
+
+"m" -- Write a "mark" message to the log.  This is so we 
+can figure out where to locate events along the line.
+
+The keys "0"-"8" will move the throttle to the indicated run position 
+without letting the program know the throttle was moved.  This was done
+to debug the throttle movement.
+
+Adding your own video
+=====================
+
+If you wish to add your own video feel free to do so.  We request that you 
+do so by adding a new mode to the list so that your change is generic.
+
+If you wish help adding your video to the program feel free to contact the author,
+Steve Oualline   oualline@gmail.com.   
+
+We ask that you keep the SCRM logo on any version you make as the original author 
+is a SCRM volunteer.
+
+Selling the software
+====================
+
+The software is licensed under the GPL.  That doesn't mean that you can't create
+your own version and sell a USB key with the software on it.  However, if you do so
+you must make available the source code the anyone who requests it.  (Or better yet feed you
+changes back to the original author as a "pull request")
+
+The purpose of this project was to make a high quality trolley simulator available to any
+institution that wants it.  I hope you find this beneficial.

@@ -1,0 +1,75 @@
+Controls
+	Controller, run0 - run4
+	Brake: Release, Lap, Apply, Emergency
+
+Brake Gauge
+	Reservoir 
+	Brake Pipe
+
+Speed
+
+Speed += Power Acceleration - Brake Accelearation - Friction
+
+    Power Accelearation = Run positon 
+    Break Acceleartion = BrakePipe Pressure * Brake Factor
+    Friction = Friction * Speed Factor
+
+Speed += Controller * ControllerFactor - BrakePipe * BrakeFactor
+# Does not take into account curves
+# Does not take into account grade
+
+if (BrakeApply)
+    BrakePipe += Air * ApplyFactor
+
+if (BrakeEmergency)
+    BrakePipe += Air * EmergencyFactor
+
+if (BrakeRelease)
+    BrakePipe -= Air * ReleaseFactor
+
+
+Sounds:
+	Doors closing / opening
+	Curve squeal
+	Brake apply
+	Brake release
+	Running click click
+	Warning sound
+
+Events:
+	Broadway stop / crossing
+	Central Crossing
+	Carbarn 2 platform
+	Broadway
+	Thomas stop
+	Store
+
+	Not include: Drop power for frogs
+
+---------------------------------------------
+Too fast
+Missed stop
+Missed bell
+---------------------------------------------
+
+Gauge desing
+
+Range of vlues 0-120 by 10
+0: 0 
+1: 10
+2: 20
+3: 30
+4: 40
+5: 50
+6: 60
+7: 70
+8: 80
+9: 90
+10: 100
+11: 110
+12: 120
+
+650=circle
+2/3 = 240
+20 degrees/inc
+

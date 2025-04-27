@@ -1,0 +1,17 @@
+Default video speed is: ????
+
+Acceleration:
+
+Run 1:	x FSP up to a limit
+Run 2:	x FSP up to a limit
+Run 3:	x FSP up to a limit
+Run 4:	x FSP up to a limit
+Run 5-8: Throw the breaker
+
+Friction: -x FPS
+Brake:	x FPS * b LBS
+
+Brake apply:  b LBS/seconds (Drains brake reservour)
+Brake Release: b LBS/seconds
+	
+Reservour fill rate: b LBS/second

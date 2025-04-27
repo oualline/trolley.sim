@@ -1,0 +1,10 @@
+For development on windows
+
+Install:
+    Install vlc -- Make sure to get 64 bit version
+    Install python3
+    
+    Install mobaxterm
+	Copy bashrc.win -> .bashrc
+	Execute winsetup.sh
+

@@ -1,0 +1,124 @@
+Easy Mode
+    Test 1: Deadman
+ 	a. Verify that Deadman is not set
+	b. In click run
+	c. Observe error indicating deadman did not appear
+	d. Observe that the system reset
+
+    Test 2: Moving
+ 	a. Click Deadman to set it
+        b. Click Run-1
+ 	c. Observe movement
+
+    Test 3: Moving
+ 	a. Click Deadman to set it
+        b. Click Run-2
+ 	c. Observe fast movement
+
+    Test 4: Moving
+ 	a. Click Deadman to set it
+        b. Click Run-3
+ 	c. Observe fastest movement
+
+    Test 5: Stoping
+ 	a. Click Deadman to set it
+	b. Click Run-1 -- Wait for at least 5 seconds
+	c. Observe movement
+	d. Click Run-0
+	e. Observe trolley come to stop
+
+    Test 6: End of run
+ 	a. Click Deadman to set it
+	b. Click Run-3
+ 	c. Observe that you receive a nice message when you hit the store
+
+    Test 7: Deadman release
+ 	a. Click Deadman to set it
+	b. Click Run-1 -- Wait for at least 5 seconds
+	c. Observe movement
+
+    Test 8: Reset
+ 	a. Click Deadman to set it
+	b. Click Run-1 -- Wait for at least 5 seconds
+	c. Observe movement
+        d. Click "Reset"
+        f. Observe that system resets
+	
+Start/Stop Mode:
+
+    Test 1: Deadman
+ 	a. Verify that Deadman is not set
+	b. Set reverser to forward
+	c. In click run
+	d. Observe error indicating deadman did not appear
+	e. Observe that the system reset
+
+    Test 2: Moving
+ 	a. Click Deadman to set it
+	b. Set reverser to forward
+	c. Release brakes
+        d. Click Run-1
+ 	e. Observe movement
+	f. Move to Run-0 after 5 seconds
+	g. Observe coasting
+
+    Test 3: With brake on
+ 	a. Click Deadman to set it
+	b. Set reverser to forward
+	c. Do not release brakes
+        d. Click Run-1
+ 	e. Observe error message
+
+    Test 4: Move without reverser
+ 	a. Click Deadman to set it
+	b. Leave reverser with neutral 
+	c. Release brakes
+        d. Click Run-1
+ 	e. Observe error message
+
+    Test 5: Moving too long
+ 	a. Click Deadman to set it
+	b. Reverser to forward
+	c. Release brakes
+        d. Click Run-1 
+ 	e. Observe movement
+	f. After 10 seconds observe error message
+
+    Test 6: Moving fast
+ 	a. Click Deadman to set it
+	b. Reverser to forward
+	c. Release brakes
+        d. Click Run-1 for 5 second
+ 	e. Observe movement
+        f. Click Run-2 for 5 second
+ 	g. Observe movement
+	h. Click Run-0
+
+    Test 7: Run-2 -> Run-1
+ 	a. Click Deadman to set it
+	b. Reverser to forward
+	c. Release brakes
+        d. Click Run-1 for 5 second
+ 	e. Observe movement
+        f. Click Run-2 for 5 second
+ 	g. Observe movement
+	h. Click Run-1
+	i. Observe error message
+
+    Test 7: Brake apply
+ 	a. Click Deadman to set it
+	b. Reverser to forward
+	c. Release brakes
+        d. Click Run-1 for 5 second
+ 	e. Observe movement
+	f. Brake: Apply
+ 	h. Observe movement
+
+	
+
+
+
+	
+
+
+

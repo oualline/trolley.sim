@@ -1,0 +1,20 @@
++----------------------------------------------------+-------------+
+|                                                    |             |
+|                                                    | Brake       |
+|                                                    |             |
+|                                                    |             |
+|           Video                                    |             |
+|                                                    |             |
+|                                                    | Rate: xxx   |
+|                                                    | Frame: xxx  |
+|                                                    |             |
++----------------------------------------------------+-------------+
+
+[Run8] [Run7] [Run6] [Run5] [Run4] [Run3] [Run2] [Run1] [Run0]
+
+                            [Release] [Lap] [Apply] [Emergency]
+
+[Open] [Close] (doors)  [Bell]
+
+[Restart] [Instructions] [Debug]
+

@@ -1,0 +1,33 @@
+This is alpha code.  As such it is far from perfect.
+
+Known issues:
+
+1. Video is badly shot. Needs to be replaced.
+
+2. When you enter the store at high speed, the mother fussing
+over the kid fusses very fast.
+
+3. Logs are very verbose.  The code is still being debugged
+and this will continue until the reliability gets better.
+
+Known limitation:
+
+1. The software does not precisely the LARY 1201 on which it is 
+based.  If you want to fix that then feel free to edit the many 
+tuning parameters in this code and send them to me.
+
+2. Uphill and downhill are not implemented.
+
+3. Zorch sound is not authentic.  But the real one is to subtle for 
+this video game.
+
+Know bugs:
+
+1. The video will glitch on startup and show strange colors.
+
+2. When an error occurs, the video does not rewind to the start properly.
+
+3. Tons of vlc error get printed when running this on linux.  And I have no
+idea (yet) what to do about them.
+
+
