@@ -55,6 +55,21 @@ is running around the loop line at the Southern California
 Railroad Museum.  See the file help.pdf for information on how
 to run the trolley.
 
+Command Line
+============
+
+Usage:
+    python3 main.py [-b<bottom>] [-t<top>] [-l<left>] [-r<right>] [-d] [-v] [-f]
+
+    Where
+	    -b <bottom> -- Set bottom margin
+	    -t <top> -- Set top margin
+	    -l <left> -- Set left margin
+	    -r <right> -- Set right margin
+	    -d -- Debug (show button bar)
+	    -v -- Verbose
+	    -f -- Start in full screen
+
 License
 =======
 

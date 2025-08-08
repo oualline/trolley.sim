@@ -18,6 +18,7 @@ import subprocess
 import math
 import webbrowser
 import os
+import getopt
 
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import ( QApplication, QDialog, QMainWindow, QMessageBox )
@@ -32,6 +33,14 @@ import state
 import controller
 import sound
 import video_player
+
+ShowButtons = False     # If true, turn on the buttons
+FullScreen = False      # Start in full screen mode
+Verbose = False         # Output extra debug information
+TopMargin = None        # Margins
+BottomMargin = None
+LeftMargin = None
+RightMargin = None
 
 if '_PYI_APPLICATION_HOME_DIR' in os.environ:
     DIR=os.environ['_PYI_APPLICATION_HOME_DIR']
@@ -791,6 +800,9 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         :param self: This class
         :param parent: Parent of this class
         """
+        global FullScreen 
+        global LeftMargin, RightMargin, TopMargin, BottomMargin
+
         super().__init__(parent)
         self.setupUi(self)
         state.State.Reset()
@@ -841,12 +853,25 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         self.Timer.start()
         self.MainReset()
         self.setWindowTitle("SCRM Trolley")
+        Margins = self.centralwidget.contentsMargins()
+
+        if (TopMargin is None):
+            TopMargin = Margins.top()
+        if (BottomMargin is None):
+            BottomMargin = Margins.bottom()
+        if (LeftMargin is None):
+            LeftMargin = Margins.left()
+        if (RightMargin is None):
+            RightMargin = Margins.right()
+
+        # left, top, right, bottom
+        self.centralwidget.setContentsMargins(LeftMargin, TopMargin, RightMargin, BottomMargin)
+        Margins = self.centralwidget.contentsMargins()
 
     def PlayVideo(self):
         """
         We were asked to play a video
         """
-        print("### Video %s" % self.SelectWindow.GetMode())
         ModeType = self.SelectWindow.GetMode()
         if (ModeType == ModeEnum.EASY):
             video_player.play_video("video/easy.mp4")
@@ -1334,7 +1359,10 @@ Press OK to continue""")
             M -- Mark position
             0-8 -- Move the controller to position indicate by the run level.
                 (Do not actually set the run level)
+            f -- Toggle fullscreen
         """
+        global FullScreen
+
         if (event.key() == ord('X')):
             self.BrakeUi.BrakeLapClicked()
             self.BrakeUi.RedPressure += 10.0
@@ -1349,20 +1377,73 @@ Press OK to continue""")
             RunLevel = event.key() - ord('0')
             print("DEBUG: Run level %d" % RunLevel)
             self.ControllerGraphics.SetControllerRun(RunLevel)
+        elif (event.key() == ord('F')):
+            FullScreen = not FullScreen
+            if (FullScreen):
+                self.showFullScreen()
+            else:
+                self.showNormal()
+                self.showMaximized()
+
+
+def Usage():
+    """ 
+    Tell user what to do
+    """
+    print("""Usage is:
+python3 main.py [-b<bottom>] [-t<top>] [-l<left>] [-r<right>] [-d] [-v] [-f]
+
+Where
+        -b <bottom> -- Set bottom margin
+        -t <top> -- Set top margin
+        -l <left> -- Set left margin
+        -r <right> -- Set right margin
+        -d -- Debug (show button bar)
+        -v -- Verbose
+        -f -- Start in full screen
+    """)
+    sys.exit(8)
 
 if __name__ == "__main__":
-    sound.Init()
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "b:t:l:r:dvf")
+    except getopt.GetoptError as err:
+        # print help information and exit:
+        print(err)  # will print something like "option -a not recognized"
+        Usage()
 
-    if (len(sys.argv) != 1):
-        ShowButtons = True
-    else:
-        ShowButtons = False
+    ShowButtons = False
+    for Option, Arg in opts:
+        if Option == "-b":
+            BottomMargin = int(Arg)
+        elif Option == "-t":
+            TopMargin = int(Arg)
+        if Option == "-l":
+            LeftMargin = int(Arg)
+        elif Option == "-r":
+            RightMargin = int(Arg)
+        elif Option == "-d":
+            ShowButtons = True
+        elif Option == "-v":
+            Verbose = True
+        elif Option == "-f":
+            FullScreen = True
+        else:
+            print("unhandled option:", Opt)
+            Usage()
+
+    sound.Init()
 
     app = QtWidgets.QApplication(sys.argv)  #pylint: disable=I1101
 
     state.Init()
     mainWindow = Window()
     mainWindow.showMaximized()
+    if (FullScreen):
+        mainWindow.showFullScreen()
+    else:
+        mainWindow.showNormal()
+
     state.Log("New run----------------------------------------------------------------")
 
     app.exec()
