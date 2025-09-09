@@ -159,6 +159,7 @@ class EasyMode:
         else:
             state.State.Acceleration = ComputeAcceleration(RunLevel)
             state.Log("Acceleration %1.3f" % state.State.Acceleration)
+
         return True
 
     def ModeReset(self):                    # EasyMode
@@ -185,12 +186,14 @@ class EasyMode:
             if (state.State.Speed > self.MaxSpeed):
                 state.State.Acceleration = 0
                 state.State.Speed = self.MaxSpeed
-                state.Log("Speed %1.3f" % state.State.Speed)
         else:
             if (state.State.Speed < 0):
                 state.State.Acceleration = 0
                 state.State.Speed = 0
-                state.Log("Speed %1.3f" % state.State.Speed)
+            # Are we decellerating
+            elif (state.State.Speed < self.MaxSpeed):
+                state.State.Acceleration = 0
+        state.Log("(ModeUpdate) Speed %1.3f Acceleration %1.3f" % (state.State.Speed, state.State.Acceleration))
 
         ##@@ Make common code
         if ((MainWindow.MediaPlayer.get_position() >= CENTRAL_BELL_START) and 
