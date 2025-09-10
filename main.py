@@ -106,6 +106,25 @@ def ComputeAcceleration(Level):
 
     return((MAX_SPEED[Level] - MAX_SPEED[Level-1]) / SPEED_TIME)
 
+##@@
+# Event list / easy mode
+#       Central bell start
+#       Central bell stop
+
+# Event list / full mode
+#       Stop at broadway
+#       Broadway crossing
+#       Central crossing
+#       Zorch1
+#       Broadway south
+#       Zorch2
+#       Thomas stop
+#       Store stop
+
+# class EventCheck:   __init__(List)
+#       EventReset
+#       CheckEvent(MainWindow)
+
 class EasyMode:
     Name = "Easy Mode"
     """
@@ -186,6 +205,7 @@ class EasyMode:
             if (state.State.Speed > self.MaxSpeed):
                 state.State.Acceleration = 0
                 state.State.Speed = self.MaxSpeed
+                state.Log("Speed %1.3f" % state.State.Speed)
         else:
             if (state.State.Speed < 0):
                 state.State.Acceleration = 0
@@ -216,7 +236,7 @@ class EasyMode:
         """
         if (not state.State.Deadman) and ((state.State.Speed != 0) or (state.State.RunLevel != 0)):
             state.Log("MediaPlayer.pause()")
-            Result = MainWindow.MediaPlayer.pause()
+            MainWindow.MediaPlayer.pause()
             MainWindow.ErrorDeadman()
             MainWindow.MainReset()
             return False
@@ -620,7 +640,7 @@ class FullMode(StartStopMode):
                     state.Log("Zorch at position %0.2f" % MainWindow.MediaPlayer.get_position())
                     sound.PlaySound.Play(sound.SoundEnum.ZORCH, False)
                     if (not self.ZorchDone[Index]):
-                        MainWindow.AddWarning("Zorched %s" % ZORCH_MESSAGE[Index])
+                        MainWindow.AddWarning("Zorched %s" % self.ZORCH_MESSAGE[Index])
                         self.ZorchDone[Index] = True
 
         if (MainWindow.MediaPlayer.get_position() > STORE_POSITION) and \
@@ -1068,22 +1088,11 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         self.BrakeUi.BrakeEmergencyClicked()
 
     def closeEvent(self, event):
+        """
+        Closing -- clean up resources
+        """
+        sound.Cleanup()
         sys.exit(0)
-
-    ## Not used @@
-    def OverspeedMessage(self):
-        """
-        You tried to do run4 or above.  You can't do this.
-        """
-        msg = QMessageBox()
-        msg.setIcon(QMessageBox.Critical)
-        msg.setText("Too Fast")
-        msg.setInformativeText("The track you are on is limited to 15MPH.\nDo not advance the controller past Run-3\n\nStart over.")
-        msg.setWindowTitle("Error")
-        msg.setStandardButtons(QMessageBox.Ok)
-        msg.buttonClicked.connect(lambda i: print(f"Button pressed is: {i.text()}"))
-        msg.exec_()
-        self.MainReset()
 
     def AddWarning(self, Message):
         """
@@ -1432,7 +1441,7 @@ if __name__ == "__main__":
         elif Option == "-f":
             FullScreen = True
         else:
-            print("unhandled option:", Opt)
+            print("unhandled option:", Option)
             Usage()
 
     sound.Init()
