@@ -1,6 +1,6 @@
 #${HOME}/tmp/10-minute.mp4 ${HOME}/tmp/trolley.mp4 mode_window.py
 
-all: sim_ui4.py mode_window.py
+all: sim_ui4.py mode_window.py quick.pdf help.pdf
 
 help:
 	@echo "make -- make local program"
@@ -8,6 +8,12 @@ help:
 	@echo "make linux -- make the linux single exe file"
 	@echo "make windows -- make the windows single exe file (must be executed on windows)"
 	@echo "make output -- Create a zip with the image of the program"
+
+quick.pdf: quick.odt
+	libreoffice --headless --convert-to pdf  quick.odt
+
+help.pdf: help.odt
+	libreoffice --headless --convert-to pdf  help.odt
 
 sim_ui4.py: sim_ui4.ui
 	pyuic5 -o sim_ui4.py sim_ui4.ui
@@ -18,6 +24,7 @@ mode_window.py: mode_window.ui
 clean: 
 	rm -f sim_ui4.py mode_window.py
 	rm -rf __pycache__ build dist
+	rm -f quick.pdf
 
 linux: mode_window.py sim_ui4.py
 	pyinstaller trolley-linux.spec

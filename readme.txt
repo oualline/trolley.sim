@@ -36,16 +36,11 @@ You can copy "trolley.exe" to your hard drive.and run it
 from there or run it directly from the USB drive.  Running
 it from a USB drive is slow.
 
+WARNING: The program starts slow even when run from a hard
+drive.
+
 Apple:
      Not supported, but watch this space.
-
-Support
-=======
-
-This software is officially unsupported.  If you have problems
-with program and got it from a USB drive at the Southern
-California Railroad Museum store, you may return the USB drive
-for a full refund.
 
 Introduction
 ============
