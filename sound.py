@@ -143,7 +143,7 @@ class PlaySoundClass:
         Parameters
              Sound -- Sound to stop enum
         """
-        state.Log("Stop Sound %s" % Sound.name)
+        state.Log("Stop Sound %s" % SoundEnum(Sound))
         
         if self.Players[Sound] is not None:
             self.Players[Sound].set_state(Gst.State.NULL)

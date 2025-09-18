@@ -5,6 +5,7 @@ Install:
     Install python3
     
     Install mobaxterm
+	Install mobaxterm development tools (https://mobaxterm.mobatek.net/plugins.html)
 	Copy bashrc.win -> .bashrc
-	Execute winsetup.sh
+	Execute win-setup.sh
 

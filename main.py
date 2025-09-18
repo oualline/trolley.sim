@@ -23,7 +23,7 @@ import getopt
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import ( QApplication, QDialog, QMainWindow, QMessageBox )
 from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsEllipseItem, QGraphicsRectItem, QGraphicsLineItem, QGraphicsTextItem
-from PyQt5.QtCore import Qt, QUrl, QRect
+from PyQt5.QtCore import Qt, QUrl, QRect, QEvent
 from PyQt5.QtGui import QBrush, QPen, QFont, QPixmap, QPainter
 
 import mode_window
@@ -977,7 +977,7 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
                 state.Log("MediaPlayer.pause()")
                 Result = self.MediaPlayer.pause()
 
-        StatusMsg = "Run %d Position %.2f Speed %.2f Acceleration %.3f Brake Acc. %.3f Brake:%2.2f Res:%2.2f Extend: %f" % \
+        StatusMsg = "Run %d Pos %.2f Speed %.2f Acc %.3f Brake Acc. %.3f Brake:%2.2f Res:%2.2f Extend: %.2f" % \
              (state.State.RunLevel, self.MediaPlayer.get_position(), state.State.Speed, 
              state.State.Acceleration, state.State.BrakeAcceleration, self.BrakeUi.RedPressure, self.BrakeUi.BlackPressure, self.BrakeUi.Extend)
         state.Log(StatusMsg)
@@ -1450,11 +1450,11 @@ if __name__ == "__main__":
 
     state.Init()
     mainWindow = Window()
-    mainWindow.showMaximized()
     if (FullScreen):
         mainWindow.showFullScreen()
     else:
         mainWindow.showNormal()
+        mainWindow.showMaximized()
 
     state.Log("New run----------------------------------------------------------------")
 
