@@ -42,6 +42,13 @@ The keys "0"-"8" will move the throttle to the indicated run position
 without letting the program know the throttle was moved.  This was done
 to debug the throttle movement.
 
+Pipe
+====
+
+On Linux /tmp/command_pipe is opened and will receive commands sent to it.
+It is designed for integration with external hardware through the use of
+other hw driving programs.
+
 Adding your own video
 =====================
 

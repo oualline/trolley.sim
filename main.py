@@ -8,22 +8,24 @@ Main GUI for the trolley simulator
 TODO:
         Add replay/playback mode
 """
-import sys
-import pprint   #pylint: disable=W0611
+import enum
+import getopt
+import math
+import os
 import platform
+import pprint   #pylint: disable=W0611
+import subprocess
+import sys
+import threading
 import time
 import vlc
-import enum
-import subprocess
-import math
 import webbrowser
-import os
-import getopt
 
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import ( QApplication, QDialog, QMainWindow, QMessageBox )
 from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsEllipseItem, QGraphicsRectItem, QGraphicsLineItem, QGraphicsTextItem
-from PyQt5.QtCore import Qt, QUrl, QRect, QEvent
+from PyQt5.QtCore import Qt, pyqtSignal, QThread, QPointF, QEvent, QUrl, QRect
+from PyQt5.QtGui import QMouseEvent
 from PyQt5.QtGui import QBrush, QPen, QFont, QPixmap, QPainter
 
 import mode_window
@@ -55,6 +57,156 @@ class ModeEnum(enum.Enum):
     START_STOP = 1   # Mode is start/stop
     FULL = 2         # Mode is full checking
 
+# Check if we're running on Linux
+IS_LINUX = platform.system().lower() == 'linux'
+
+if IS_LINUX:
+    class NamedPipeReader(QThread):
+        """
+        Thread class that reads coordinates from a named pipe.
+        
+        This thread continuously monitors a named pipe for commands
+        and emits a signal when valid coordinates are received.
+        """
+        
+        # Signal emitted when coordinates are read from the pipe
+        CommandReceived = pyqtSignal(str)
+        
+        def __init__(self, pipe_path="/tmp/command_pipe"):
+            """
+            Initialize the named pipe reader.
+            
+            Args:
+                pipe_path (str): Path to the named pipe (FIFO)
+            """
+            super().__init__()
+            self.pipe_path = pipe_path
+            self.running = True
+            
+        def run(self):
+            """
+            Main thread execution method.
+            
+            Creates the named pipe if it doesn't exist and continuously reads from it.
+            Parses input in the format "command" and emits CommandReceived signal.
+            """
+            if os.path.exists(self.pipe_path):
+                os.unlink(self.pipe_path)
+                state.Log(f"Cleaned up named pipe: {self.pipe_path}")
+            try:
+                # Create named pipe if it doesn't exist
+                if not os.path.exists(self.pipe_path):
+                    os.mkfifo(self.pipe_path)
+                    state.Log(f"Created named pipe: {self.pipe_path}")
+                
+                state.Log(f"Listening on named pipe: {self.pipe_path}")
+                state.Log(f"Send coordinates with: echo 'Command' > {self.pipe_path}")
+                
+                while self.running:
+                    try:
+                        # Open pipe for reading (this blocks until data is available)
+                        with open(self.pipe_path, 'r') as pipe:
+                            while self.running:
+                                line = pipe.readline().strip()
+                                if not line:
+                                    break  # Pipe was closed, reopen it
+                                self.CommandReceived.emit(line)
+                                    
+                    except (OSError, IOError) as e:
+                        if self.running:
+                            state.Log(f"Pipe error: {e}")
+                            time.sleep(1)  # Wait before retrying
+                            
+            except Exception as e:
+                state.Log(f"Named pipe error: {str(e)}")
+                
+        def stop(self):
+            """Stop the thread gracefully."""
+            self.running = False
+            self.quit()
+            self.wait()
+
+    class CommandPipe():
+        def __init__(self, MainWindow):
+            """ Initialize the pipe reader and start the listener thread"""
+            # Initialize and start the named pipe reader thread
+            self.pipe_reader = NamedPipeReader()
+            self.pipe_reader.CommandReceived.connect(self.HandlePipeCommand)
+            self.pipe_reader.start()
+            self.MainWindow = MainWindow
+
+        def HandlePipeCommand(self, Command):
+            """
+            Handle coordinates received from the named pipe.
+            
+            This method is called when the pipe reader thread receives valid commands.
+            
+            Args:
+                Command: command received
+            """
+            state.Log(f"Processing pipe command: {Command}")
+
+            if (Command == "Run0"):
+                self.MainWindow.SetRun(0)
+            elif (Command == "Run1"):
+                self.MainWindow.SetRun(1)
+            elif (Command == "Run2"):
+                self.MainWindow.SetRun(2)
+            elif (Command == "Run3"):
+                self.MainWindow.SetRun(3)
+            elif (Command == "Run4"):
+                self.MainWindow.SetRun(4)
+            elif (Command == "Run5"):
+                self.MainWindow.SetRun(5)
+            elif (Command == "Run6"):
+                self.MainWindow.SetRun(6)
+            elif (Command == "Run7"):
+                self.MainWindow.SetRun(7)
+            elif (Command == "Run8"):
+                self.MainWindow.SetRun(8)
+            elif (Command == "Forward"):
+                self.MainWindow.SetDirection(state.DirectionEnum.FORWARD)
+            elif (Command == "Reverse"):
+                self.MainWindow.SetDirection(state.DirectionEnum.REVERSE)
+            elif (Command == "Neutral"):
+                self.MainWindow.SetDirection(state.DirectionEnum.NEUTRAL)
+            elif (Command == "Deadman"):
+                self.MainWindow.DeadmanClicked(not state.State.Deadman)
+            elif (Command == "Apply"):
+                self.MainWindow.BrakeGUI.MoveBrakeLever(state.BrakeEnum.APPLY)
+            elif (Command == "Lap"):
+                self.MainWindow.BrakeGUI.MoveBrakeLever(state.BrakeEnum.LAP)
+            elif (Command == "Release"):
+                self.MainWindow.BrakeGUI.MoveBrakeLever(state.BrakeEnum.RELEASE)
+            elif (Command == "Emergency"):
+                self.MainWindow.BrakeGUI.MoveBrakeLever(state.BrakeEnum.EMERGENCY)
+            elif (Command == "Bell"):
+                self.MainWindow.Ding(state.BrakeEnum.EMERGENCY)
+            else:
+                print("Unknown pipe command %s" % Command)
+
+        def shutDown(self):
+            """
+            Shutdown the input handler
+            
+            Ensures the named pipe reader thread is properly stopped when the window closes.
+            
+            Args:
+                event: QCloseEvent
+            """
+            print("Shutting down pipe...")
+            
+            # Stop the pipe reader thread
+            self.pipe_reader.stop()
+            
+            # Clean up the named pipe file
+            try:
+                if os.path.exists(self.pipe_reader.pipe_path):
+                    os.unlink(self.pipe_reader.pipe_path)
+                    print(f"Cleaned up named pipe: {self.pipe_reader.pipe_path}")
+            except OSError as e:
+                print(f"Warning: Could not remove pipe file: {e}")
+            
 #----------------------------------------------------------------
 # Physics section
 #
@@ -828,6 +980,8 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
 
         super().__init__(parent)
         self.setupUi(self)
+        if IS_LINUX:
+            self.CommandPipe = CommandPipe(self)
         state.State.Reset()
 
         self.BrakeApply.clicked.connect(self.BrakeApplyClicked)

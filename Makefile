@@ -1,6 +1,6 @@
 #${HOME}/tmp/10-minute.mp4 ${HOME}/tmp/trolley.mp4 mode_window.py
 
-all: sim_ui4.py mode_window.py quick.pdf help.pdf
+all: sim_ui4.py mode_window.py quick.pdf help.pdf 
 
 help:
 	@echo "make -- make local program"
@@ -24,7 +24,7 @@ mode_window.py: mode_window.ui
 clean: 
 	rm -f sim_ui4.py mode_window.py
 	rm -rf __pycache__ build dist
-	rm -f quick.pdf
+	rm -f quick.pdf help.pdf
 
 linux: mode_window.py sim_ui4.py
 	pyinstaller trolley-linux.spec
