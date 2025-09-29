@@ -39,7 +39,7 @@ class TrolleyState:
         self.Reverser = DirectionEnum.FORWARD   # Reverser position
         self.Deadman = False    # Deadman on or off
 
-        self.Speed = 0          # Current speed
+        self.Speed = 0.0        # Current speed
         self.Acceleration = 0   # Current acceleration from motor
         self.BrakeAcceleration = 0   # Current acceleration from braking
         self.BrakeValvePosition = BrakeEnum.APPLY

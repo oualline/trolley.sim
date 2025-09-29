@@ -18,7 +18,6 @@ import subprocess
 import sys
 import threading
 import time
-import vlc
 import webbrowser
 
 from PyQt5 import QtWidgets, QtCore
@@ -35,6 +34,7 @@ import state
 import controller
 import sound
 import video_player
+import video
 
 ShowButtons = False     # If true, turn on the buttons
 FullScreen = False      # Start in full screen mode
@@ -368,12 +368,12 @@ class EasyMode:
         state.Log("(ModeUpdate) Speed %1.3f Acceleration %1.3f" % (state.State.Speed, state.State.Acceleration))
 
         ##@@ Make common code
-        if ((MainWindow.MediaPlayer.get_position() >= CENTRAL_BELL_START) and 
+        if ((MainWindow.Video.GetPosition() >= CENTRAL_BELL_START) and 
             (not self.CentralSounding)):
             self.CentralSounding = True
             sound.PlaySound.Play(sound.SoundEnum.CENTRAL_BELL, True)
 
-        if ((MainWindow.MediaPlayer.get_position() >= CENTRAL_BELL_STOP) and 
+        if ((MainWindow.Video.GetPosition() >= CENTRAL_BELL_STOP) and 
             (self.CentralSounding)):
             self.CentralSounding = False
             sound.PlaySound.Stop(sound.SoundEnum.CENTRAL_BELL)
@@ -387,8 +387,7 @@ class EasyMode:
         :returns: True if it's safe to contine
         """
         if (not state.State.Deadman) and ((state.State.Speed != 0) or (state.State.RunLevel != 0)):
-            state.Log("MediaPlayer.pause()")
-            MainWindow.MediaPlayer.pause()
+            MainWindow.Video.SetRate(0.0)
             MainWindow.ErrorDeadman()
             MainWindow.MainReset()
             return False
@@ -494,12 +493,12 @@ class StartStopMode:
                 state.State.Acceleration = 0
                 state.Log("Acceleration %f" % state.State.Acceleration)
 
-        if ((MainWindow.MediaPlayer.get_position() >= CENTRAL_BELL_START) and (not self.CentralSounding)):
+        if ((MainWindow.Video.GetPosition() >= CENTRAL_BELL_START) and (not self.CentralSounding)):
             self.CentralSounding = True
             sound.PlaySound.Play(sound.SoundEnum.CENTRAL_BELL, True)
 
-        if ((MainWindow.MediaPlayer.get_position() >= CENTRAL_BELL_STOP) and (self.CentralSounding)):
-            self.CentralSounding = False
+        if ((MainWindow.Video.GetPosition() >= CENTRAL_BELL_STOP) and (self.CentralSounding)):
+            self.CentralSounding = Flse
             sound.PlaySound.Stop(sound.SoundEnum.CENTRAL_BELL)
 
 
@@ -759,8 +758,8 @@ class FullMode(StartStopMode):
             if (self.CrossingCheckDone[Index]):
                 continue
 
-            if (MainWindow.MediaPlayer.get_position() >= self.CROSSING_END[Index]):
-               # Get the number of times we dinged here
+            if (MainWindow.Video.GetPosition() >= self.CROSSING_END[Index]):
+               # Get the number of time we dinged here
                DingDingDing = self.DingCount(MainWindow.DingPosition, 
                    self.CROSSING_START[Index], self.CROSSING_END[Index])
 
@@ -774,33 +773,33 @@ class FullMode(StartStopMode):
             if (self.StopCheckDone[Index]):
                 continue
             if ((self.CurrentSpeed == 0) and 
-                (MainWindow.MediaPlayer.get_position() >= self.STOP_CHECKS_START[Index]) and 
-                (MainWindow.MediaPlayer.get_position() <= self.STOP_CHECKS_END[Index])):
+                (MainWindow.Video.GetPosition() >= self.STOP_CHECKS_START[Index]) and 
+                (MainWindow.Video.GetPosition() <= self.STOP_CHECKS_END[Index])):
                 state.Log("Setting Stop for %s" % self.STOP_MESSAGE[Index])
                 self.StopCheckDone[Index] = True
                 continue
 
-            if (MainWindow.MediaPlayer.get_position() > self.STOP_CHECKS_END[Index]):
-                self.StopCheckDone[Index] = True
+            if (MainWindow.Video.GetPosition() > self.STOP_CHECKS_END[Index]):
+                self.StopCheckDone[Inde] = True
                 MainWindow.AddWarning("Failed stop at %s" % self.STOP_MESSAGE[Index])
 
         # Check Zorching
         for Index in range(len(self.ZORCH_START)):
-            if ((MainWindow.MediaPlayer.get_position() >= self.ZORCH_START[Index]) and
-                (MainWindow.MediaPlayer.get_position() <= self.ZORCH_END[Index])):
+            if ((MainWindow.Video.GetPosition() >= self.ZORCH_START[Index]) and
+                (MainWindow.Video.GetPosition() <= self.ZORCH_END[Index])):
                 if (state.State.RunLevel != 0):
-                    state.Log("Zorch at position %0.2f" % MainWindow.MediaPlayer.get_position())
+                    state.Log("Zorch at position %0.2f" % MainWindow.Video.GetPosition())
                     sound.PlaySound.Play(sound.SoundEnum.ZORCH, False)
                     if (not self.ZorchDone[Index]):
                         MainWindow.AddWarning("Zorched %s" % self.ZORCH_MESSAGE[Index])
                         self.ZorchDone[Index] = True
 
-        if (MainWindow.MediaPlayer.get_position() > STORE_POSITION) and \
-            (state.State.Speed == 0):
+        if (MainWindow.Video.GetPosition() > STORE_POSITION) and \
+            (state.State.Speed <= 00.):
             state.Log("Stopped correctly at store")
+            MainWindow.MainReset()
             MainWindow.DisplayWarnings()
             MainWindow.GoodStop();
-            MainWindow.MainReset()
             return (False)
 
         return True
@@ -989,22 +988,7 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         self.BrakeLap.clicked.connect(self.BrakeLapClicked)
         self.BrakeEmergency.clicked.connect(self.BrakeEmergencyClicked)
 
-        ##++self.DingProc = None
-
-        #-----------------------------------------------------------
-        # Setup video player
-        #-----------------------------------------------------------
-        self.instance = vlc.Instance()  # Create an instance of the player
-        self.MediaPlayer = self.instance.media_player_new()
-        self.MediaPlayer.audio_output_device_set("adummy", "/dev/null")
-        self.MediaPlayer.audio_set_mute(True)
-
-        if platform.system() == "Linux": # for Linux using the X Server
-            self.MediaPlayer.set_xwindow(int(self.VideoFrame.winId()))
-        elif platform.system() == "Windows": # for Windows
-            self.MediaPlayer.set_hwnd(int(self.VideoFrame.winId()))
-        elif platform.system() == "Darwin": # for MacOS
-            self.MediaPlayer.set_nsobject(int(self.VideoFrame.winId()))
+        self.Video = video.Video(self, VideoFile)
 
         self.VideoFrame.setStyleSheet("""
             background-image: url(%s/background.png) 0 0 0 0 stretch stretch;
@@ -1098,8 +1082,7 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         if (not Continue):
             return
 
-        # Tell the video to change the state
-        self.MediaPlayer.set_rate(state.State.Speed)
+        self.Video.SetRate(state.State.Speed)
 
         state.Log("ClickClackTime %f" % self.ClickClackTime)
         if (self.ClickClackTime == 0):
@@ -1118,28 +1101,14 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
                     self.ClickClackTime = 0.0
                 state.Log("ClickClackTime %f" % self.ClickClackTime)
 
-        # Are we too close to the end to do anything
-        if (self.MediaPlayer.get_position() < END_OF_VIDEO):
-            # Check to see if we are not playing and moving
-            if ((self.MediaPlayer.get_state() != vlc.State.Playing) and \
-                        (state.State.Speed > 0.0)):
-                state.Log("MediaPlayer.play()")
-                Result = self.MediaPlayer.play()
-
-            elif ((self.MediaPlayer.get_state() == vlc.State.Playing) and \
-                        (state.State.Speed <= 0.0)):
-                state.Log("MediaPlayer.pause()")
-                Result = self.MediaPlayer.pause()
 
         StatusMsg = "Run %d Pos %.2f Speed %.2f Acc %.3f Brake Acc. %.3f Brake:%2.2f Res:%2.2f Extend: %.2f" % \
-             (state.State.RunLevel, self.MediaPlayer.get_position(), state.State.Speed, 
+             (state.State.RunLevel, self.Video.GetPosition(), state.State.Speed, 
              state.State.Acceleration, state.State.BrakeAcceleration, self.BrakeUi.RedPressure, self.BrakeUi.BlackPressure, self.BrakeUi.Extend)
         state.Log(StatusMsg)
         self.StatusLabel.setText(StatusMsg)
 
-        if (self.MediaPlayer.get_position() > END_OF_VIDEO):
-            state.Log("MediaPlayer.pause()")
-            Result = self.MediaPlayer.pause()
+        if (self.Video.GetPosition() > END_OF_VIDEO):
             self.AddWarning("Failed to stop at store")
             self.DisplayWarnings()
             self.NoticeDone()
@@ -1157,7 +1126,7 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
             sound.PlaySound.Play(sound.SoundEnum.BELL3, False)
 
         ThisDingTime = time.time()
-        DingPosition = self.MediaPlayer.get_position()
+        DingPosition = self.Video.GetPosition()
         self.DingTime.append(ThisDingTime)
         self.DingPosition.append(DingPosition)
         state.Log("DING Time: %f Pos: %f" % (ThisDingTime, DingPosition))
@@ -1187,9 +1156,11 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         """ 
         Reset to the starting position
         """
-        self.MediaPlayer.set_position(0.0)
+        self.Video.SetPosition(0.0)
         self.SetSimulatorMode()
         state.State.Reset()
+        self.Video.SetRate(state.State.Speed)
+
         self.Mode.ModeReset()
         self.WarningList = []
         self.WarningLabel.setText("")
@@ -1200,15 +1171,8 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         self.SetRun(0)
         self.SetDirection(state.DirectionEnum.NEUTRAL)
 
-        self.Media = self.instance.media_new(VideoFile)
-        self.MediaPlayer.set_media(self.Media)
-        self.Media.parse()
+        self.Video.Reset()
 
-        self.MediaPlayer.set_rate(1.0)
-
-        self.MediaPlayer.audio_set_volume(0)
-        state.Log("Reset: Pause")
-        self.MediaPlayer.pause()
         self.BrakeGUI.MoveBrakeLever(state.BrakeEnum.APPLY)
         self.BrakeUi.SetBrake(state.BrakeEnum.APPLY)
         self.BrakeUi.BrakeReset()
@@ -1305,12 +1269,8 @@ If it is released the trolley performs an emergency stop
         Change the direction we are going
         """
         if ((state.State.RunLevel != 0) and (Direction != state.DirectionEnum.FORWARD)):
-            state.Log("MediaPlayer: Pause")
-            self.MediaPlayer.pause()
             self.ErrorReverserMoved()
             Direction = state.DirectionEnum.FORWARD
-            state.Log("MediaPlayer: Play")
-            self.MediaPlayer.play()
             
         self.ControllerGraphics.SetReverse(Direction)
         self.ControllerButtons.SetReverse(Direction)
@@ -1354,10 +1314,9 @@ Press "Restart" to start another run""")
         """ 
         Handle all the stuff you need at the beginning of an error message
         """
-        state.Log("MediaPlayer.pause()")
-        Result = self.MediaPlayer.pause()
         state.State.Acceleration = 0
         state.State.Speed = 0
+        self.Video.SetRate(state.State.Speed)
         state.Log("Speed %f" % state.State.Speed)
 
     def ErrorMessageRun4(self):
@@ -1502,16 +1461,11 @@ Press OK to continue""")
         KeepGoing = self.Mode.ModeSetRun(self, Level)
         
         if (not KeepGoing):
-            state.Log("MediaPlayer: Pause")
-            Result = self.MediaPlayer.pause()
             state.State.Acceleration = 0
             state.State.Speed = 0
+            self.Video.SetRate(state.State.Speed)
             state.Log("Speed %f" % state.State.Speed)
             return False
-
-        if (self.MediaPlayer.get_state() != vlc.State.Playing):
-            state.Log("MediaPlayer: Play")
-            Result = self.MediaPlayer.play()
 
         state.State.RunLevel = Level
         return (True)
@@ -1537,8 +1491,8 @@ Press OK to continue""")
             print("DEBUG: 10 pound set %f" % self.BrakeUi.RedPressure)
             state.Log("DEBUG: 10 pound set %f" % self.BrakeUi.RedPressure)
         elif (event.key() == ord('M')):
-            print("Mark Position %.2f" % self.MediaPlayer.get_position())
-            state.Log("Mark Position: %.2f" % self.MediaPlayer.get_position())
+            print("Mark Position %.2f" % self.Video.GetPosition())
+            state.Log("Mark Position: %.2f" % self.Video.GetPosition())
         elif ((event.key() >= ord('0')) and (event.key() <= ord('8'))):
             RunLevel = event.key() - ord('0')
             print("DEBUG: Run level %d" % RunLevel)
