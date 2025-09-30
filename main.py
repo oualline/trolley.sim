@@ -1028,6 +1028,7 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         # left, top, right, bottom
         self.centralwidget.setContentsMargins(LeftMargin, TopMargin, RightMargin, BottomMargin)
         Margins = self.centralwidget.contentsMargins()
+        self.AideBox.hide()     ##@@ until implemented, don't show
 
     def PlayVideo(self):
         """

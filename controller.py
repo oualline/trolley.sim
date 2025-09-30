@@ -24,6 +24,18 @@ from PyQt5.QtGui import QBrush, QPen, QFont, QPixmap, QPainter
 
 import state
 
+CONTROLLER_CENTER_X = 350   # Location of the center of the controller
+CONTROLLER_CENTER_Y = 150   # Location of the center of the controller
+
+# Try and adjust the center of the handle to the correct location
+# This are eyeballed and need to be computed
+CONTROLLER_HANDLE_X_OFFSET = 173
+CONTROLLER_HANDLE_Y_OFFSET = 40
+
+# This are eyeballed and need to be computed
+REVERSE_HANDLE_X_POS = 79      # Position of the handle in X
+REVERSE_HANDLE_X_OFFSET = 38    # Offset to rotation point
+
 class ControllerGraphics():
     """
     Handle the drawing and clicking of the controller controller.
@@ -78,16 +90,15 @@ class ControllerGraphics():
 
         self.ControllerHandleItem = self.ControllerScene.addPixmap(ControllerHandleScaled)
 
-        # Try and adjust the center of the handle to the correct location
-        CONTROLLER_HANDLE_X_OFFSET = 156
-        CONTROLLER_HANDLE_Y_OFFSET = 40
         #                      0  1   2   3   4    5    6    7     8
         self.RUN_TO_ANGLE = (-30, 0, 30, 60, 90, 120, 150, 180, -150)
 
         # Because end of hand is rounded, we need to move it a little based on height alone
         self.ControllerHandleItem.setPos(CONTROLLER_HANDLE_X_OFFSET, CONTROLLER_HANDLE_Y_OFFSET)
-        CONTROLLER_X_CENTER = 22   # The rotation point of the controller in X
+
+        # Not a typo, the height controls the rotation point
         self.ControllerHandleItem.setTransformOriginPoint(ControllerHandleScaled.height()/2, ControllerHandleScaled.height()/2)
+
         self.ControllerHandleRotation = 0
         state.Log("Controller run level %d Angle %d" % (state.State.RunLevel, self.RUN_TO_ANGLE[state.State.RunLevel]))
         self.ControllerHandleItem.setRotation(self.RUN_TO_ANGLE[state.State.RunLevel])
@@ -99,8 +110,6 @@ class ControllerGraphics():
         ReverseHandleScaled = ReverseHandle.scaledToHeight(NewHeight)
 
         self.ReverseHandleItem = self.ControllerScene.addPixmap(ReverseHandleScaled)
-        REVERSE_HANDLE_X_POS = 64      # Position of the handle in X
-        REVERSE_HANDLE_X_OFFSET = 38    # Offset to rotation point
         self.ReverseHandleItem.setPos(REVERSE_HANDLE_X_POS, ControllerHeight/2+2)
         self.ReverseHandleItem.setTransformOriginPoint(REVERSE_HANDLE_X_OFFSET, ReverseHandleScaled.height()/2)
         self.ReverseHandleItem.setRotation(0)  

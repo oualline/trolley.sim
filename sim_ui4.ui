@@ -127,6 +127,13 @@
             </property>
            </widget>
           </item>
+          <item>
+           <widget class="QCheckBox" name="AideBox">
+            <property name="text">
+             <string>Click Targets</string>
+            </property>
+           </widget>
+          </item>
          </layout>
         </item>
        </layout>
