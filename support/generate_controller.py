@@ -55,11 +55,16 @@ DOT_RADUIS = 10  # 20 pixel diameter for all cyan dots
 CONTROLLER_CENTER_X, CONTROLLER_CENTER_Y = 350, 150   # Location of the center of the controller
 circle_radius = 3               # Radius of red dot in the middle of the controller
 
-def ReverserDot(Reverser_x, Reverser_y, Angle, Label):
+BROWN_COLOR = (0xda, 0xa5, 0x20)  # RGB values for tan color
+
+DO_TEXT=False   # Draw a label in the circle
+
+def ReverserDot(ControllerDraw, Reverser_x, Reverser_y, Angle, Label):
     """
     Draw a reverser label
 
     Args:
+        ControllerDraw -- The controller drawing
         Reverser_x: Center of the reverser in X
         Reverser_y: Center of the reverser in Y
         Angle: The angle of the line
@@ -71,17 +76,20 @@ def ReverserDot(Reverser_x, Reverser_y, Angle, Label):
     dot_f_y = Reverser_y + REVERSER_DOT_POS * math.sin(LineAngle)
     ControllerDraw.ellipse([dot_f_x - DOT_RADUIS, dot_f_y - DOT_RADUIS,
                   dot_f_x + DOT_RADUIS, dot_f_y + DOT_RADUIS], fill=DOT_COLOR)
-    ControllerDraw.text((dot_f_x, dot_f_y), Label, fill=(0, 0, 0), anchor="mm")
+    if (DO_TEXT):
+        ControllerDraw.text((dot_f_x, dot_f_y), Label, fill=(0, 0, 0), anchor="mm")
     
-def ReverserLine(Reverser_x, Reverser_y, Angle, Label):
+def ReverserLine(ControllerDraw, Reverser_x, Reverser_y, Angle, Label, DotOption):
     """
     Draw a reverser line
 
     Args:
-        Reverser_x: Center of the reverser in X
-        Reverser_y: Center of the reverser in Y
-        Angle: The angle of the line
-        Label: The label to put at the end
+        ControllerDraw -- The controller drawing
+        Reverser_x -- Center of the reverser in X
+        Reverser_y -- Center of the reverser in Y
+        Angle -- The angle of the line
+        Label -- The label to put at the end
+        DotOption -- If true, draw the dot
     """
     LineAngle = math.radians(Angle)  # Convert degrees to radians for trig functions
     LineStart_x = Reverser_x + REVERSER_TICK_START * math.cos(LineAngle)  
@@ -92,10 +100,18 @@ def ReverserLine(Reverser_x, Reverser_y, Angle, Label):
     # Draw the black portion (second half of the line)
     ControllerDraw.line([LineStart_x, LineStart_y, LineEnd_x, LineEnd_y], 
               fill=REVERSER_COLOR, width=REVERSER_TICK_WIDTH)
-    ReverserDot(Reverser_x, Reverser_y, Angle, Label)
+    if (DotOption):
+        ReverserDot(ControllerDraw, Reverser_x, Reverser_y, Angle, Label)
 
 
-def DrawReverser():
+def DrawReverser(ControllerDraw, DotOption):
+    """
+    Draw the drverser
+
+    Args:
+        ControllerDraw -- The controller drawing elements
+        DotOption -- If true, draw the dot
+    """
     # ============================================================================
     # Reverser center
     # ============================================================================
@@ -109,39 +125,25 @@ def DrawReverser():
     # ============================================================================
     # LINES The reverser
     # ============================================================================
-    ReverserLine(Reverser_x, Reverser_y, 210, "F")
-    ReverserLine(Reverser_x, Reverser_y, 150, "R")
-    ReverserDot (Reverser_x, Reverser_y, 180, "N")
+    ReverserLine(ControllerDraw, Reverser_x, Reverser_y, 210, "F", DotOption)
+    ReverserLine(ControllerDraw, Reverser_x, Reverser_y, 150, "R", DotOption)
+    if (DotOption):
+        ReverserDot(ControllerDraw, Reverser_x, Reverser_y, 180, "N")
 
-# Create a new RGB image with dimensions 650x300 pixels
-# Background color is white
-ControllerImage = Image.new('RGB', (IMAGE_X, IMAGE_Y), color='white')
 
-# Create a drawing context for adding shapes and text to the image
-ControllerDraw = ImageDraw.Draw(ControllerImage)
 
-# ============================================================================
-# MAIN RECTANGLE
-# ============================================================================
-# Draw a tan rectangle with rounded corners on the right side of the image
-# Rectangle dimensions: 600 pixels wide x 300 pixels tall
-# Position: starts at x=50 (to leave 50 pixels on left) and extends to x=650
-# The rectangle fills the entire height (y=0 to y=300)
-BROWN_COLOR = (0xda, 0xa5, 0x20)  # RGB values for tan color
-ControllerDraw.rounded_rectangle([CONTROLLER_LEFT, 0, CONTROLLER_X, CONTROLLER_Y], radius=CONTROLLER_CORNER, fill=BROWN_COLOR)
-
-DrawReverser()
-
-def DrawRun(Center_X, Center_Y, Angle, Label, Width):
+def DrawRun(ControllerDraw, Center_X, Center_Y, Angle, Label, Width, DotOption):
     """
     Draw the run tick
 
     Args:
-        Center_X: Center of the controller in X
-        Center_Y: Center of the controller in Y
-        Angle: Angle of the tick
-        Lable: Tick label
-        Width: Width of the tick
+        ControllerDraw -- The controller drawing elements
+        Center_X -- Center of the controller in X
+        Center_Y -- Center of the controller in Y
+        Angle -- Angle of the tick
+        Lable -- Tick label
+        Width -- Width of the tick
+        DotOption -- If true, draw the dot
     """
 
     LineAngle = math.radians(Angle)
@@ -155,31 +157,47 @@ def DrawRun(Center_X, Center_Y, Angle, Label, Width):
     # Dot for -30 degree line (label "0")
     Dot_X = Center_X + RUN_TICK_LABEL * math.cos(LineAngle)
     Dot_Y = Center_Y + RUN_TICK_LABEL * math.sin(LineAngle)
-    ControllerDraw.ellipse([Dot_X - DOT_RADUIS, Dot_Y - DOT_RADUIS,
-                  Dot_X + DOT_RADUIS, Dot_Y + DOT_RADUIS], fill=DOT_COLOR)
-    ControllerDraw.text((Dot_X, Dot_Y), Label, fill=(0, 0, 0), anchor="mm")
+    if (DotOption):
+        ControllerDraw.ellipse([Dot_X - DOT_RADUIS, Dot_Y - DOT_RADUIS,
+                      Dot_X + DOT_RADUIS, Dot_Y + DOT_RADUIS], fill=DOT_COLOR)
+        if (DO_TEXT):
+            ControllerDraw.text((Dot_X, Dot_Y), Label, fill=(0, 0, 0), anchor="mm")
 
-# Draw the 9 ticks
-for Tick in range(9):
-    Angle = -30 + 30*Tick
-    Label = str(Tick)
-    Width = 5
-    if (Tick in (0, 4, 8)):
-       Width = 10
-    DrawRun(CONTROLLER_CENTER_X, CONTROLLER_CENTER_Y, Angle, Label, Width)
+def DrawController(IMAGE_NAME, DotOption):
+    # Create a new RGB image with dimensions 650x300 pixels
+    # Background color is white
+    ControllerImage = Image.new('RGB', (IMAGE_X, IMAGE_Y), color='white')
 
-# Red dot in the middle
-ControllerDraw.ellipse([CONTROLLER_CENTER_X - circle_radius, CONTROLLER_CENTER_Y - circle_radius,
-              CONTROLLER_CENTER_X + circle_radius, CONTROLLER_CENTER_Y + circle_radius], 
-              fill=MIDDLE_DOT_COLOR)
+    # Create a drawing context for adding shapes and text to the image
+    ControllerDraw = ImageDraw.Draw(ControllerImage)
 
-# ============================================================================
-# SAVE IMAGE
-# ============================================================================
-# Save the completed image as a PNG file
-IMAGE_NAME="controller-bg.png"
-ControllerImage.save(IMAGE_NAME)
-print(f"Image created successfully: {IMAGE_NAME}")
+    ControllerDraw.rounded_rectangle([CONTROLLER_LEFT, 0, CONTROLLER_X, CONTROLLER_Y], radius=CONTROLLER_CORNER, fill=BROWN_COLOR)
 
-# Optionally display the image (uncomment if running in an environment that supports it)
-ControllerImage.show()
+    DrawReverser(ControllerDraw, DotOption)
+
+    # Draw the 9 ticks
+    for Tick in range(9):
+        Angle = -30 + 30*Tick
+        Label = str(Tick)
+        Width = 5
+        if (Tick in (0, 4, 8)):
+           Width = 10
+        DrawRun(ControllerDraw, CONTROLLER_CENTER_X, CONTROLLER_CENTER_Y, Angle, Label, Width, DotOption)
+
+    # Red dot in the middle
+    ControllerDraw.ellipse([CONTROLLER_CENTER_X - circle_radius, CONTROLLER_CENTER_Y - circle_radius,
+                  CONTROLLER_CENTER_X + circle_radius, CONTROLLER_CENTER_Y + circle_radius], 
+                  fill=MIDDLE_DOT_COLOR)
+
+    # ============================================================================
+    # SAVE IMAGE
+    # ============================================================================
+    # Save the completed image as a PNG file
+    ControllerImage.save(IMAGE_NAME)
+    print(f"Image created successfully: {IMAGE_NAME}")
+
+    # Optionally display the image (uncomment if running in an environment that supports it)
+    #ControllerImage.show()
+
+DrawController("controller-bg.png", True)
+DrawController("controller-no-dot.png", False)

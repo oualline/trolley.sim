@@ -26,6 +26,7 @@ import state
 
 CONTROLLER_CENTER_X = 350   # Location of the center of the controller
 CONTROLLER_CENTER_Y = 150   # Location of the center of the controller
+CONTROLLER_X_OFFSET = 80    # Move the controller over this amount
 
 # Try and adjust the center of the handle to the correct location
 # This are eyeballed and need to be computed
@@ -59,29 +60,34 @@ class ControllerGraphics():
 
         """
 
-        MARGIN = 15                     # Margin for top/bottom of controller
-        CONTROLLER_X_OFFSET = 80        # Move the controller over this amount
+        self.MARGIN = 15                     # Margin for top/bottom of controller
 
-        Height = MainWindow.ControllerGraphicsView.height()
+        self.Height = MainWindow.ControllerGraphicsView.height()
         Width = MainWindow.ControllerGraphicsView.width()
 
-        self.ControllerScene = QGraphicsScene(0, 0, Width-MARGIN, Height-MARGIN)
+        self.ControllerScene = QGraphicsScene(0, 0, Width-self.MARGIN, self.Height-self.MARGIN)
 
-        # Create the crontroller
+        # Create the controller
         ControllerBackgroundImage = QPixmap(os.path.join("image", "controller-bg.png"))
-        ControllerBackgroundImageScaled = ControllerBackgroundImage.scaledToHeight(Height - 2 * MARGIN)
-        ControllerBackgroundItem = self.ControllerScene.addPixmap(ControllerBackgroundImageScaled)
+        self.ControllerBackgroundImageScaled = ControllerBackgroundImage.scaledToHeight(self.Height - 2 * self.MARGIN)
+
+        ControllerBackgroundImageNoDots = QPixmap(os.path.join("image", "controller-no-dot.png"))
+        self.ControllerBackgroundImageScaledNoDots = ControllerBackgroundImageNoDots.scaledToHeight(self.Height - 2 * self.MARGIN)
+
+        self.ShowDots = True
+        self.ControllerBackgroundItem = self.ControllerScene.addPixmap(self.ControllerBackgroundImageScaled)
+        self.ControllerBackgroundItem.setZValue(1)
 
         # Figure out the height of the controller and it's middle
-        ControllerHeight = ControllerBackgroundImageScaled.height()
-        Offset = (Height - ControllerHeight)/2 - MARGIN/2
+        ControllerHeight = self.ControllerBackgroundImageScaled.height()
+        Offset = (self.Height - ControllerHeight)/2 - self.MARGIN/2
 
         # Center the controller
-        ControllerBackgroundItem.setPos(CONTROLLER_X_OFFSET, Offset)
+        self.ControllerBackgroundItem.setPos(CONTROLLER_X_OFFSET, Offset)
 
         # Now put the controller on the controller
         ControllerHandle = QPixmap(os.path.join("image", "controller-arm.png"))
-        ControllerScale = float(ControllerBackgroundImageScaled.width()) / \
+        ControllerScale = float(self.ControllerBackgroundImageScaled.width()) / \
             float(ControllerBackgroundImage.width()) 
         NewHeight = int(float(ControllerHandle.height()) * ControllerScale)
 
@@ -89,6 +95,7 @@ class ControllerGraphics():
         ControllerHandleScaled = ControllerHandle.scaledToHeight(NewHeight)
 
         self.ControllerHandleItem = self.ControllerScene.addPixmap(ControllerHandleScaled)
+        self.ControllerHandleItem.setZValue(2)
 
         #                      0  1   2   3   4    5    6    7     8
         self.RUN_TO_ANGLE = (-30, 0, 30, 60, 90, 120, 150, 180, -150)
@@ -113,12 +120,33 @@ class ControllerGraphics():
         self.ReverseHandleItem.setPos(REVERSE_HANDLE_X_POS, ControllerHeight/2+2)
         self.ReverseHandleItem.setTransformOriginPoint(REVERSE_HANDLE_X_OFFSET, ReverseHandleScaled.height()/2)
         self.ReverseHandleItem.setRotation(0)  
+        self.ReverseHandleItem.setZValue(3)
 
         self.MainWindow = MainWindow
         MainWindow.ControllerGraphicsView.mousePressEvent = self.MouseClick
         MainWindow.ControllerGraphicsView.setScene(self.ControllerScene)
         MainWindow.ControllerGraphicsView.show()
 
+    def ToggleDots(self):
+        """ 
+        Toggle between dots and no dots
+        """
+        self.ShowDots = not self.ShowDots
+        if (self.ShowDots):
+            self.ControllerScene.removeItem(self.ControllerBackgroundItem)
+            self.ControllerBackgroundItem = self.ControllerScene.addPixmap(self.ControllerBackgroundImageScaled)
+        else:
+            self.ControllerScene.removeItem(self.ControllerBackgroundItem)
+            self.ControllerBackgroundItem = self.ControllerScene.addPixmap(self.ControllerBackgroundImageScaledNoDots)
+        self.ControllerBackgroundItem.setZValue(1)
+            
+        # Figure out the height of the controller and it's middle
+        ControllerHeight = self.ControllerBackgroundImageScaled.height()
+        Offset = (self.Height - ControllerHeight)/2 - self.MARGIN/2
+
+        # Center the controller
+        self.ControllerBackgroundItem.setPos(CONTROLLER_X_OFFSET, Offset)
+            
     def ControllerReset(self):
         """
         Reset the controller and the reverser

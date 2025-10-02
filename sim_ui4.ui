@@ -128,9 +128,12 @@
            </widget>
           </item>
           <item>
-           <widget class="QCheckBox" name="AideBox">
+           <widget class="QCheckBox" name="ClickTargets">
             <property name="text">
              <string>Click Targets</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
             </property>
            </widget>
           </item>
