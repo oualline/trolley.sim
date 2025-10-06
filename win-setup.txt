@@ -2,10 +2,16 @@ For development on windows
 
 Install:
     Install vlc -- Make sure to get 64 bit version
-    Install python3
-    
-    Install mobaxterm
-	Install mobaxterm development tools (https://mobaxterm.mobatek.net/plugins.html)
-	Copy bashrc.win -> .bashrc
-	Execute win-setup.sh
+	https://www.videolan.org/vlc/
 
+    Install MSYS2 from https://www.msys2.org/
+
+    NOTE: When running MSYS32 use MSYS32 UCRT64
+
+    Add the following to the Windows path 
+	C:\msys64\mingw64\bin
+	C:\msys64\usr\bin
+   
+    Add the path to MSYS32: (MSYS32 terminal)
+       echo 'export PATH=$PATH:/mingw64/bin' >> .profile
+ 

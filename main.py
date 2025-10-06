@@ -19,6 +19,7 @@ import sys
 import threading
 import time
 import webbrowser
+import vlc      ##@@
 
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import ( QApplication, QDialog, QMainWindow, QMessageBox )
@@ -44,13 +45,22 @@ BottomMargin = None
 LeftMargin = None
 RightMargin = None
 
+VideoFile = os.path.join("video", "trolley.m4v")
+
 if '_PYI_APPLICATION_HOME_DIR' in os.environ:
     DIR=os.environ['_PYI_APPLICATION_HOME_DIR']
     os.chdir(DIR)
+    VideoFile = os.path.join(DIR, VideoFile)
 else:
-    DIR=os.getcwd()
+    # Detect the operating system
+    operating_system = platform.system()
+    # Window is strange.  VLC and getcwd don't like each other
+    if operating_system != "Windows":
+        DIR=os.getcwd()
+    else:
+        DIR="."
 
-VideoFile = DIR + "/video/trolley.m4v"
+VideoFile = os.path.join(DIR, VideoFile)
 
 class ModeEnum(enum.Enum):
     EASY = 0         # Mode is easy

@@ -1,4 +1,4 @@
-# -*- mode: python ; coding: utf-8 -*-
+# -*- mode: python ; coding: utf-7 -*-
 
 
 a = Analysis(
@@ -6,10 +6,14 @@ a = Analysis(
     pathex=[],
     binaries=[
 	('C:\\Program Files\\VideoLAN\\VLC\\', 'VLC'),
+	('C:\\msys64\\mingw64\\lib\\gstreamer-1.0', '.'),
+	('C:\\msys64\\mingw64\\lib', '.'),
+	('C:\\msys64\\mingw64\\lib\\ImageMagick-7.1.2\\modules-Q16HDRI\\coders', '.'),
 	('image/*.png', '.'),
 	('image/*.svg', '.')
     ],
     datas=[
+	('image/splash.png', '.'),
         ('*.mp3', '.'), 
         ('video/trolley.m4v', 'video'), 
         ('video/easy.mp4', 'video'), 
@@ -25,6 +29,9 @@ a = Analysis(
     noarchive=False,
     optimize=0,
 )
+splash = Splash('image/splash.png',
+                binaries=a.binaries,
+                datas=a.datas)
 pyz = PYZ(a.pure)
 
 exe = EXE(

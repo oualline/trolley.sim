@@ -1,3 +1,8 @@
+Label controls
++/- for throttle
+Attract mode.
+then do you want video help
+
 Bugs
 
 1. Reset does not change graphics controller or deadman

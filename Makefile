@@ -34,6 +34,7 @@ linux: mode_window.py sim_ui4.py
 
 windows: mode_window.py sim_ui4.py
 	pyinstaller --log-level DEBUG trolley-windows.spec
+	#pyinstaller trolley-windows.spec
 
 # Files that go into the system
 FILES= bugs.txt developers.txt help.pdf readme.txt LICENSE.txt
