@@ -26,6 +26,7 @@ pacman -S --needed mingw-w64-x86_64-gst-plugins-ugly
 pacman -S --needed mingw-w64-x86_64-python-gobject 
 pacman -S --needed mingw-w64-x86_64-vlc
 pacman -S --needed mingw-w64-x86_64-json-glib
+pacman -S --needed mingw-w64-x86_64-boost-libs
 pacman -S --needed make
 pacman -S --needed vim
 

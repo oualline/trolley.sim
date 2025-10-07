@@ -33,7 +33,7 @@ linux: mode_window.py sim_ui4.py
 	chmod a+x /tmp/trolley-linux
 
 windows: mode_window.py sim_ui4.py
-	pyinstaller --log-level DEBUG trolley-windows.spec
+	pyinstaller --distpath=/home/user/dist --log-level DEBUG -y trolley-windows.spec
 	#pyinstaller trolley-windows.spec
 
 # Files that go into the system

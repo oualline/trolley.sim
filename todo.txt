@@ -2,6 +2,7 @@ Label controls
 +/- for throttle
 Attract mode.
 then do you want video help
+Find out what ddls needed and remove all others
 
 Bugs
 
