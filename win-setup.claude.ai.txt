@@ -1,0 +1,177 @@
+# Installation Procedure for Trolley Simulator on Windows 11
+
+This procedure will install Python, VLC, and all required Python modules to run the trolley simulator application.
+
+## Prerequisites
+- Windows 11 computer with administrator access
+- Internet connection
+
+## Step 1: Install Python
+
+1. **Download Python:**
+   - Visit [https://www.python.org/downloads/](https://www.python.org/downloads/)
+   - Download Python 3.11 or later (recommended: Python 3.11.x)
+
+2. **Install Python:**
+   - Run the downloaded installer
+   - **IMPORTANT:** Check the box "Add Python to PATH" at the bottom of the installer
+   - Click "Install Now"
+   - Wait for installation to complete
+   - Click "Close"
+
+3. **Verify Python Installation:**
+   - Open Command Prompt (press `Win + R`, type `cmd`, press Enter)
+   - Type: `python --version`
+   - You should see output like: `Python 3.11.x`
+
+## Step 2: Install VLC Media Player
+
+1. **Download VLC:**
+   - Visit [https://www.videolan.org/vlc/](https://www.videolan.org/vlc/)
+   - Click "Download VLC" button
+   - Download the Windows installer (64-bit recommended)
+
+2. **Install VLC:**
+   - Run the downloaded installer
+   - Follow the installation wizard with default settings
+   - Click "Install"
+   - Click "Close" when complete
+
+3. **Verify VLC Installation:**
+   - VLC should be installed in `C:\Program Files\VideoLAN\VLC\`
+
+## Step 3: Install Required Python Modules
+
+Open Command Prompt as Administrator:
+- Press `Win + X`
+- Select "Terminal (Admin)" or "Command Prompt (Admin)"
+
+### Install PyQt5
+```cmd
+pip install PyQt5
+```
+
+### Install python-vlc
+```cmd
+pip install python-vlc
+```
+
+### Install playsound3
+```cmd
+pip install playsound3
+```
+
+### Verify All Installations
+Run the following command to check installed packages:
+```cmd
+pip list
+```
+
+You should see these packages listed:
+- PyQt5
+- PyQt5-Qt5
+- PyQt5-sip
+- python-vlc
+- playsound3
+
+## Step 4: Verify Complete Installation
+
+Create a test script to verify all modules load correctly:
+
+1. Create a file called `test_install.py` with the following content:
+
+```python
+import sys
+
+print("Testing Python modules...")
+
+try:
+    import PyQt5
+    print("✓ PyQt5 installed successfully")
+except ImportError as e:
+    print(f"✗ PyQt5 installation failed: {e}")
+    sys.exit(1)
+
+try:
+    import vlc
+    print("✓ python-vlc installed successfully")
+except ImportError as e:
+    print(f"✗ python-vlc installation failed: {e}")
+    sys.exit(1)
+
+try:
+    import playsound3
+    print("✓ playsound3 installed successfully")
+except ImportError as e:
+    print(f"✗ playsound3 installation failed: {e}")
+    sys.exit(1)
+
+print("\nAll required modules are installed correctly!")
+print("You can now run the trolley simulator.")
+```
+
+2. Run the test script:
+```cmd
+python test_install.py
+```
+
+## Step 5: Running the Trolley Simulator
+
+1. Navigate to the directory containing the simulator files:
+```cmd
+cd C:\path\to\trolley\simulator
+```
+
+2. Run the main program:
+```cmd
+python main.py
+```
+
+## Optional: Create a Desktop Shortcut
+
+1. Right-click on Desktop → New → Shortcut
+2. For location, enter:
+   ```
+   C:\Windows\System32\cmd.exe /c "cd /d C:\path\to\trolley\simulator && python main.py"
+   ```
+   (Replace `C:\path\to\trolley\simulator` with your actual path)
+3. Name it "Trolley Simulator"
+4. Click Finish
+
+## Troubleshooting
+
+### If Python is not recognized:
+- Ensure Python was added to PATH during installation
+- Manually add Python to PATH:
+  1. Search "Environment Variables" in Windows
+  2. Edit "Path" variable
+  3. Add: `C:\Users\YourUsername\AppData\Local\Programs\Python\Python311`
+  4. Add: `C:\Users\YourUsername\AppData\Local\Programs\Python\Python311\Scripts`
+
+### If VLC videos don't play:
+- Ensure VLC is installed in the default location
+- Try reinstalling VLC with default settings
+
+### If playsound3 doesn't work:
+- Try alternative: `pip uninstall playsound3` then `pip install playsound`
+- Check that your audio drivers are up to date
+
+### If PyQt5 installation fails:
+- Try: `pip install PyQt5 --no-cache-dir`
+- Or: `pip install PyQt5==5.15.9` (specific version)
+
+## System Requirements
+
+- **OS:** Windows 11 (64-bit)
+- **RAM:** 4 GB minimum, 8 GB recommended
+- **Storage:** 500 MB free space
+- **Python:** 3.8 or later (3.11 recommended)
+- **Display:** 1024x768 minimum resolution
+
+## Notes
+
+- The simulator requires video files in a `video` directory
+- Sound files should be in the working directory
+- Image files should be in an `image` directory
+- Ensure all asset files are present before running
+

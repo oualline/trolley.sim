@@ -1,7 +1,8 @@
 Label controls
 +/- for throttle
+Graphics for the error messages
 Attract mode.
-then do you want video help
+Then do you want video help
 Find out what ddls needed and remove all others
 
 Bugs
@@ -10,18 +11,11 @@ Bugs
 2. Check all events are there for full mode
 3. Full mode, problem list
 4. Full mode, congradulations when complete
-
-Todo
-
-3. Make single run for Linux / pyinstaller
-4. Make work on windows
-5. Single program on windows (maybe with vlc) / pyinstaller
-
-
-
-1. Tutorial easy mode.
-2. Tutorial basic mode.
-3. Tutorial advanced mode.
+5. Windows
+6. Help rework
+7. Easy mode video rework
+8. Start/stop mode video rework
+9. Full mode video rework
 
 
 Notes:

@@ -1,73 +1,40 @@
 """
 Handle all sound related activities
 """
-import gi
-gi.require_version('Gst', '1.0')
-from gi.repository import Gst, GLib
+import playsound3
 import enum
 import state
 import os
 import threading
+import time
 
 PlaySound = None        # The sound playing class (singleton)
 
 # List of sounds
 # Must match SoundFiles below
 class SoundEnum(enum.IntEnum):
-    BELL1 = 0,
-    BELL2 = 1,
-    BELL3 = 2,
+    BELL = 0,
+    NOT_USED1 = 1,
+    NOT_USED2 = 2,
     APPLY = 3,
     EMERGENCY = 4,
     PUMP_UP = 5,
     RELEASE = 6,
-    NOT_USED = 7,
+    NOT_USED3 = 7,
     CLICK_CLACK = 8,
     CENTRAL_BELL = 9,
     ZORCH = 10
-
-def SoundEventHandler(bus, message, PlayerClass, Index):
-    """
-    Handle GStreamer bus messages for sound events.
-
-    bus -- GStreamer bus
-    message -- GStreamer message
-    PlayerClass -- The player singleton
-    Index -- Sound index
-    """
-    if message.type == Gst.MessageType.EOS:
-        # End of stream - sound finished playing
-        PlayerClass.Running[Index] = False
-        PlayerClass.Players[Index].set_state(Gst.State.NULL)
-        
-        if PlayerClass.Repeat[Index]:
-            state.Log("Sound %r Repeat %r" % (SoundEnum(Index), PlayerClass.Repeat[Index]))
-            PlayerClass.Play(Index, True)
-        else:
-            PlayerClass.Stop(Index)
-    
-    elif message.type == Gst.MessageType.ERROR:
-        # Handle errors
-        err, debug = message.parse_error()
-        state.Log("GStreamer Error for sound %d: %s" % (Index, err))
-        PlayerClass.Running[Index] = False
-        PlayerClass.Stop(Index)
-    
-    return True
 
 class PlaySoundClass:
     def __init__(self):
         """ 
         Create a sound playing class for all our sounds
         """
-        # Initialize GStreamer
-        Gst.init(None)
-        
         # Must match SoundEnum above
         self.SoundFiles = ( 
                 "trolley-bell.mp3",     # 0
-                "trolley-bell.mp3",     # 1
-                "trolley-bell.mp3",     # 2
+                "NOT_USED",             # 1
+                "NOT_USED",             # 2
                 "apply.mp3",            # 3
                 "emergency.mp3",        # 4
                 "pump-up-sound.mp3",    # 5
@@ -79,16 +46,25 @@ class PlaySoundClass:
                 )
         
         self.Players = []
-        self.Repeat = []
-        self.Running = []
-        self.Buses = []
+        self.StopFlag = []
         
         for Index in range(len(self.SoundFiles)):
-            self.Repeat.append(False)
-            self.Running.append(False)
             self.Players.append(None)
-            self.Buses.append(None)
+            self.StopFlag.append(False)
 
+    def PlaySound(self, Sound, Repeat):
+        """
+        Thread to actually play the given sound
+
+        Args:
+            Sound -- Sound to play enum
+            Repeat -- Repeat the sound
+        """
+        while not self.StopFlag[Sound]:
+            playsound3.playsound(self.SoundFiles[Sound])
+            if not Repeat:
+                break
+        
     def Play(self, Sound, Repeat):
         """
         Play the given sound
@@ -97,44 +73,21 @@ class PlaySoundClass:
             Sound -- Sound to play enum
             Repeat -- If true, play forever
         """
-        state.Log("Start Sound %s Repeat %r Running %r" % (Sound.name, Repeat, self.Running[Sound]))
+        state.Log("Start Sound %s Repeat %r " % (Sound.name, Repeat))
         
-        if self.Running[Sound]:
-            return
+        # Bell is special.  We let it repeat
+        if Sound != SoundEnum.BELL:
+            if self.Players[Sound] is not None:
+                if (self.Players[Sound].is_alive()):
+                    return
         
         # Skip NOT_USED sounds
         if self.SoundFiles[Sound] == "NOT_USED":
             return
 
-        # Create pipeline if it doesn't exist
-        if self.Players[Sound] is None:
-            # Get absolute path for the sound file
-            sound_file = os.path.abspath(self.SoundFiles[Sound])
-            file_uri = "file://" + sound_file
-            
-            # Create playbin pipeline
-            self.Players[Sound] = Gst.ElementFactory.make("playbin", f"player_{Sound}")
-            if not self.Players[Sound]:
-                state.Log("Error: Could not create playbin for sound %s" % Sound.name)
-                return
-            
-            # Set the URI
-            self.Players[Sound].set_property("uri", file_uri)
-            
-            # Set volume (1.0 = 100%)
-            self.Players[Sound].set_property("volume", 1.0)
-            
-            # Get the bus and add a watch
-            self.Buses[Sound] = self.Players[Sound].get_bus()
-            self.Buses[Sound].add_watch(GLib.PRIORITY_DEFAULT, 
-                                      lambda bus, msg, pc=self, idx=Sound: SoundEventHandler(bus, msg, pc, idx))
-
-        self.Running[Sound] = True
-        self.Repeat[Sound] = Repeat
-
-        # Seek to beginning and play
-        self.Players[Sound].seek_simple(Gst.Format.TIME, Gst.SeekFlags.FLUSH, 0)
-        self.Players[Sound].set_state(Gst.State.PLAYING)
+        self.StopFlag[Sound] = False
+        self.Players[Sound] = threading.Thread(target=self.PlaySound, args=(Sound,Repeat,), daemon=True)
+        self.Players[Sound].start()
 
     def Stop(self, Sound):
         """
@@ -144,23 +97,8 @@ class PlaySoundClass:
              Sound -- Sound to stop enum
         """
         state.Log("Stop Sound %s" % SoundEnum(Sound))
+        self.StopFlag[Sound] = True
         
-        if self.Players[Sound] is not None:
-            self.Players[Sound].set_state(Gst.State.NULL)
-        
-        self.Repeat[Sound] = False
-        self.Running[Sound] = False
-
-    def Cleanup(self):
-        """
-        Clean up all GStreamer resources
-        """
-        for Sound in range(len(self.SoundFiles)):
-            if self.Players[Sound] is not None:
-                self.Stop(Sound)
-                self.Players[Sound] = None
-                self.Buses[Sound] = None
-
 def Init():
     """ 
     Initialize the sound system
@@ -169,12 +107,23 @@ def Init():
 
     PlaySound = PlaySoundClass()
 
-def Cleanup():
-    """
-    Clean up the sound system
-    """
-    global PlaySound
-    
-    if PlaySound is not None:
-        PlaySound.Cleanup()
-        PlaySound = None
+if __name__ == "__main__":
+    Init()
+    print("Bell")
+    PlaySound.Play(SoundEnum.BELL, False)
+    time.sleep(5)
+    print("Bell")
+    PlaySound.Play(SoundEnum.BELL, False)
+    time.sleep(0.1)
+    print("Bell")
+    PlaySound.Play(SoundEnum.BELL, False)
+    time.sleep(0.1)
+    print("Bell")
+    PlaySound.Play(SoundEnum.BELL, False)
+    time.sleep(5)
+    print("Bell/repeat")
+    PlaySound.Play(SoundEnum.BELL, True)
+    time.sleep(10)
+    print("Stop")
+    PlaySound.Stop(SoundEnum.BELL)
+    time.sleep(10)

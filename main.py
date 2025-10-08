@@ -1136,12 +1136,7 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         """ 
         Ring the bell
         """
-        if (not sound.PlaySound.Running[sound.SoundEnum.BELL1.value]):
-            sound.PlaySound.Play(sound.SoundEnum.BELL1, False)
-        elif (not sound.PlaySound.Running[sound.SoundEnum.BELL2.value]):
-            sound.PlaySound.Play(sound.SoundEnum.BELL2, False)
-        else:
-            sound.PlaySound.Play(sound.SoundEnum.BELL3, False)
+        sound.PlaySound.Play(sound.SoundEnum.BELL, False)
 
         ThisDingTime = time.time()
         DingPosition = self.Video.GetPosition()
@@ -1227,7 +1222,6 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         """
         Closing -- clean up resources
         """
-        sound.Cleanup()
         sys.exit(0)
 
     def AddWarning(self, Message):
@@ -1275,7 +1269,9 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         MessageBox.setInformativeText("""The deadman must be pressed (or clicked) 
 at all times while the trolley is moving.   
 
-If it is released the trolley performs an emergency stop
+If it is released the trolley performs an emergency stop.
+
+The deadman is located in the lower left corner.
 """)
         MessageBox.setStandardButtons(QMessageBox.Ok)
         ButtonOk = MessageBox.button(QMessageBox.Ok)
