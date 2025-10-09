@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>965</width>
+    <width>1177</width>
     <height>878</height>
    </rect>
   </property>
@@ -144,40 +144,63 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_4">
         <item>
-         <widget class="QPushButton" name="DeadmanGraphic">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
+         <layout class="QVBoxLayout" name="DeadmanVerticalLayout">
+          <property name="leftMargin">
+           <number>0</number>
           </property>
-          <property name="minimumSize">
-           <size>
-            <width>90</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">QPushButton::pressed {background-color : red;}</string>
-          </property>
-          <property name="text">
-           <string/>
-          </property>
-          <property name="icon">
-           <iconset>
-            <normaloff>image/dead-off.png</normaloff>
-            <normalon>image/dead-on.png</normalon>image/dead-off.png</iconset>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>120</width>
-            <height>120</height>
-           </size>
-          </property>
-          <property name="checkable">
-           <bool>true</bool>
-          </property>
-         </widget>
+          <item>
+           <widget class="QPushButton" name="DeadmanGraphic">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>90</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">QPushButton::pressed {background-color : red;}</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset>
+              <normaloff>image/dead-off.png</normaloff>
+              <normalon>image/dead-on.png</normalon>image/dead-off.png</iconset>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>120</width>
+              <height>120</height>
+             </size>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="DeadmanLabel">
+            <property name="font">
+             <font>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Deadman</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
         <item>
          <spacer name="horizontalSpacer_4">
@@ -186,43 +209,135 @@
           </property>
           <property name="sizeHint" stdset="0">
            <size>
-            <width>0</width>
-            <height>0</height>
+            <width>13</width>
+            <height>13</height>
            </size>
           </property>
          </spacer>
         </item>
         <item>
-         <widget class="QGraphicsView" name="ControllerGraphicsView">
-          <property name="minimumSize">
-           <size>
-            <width>340</width>
-            <height>120</height>
-           </size>
+         <widget class="QPushButton" name="PlusButton">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
           </property>
-          <property name="maximumSize">
-           <size>
-            <width>340</width>
-            <height>120</height>
-           </size>
+          <property name="font">
+           <font>
+            <pointsize>32</pointsize>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">background-color: tan</string>
+          </property>
+          <property name="text">
+           <string>+</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QGraphicsView" name="BrakeGraphicsView">
-          <property name="minimumSize">
-           <size>
-            <width>220</width>
-            <height>120</height>
-           </size>
+         <layout class="QVBoxLayout" name="verticalLayout_2">
+          <property name="leftMargin">
+           <number>0</number>
           </property>
-          <property name="maximumSize">
-           <size>
-            <width>220</width>
-            <height>120</height>
-           </size>
+          <item>
+           <widget class="QGraphicsView" name="ControllerGraphicsView">
+            <property name="minimumSize">
+             <size>
+              <width>340</width>
+              <height>120</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>340</width>
+              <height>120</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="ControllerLabel">
+            <property name="font">
+             <font>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Controller</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QPushButton" name="MinusButton">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>32</pointsize>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">background-color: tan</string>
+          </property>
+          <property name="text">
+           <string>-</string>
           </property>
          </widget>
+        </item>
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_3">
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QGraphicsView" name="BrakeGraphicsView">
+            <property name="minimumSize">
+             <size>
+              <width>220</width>
+              <height>120</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>220</width>
+              <height>120</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="BrakeLabel">
+            <property name="font">
+             <font>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Brake</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
         <item>
          <spacer name="horizontalSpacer_5">
@@ -231,8 +346,8 @@
           </property>
           <property name="sizeHint" stdset="0">
            <size>
-            <width>0</width>
-            <height>0</height>
+            <width>13</width>
+            <height>13</height>
            </size>
           </property>
          </spacer>
@@ -659,22 +774,6 @@
    </hints>
   </connection>
   <connection>
-   <sender>DeadmanGraphic</sender>
-   <signal>clicked(bool)</signal>
-   <receiver>MainWindow</receiver>
-   <slot>DeadmanClicked()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>66</x>
-     <y>667</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>2</x>
-     <y>514</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>HelpButton</sender>
    <signal>clicked()</signal>
    <receiver>MainWindow</receiver>
@@ -703,6 +802,22 @@
     <hint type="destinationlabel">
      <x>967</x>
      <y>751</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>DeadmanGraphic</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>DeadmanClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>66</x>
+     <y>667</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>2</x>
+     <y>514</y>
     </hint>
    </hints>
   </connection>

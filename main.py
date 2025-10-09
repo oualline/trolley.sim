@@ -236,6 +236,7 @@ MIN_SPEED=0.5   # Vlc won't move at lower speeds
 #            0    1    2    3    4     5     6     7      8
 MAX_SPEED = [0.5, 1.5, 2.0, 2.5, -1.0, -1.0, -1.0, -1.0, -1.0]
 SPEED_TIME = 6  # Number of seconds it takes to get to full speed.
+MAX_LEVEL = 8   # Maximum run level
 
 FRICTION=0.99995   # Friction is 0.005% of the current speed
 
@@ -357,6 +358,13 @@ class EasyMode:
 
         :param MainWindow: The main window
         """
+        if (not state.State.Deadman) and ((state.State.Speed != 0) or (state.State.RunLevel != 0)):
+            state.Log("Deadman is not set")
+            state.State.Speed = 0.0
+            MainWindow.Video.SetRate(0.0)
+            MainWindow.ErrorDeadman()
+            MainWindow.MainReset()
+            return
 
         # Increase speed based on acceleration 
         # The 10.0 is because we update 10 times a second
@@ -397,6 +405,7 @@ class EasyMode:
         :returns: True if it's safe to contine
         """
         if (not state.State.Deadman) and ((state.State.Speed != 0) or (state.State.RunLevel != 0)):
+            state.State.Speed = 0.0
             MainWindow.Video.SetRate(0.0)
             MainWindow.ErrorDeadman()
             MainWindow.MainReset()
@@ -525,6 +534,8 @@ class StartStopMode:
             ((state.State.Speed != 0) or (state.State.RunLevel != 0)):
             state.Log("StartStop: Deadman %d %f %d" % \
                  (state.State.Deadman, state.State.Speed, state.State.RunLevel))
+            state.State.Speed = 0.0
+            MainWindow.Video.SetRate(0.0)
             MainWindow.ErrorDeadman()
             MainWindow.MainReset()
             return False
@@ -997,6 +1008,8 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         self.BrakeRelease.clicked.connect(self.BrakeReleaseClicked)
         self.BrakeLap.clicked.connect(self.BrakeLapClicked)
         self.BrakeEmergency.clicked.connect(self.BrakeEmergencyClicked)
+        self.MinusButton.clicked.connect(self.MinusButtonClicked)
+        self.PlusButton.clicked.connect(self.PlusButtonClicked)
 
         self.Video = video.Video(self, VideoFile)
 
@@ -1151,6 +1164,19 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         self.MainReset()
         self.SelectWindow.show()
 
+    def PlusButtonClicked(self):
+        """
+        Plus button clicked when running
+        """
+        self.SetRun(state.State.RunLevel+1)
+
+    def MinusButtonClicked(self):
+        """
+        Minus button clicked when running
+        """
+        self.SetRun(state.State.RunLevel-1)
+
+
     def SetSimulatorMode(self):
         """
         We are starting out.  Setup the mode
@@ -1262,17 +1288,27 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         """
         You tried to run without setting the deadman
         """
+        state.Log("ErrorDeadman")
         MessageBox = QMessageBox()
         MessageBox.setIcon(QMessageBox.Critical)
         MessageBox.setText("<H1 ALIGN=\"CENTER\"><B>Deadman not engaged</B></H1>")
         MessageBox.setWindowTitle("Deadman not engaged")
-        MessageBox.setInformativeText("""The deadman must be pressed (or clicked) 
+        MessageBox.setInformativeText("""<HTML>
+<BODY>
+<P>
+The deadman must be pressed (or clicked) 
 at all times while the trolley is moving.   
-
+<P>
 If it is released the trolley performs an emergency stop.
-
+<P>
 The deadman is located in the lower left corner.
+
+<TABLE>
+<TR><TD><IMG SRC="image/dead-off.png" height="100"></TD><TD><IMG SRC="image/dead-on.png" height=100></TD></TR>
+<TR><TD>Wrong</TD><TD>Right</TD></TR>
+</TABLE>
 """)
+        MessageBox.setTextFormat(Qt.RichText)
         MessageBox.setStandardButtons(QMessageBox.Ok)
         ButtonOk = MessageBox.button(QMessageBox.Ok)
         ButtonOk.setText("Restart")
@@ -1463,6 +1499,12 @@ Press OK to continue""")
         :returns: True if we should continue our journey
         """
         state.Log("SetRun %d" % Level)
+        if (Level > MAX_LEVEL):
+            Level = MAX_LEVEL
+
+        if (Level < 0):
+            Level = 0
+
         self.ControllerGraphics.SetControllerRun(Level)
         self.ControllerButtons.SetControllerRun(Level)
 
