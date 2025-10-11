@@ -1,13 +1,10 @@
-Label controls
-+/- for throttle
-Graphics for the error messages
 Attract mode.
 Then do you want video help
 Find out what ddls needed and remove all others
 
 Bugs
 
-1. Reset does not change graphics controller or deadman
+1. No image when starting in easy mode
 2. Check all events are there for full mode
 3. Full mode, problem list
 4. Full mode, congradulations when complete

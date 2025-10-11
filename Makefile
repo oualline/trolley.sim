@@ -33,7 +33,10 @@ linux: mode_window.py sim_ui4.py
 	chmod a+x /tmp/trolley-linux
 
 windows: mode_window.py sim_ui4.py
-	pyinstaller --distpath=/home/user/dist --log-level DEBUG -y trolley-windows.spec
+	pyinstaller -y trolley-windows.spec
+
+junk:
+	#pyinstaller --distpath=/home/user/dist --log-level DEBUG -y trolley-windows.spec
 	#pyinstaller trolley-windows.spec
 
 # Files that go into the system
@@ -49,7 +52,9 @@ output: $(FILES) dist/trolley-linux dist/trolley-windows.exe
 	mkdir $(DIR)/linux
 	cp dist/trolley-linux $(DIR)/linux/trolley
 	chmod a+x $(DIR)/linux/trolley
+	#
 	mkdir $(DIR)/windows
-	cp dist/trolley-windows.exe $(DIR)/windows/trolley.exe
+	cp -r dist/trolley-windows $(DIR)/windows
+	#
 	rm -f trolley.zip
 	(cd $(DIR);zip -r $(OLD_DIR)/trolley.zip .)

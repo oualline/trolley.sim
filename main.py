@@ -1014,10 +1014,10 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         self.Video = video.Video(self, VideoFile)
 
         self.VideoFrame.setStyleSheet("""
-            background-image: url(%s/background.png) 0 0 0 0 stretch stretch;
+            background-image: url(%s) 0 0 0 0 stretch stretch;
             background-repeat: no-repeat;
             background-position: center;
-            """ % os.path.join(DIR, "image"))
+            """ % os.path.join(DIR, "image", "background.png"))
 
         self.BrakeUi = brake_ui.BrakeUi(self)
 
@@ -1620,6 +1620,21 @@ if __name__ == "__main__":
         mainWindow.showNormal()
         mainWindow.showMaximized()
 
+
+    if '_PYI_APPLICATION_HOME_DIR' in os.environ:
+        import pyi_splash
+        # Close the splash screen. It does not matter when the call
+        # to this function is made, the splash screen remains open until
+        # this function is called or the Python program is terminated.
+        pyi_splash.close()
+
+    # this will remove minimized status
+    # and restore window with keeping maximized/normal state
+    mainWindow.setWindowState(mainWindow.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
+
+    # this will activate the window
+    mainWindow.activateWindow()
+    mainWindow.raise_()
     state.Log("New run----------------------------------------------------------------")
 
     app.exec()

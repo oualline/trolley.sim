@@ -1,17 +1,11 @@
-# -*- mode: python ; coding: utf-7 -*-
-
 
 a = Analysis(
     ['brake_ui.py', 'controller.py', 'main.py', 'mode_window.py', 'sim_ui4.py', 'sound.py', 'state.py', 'video_player.py'],
     pathex=[],
     binaries=[
 	('C:\\Program Files\\VideoLAN\\VLC\\', 'VLC'),
-	('C:\\msys64\\mingw64\\bin', 'bin'),
-	('C:\\msys64\\mingw64\\lib\\gstreamer-1.0', 'lib'),
-	('C:\\msys64\\mingw64\\lib', 'lib'),
-	('C:\\msys64\\mingw64\\lib\\ImageMagick-7.1.2\\modules-Q16HDRI\\coders', 'lib'),
-	('image/*.png', '.'),
-	('image/*.svg', '.')
+	('image/*.png', 'image'),
+	('image/*.svg', 'image')
     ],
     datas=[
 	('image/splash.png', '.'),

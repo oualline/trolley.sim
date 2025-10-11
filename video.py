@@ -3,6 +3,8 @@ Module to handle the playing of video
 
 Currently uses VLC for video output
 """
+import time
+
 import vlc
 import platform
 
@@ -41,8 +43,13 @@ class Video:
         self.MediaPlayer.set_media(self.Media)
         self.Media.parse()
 
-        self.MediaPlayer.set_rate(0)
         self.MediaPlayer.audio_set_volume(0)
+        state.Log("Reset: Pause")
+        self.MediaPlayer.pause()
+        self.MediaPlayer.set_rate(1.0)
+        self.MediaPlayer.play()
+        state.Log("Reset: Play")
+        time.sleep(0.01)
         state.Log("Reset: Pause")
         self.MediaPlayer.pause()
         

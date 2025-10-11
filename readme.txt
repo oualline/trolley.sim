@@ -32,9 +32,12 @@ Linux:
 Windows:
    
 Use the file manager to open the folder <usb-drive>\Windows.
-You can copy "trolley.exe" to your hard drive.and run it
-from there or run it directly from the USB drive.  Running
-it from a USB drive is slow.
+Copy the directory trolley-windows on to your hard drive.
+Inside the folder you'll find the file trolley-windows.exe
+which you can now run.
+
+You can run it directly from the USB drive, but it runs
+very very slow.
 
 WARNING: The program starts slow even when run from a hard
 drive.
