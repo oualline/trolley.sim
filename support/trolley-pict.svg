@@ -1,0 +1,694 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   viewBox="0 0 800 400"
+   version="1.1"
+   id="svg150"
+   sodipodi:docname="trolley-pict.svg"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs154" />
+  <sodipodi:namedview
+     id="namedview152"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="false"
+     inkscape:zoom="6.4735117"
+     inkscape:cx="456.3211"
+     inkscape:cy="212.40403"
+     inkscape:window-width="1920"
+     inkscape:window-height="1012"
+     inkscape:window-x="1920"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg150" />
+  <!-- Background -->
+  <rect
+     x="0"
+     y="0"
+     width="800"
+     height="400"
+     fill="#f8f8f8"
+     id="rect2" />
+  <!-- Track -->
+  <line
+     x1="50"
+     y1="320"
+     x2="750"
+     y2="320"
+     stroke="#666666"
+     stroke-width="8"
+     id="line4" />
+  <line
+     x1="50"
+     y1="323"
+     x2="750"
+     y2="323"
+     stroke="#333333"
+     stroke-width="2"
+     id="line6" />
+  <!-- Cross Ties -->
+  <g
+     fill="#8b4513"
+     stroke="#000000"
+     stroke-width="1"
+     id="g24">
+    <rect
+       x="100"
+       y="315"
+       width="40"
+       height="10"
+       id="rect8" />
+    <rect
+       x="180"
+       y="315"
+       width="40"
+       height="10"
+       id="rect10" />
+    <rect
+       x="260"
+       y="315"
+       width="40"
+       height="10"
+       id="rect12" />
+    <rect
+       x="340"
+       y="315"
+       width="40"
+       height="10"
+       id="rect14" />
+    <rect
+       x="420"
+       y="315"
+       width="40"
+       height="10"
+       id="rect16" />
+    <rect
+       x="500"
+       y="315"
+       width="40"
+       height="10"
+       id="rect18" />
+    <rect
+       x="580"
+       y="315"
+       width="40"
+       height="10"
+       id="rect20" />
+    <rect
+       x="660"
+       y="315"
+       width="40"
+       height="10"
+       id="rect22" />
+  </g>
+  <!-- Trolley Body (with open ends) -->
+  <path
+     d="M100,120 L100,260 L700,260 L700,120 Z"
+     fill="#b22222"
+     stroke="#800000"
+     stroke-width="3"
+     id="path26" />
+  <!-- Windows -->
+  <rect
+     x="120"
+     y="140"
+     width="50"
+     height="60"
+     fill="#add8e6"
+     stroke="#000000"
+     stroke-width="2"
+     id="rect28" />
+  <rect
+     x="190"
+     y="140"
+     width="50"
+     height="60"
+     fill="#add8e6"
+     stroke="#000000"
+     stroke-width="2"
+     id="rect30" />
+  <rect
+     x="260"
+     y="140"
+     width="50"
+     height="60"
+     fill="#add8e6"
+     stroke="#000000"
+     stroke-width="2"
+     id="rect32" />
+  <rect
+     x="330"
+     y="140"
+     width="50"
+     height="60"
+     fill="#add8e6"
+     stroke="#000000"
+     stroke-width="2"
+     id="rect34" />
+  <rect
+     x="400"
+     y="140"
+     width="50"
+     height="60"
+     fill="#add8e6"
+     stroke="#000000"
+     stroke-width="2"
+     id="rect36" />
+  <rect
+     x="470"
+     y="140"
+     width="50"
+     height="60"
+     fill="#add8e6"
+     stroke="#000000"
+     stroke-width="2"
+     id="rect38" />
+  <rect
+     x="540"
+     y="140"
+     width="50"
+     height="60"
+     fill="#add8e6"
+     stroke="#000000"
+     stroke-width="2"
+     id="rect40" />
+  <rect
+     x="610"
+     y="140"
+     width="50"
+     height="60"
+     fill="#add8e6"
+     stroke="#000000"
+     stroke-width="2"
+     id="rect42" />
+  <!-- Open Front End -->
+  <rect
+     x="100"
+     y="120"
+     width="20"
+     height="140"
+     fill="none"
+     stroke="#800000"
+     stroke-width="3"
+     id="rect44" />
+  <line
+     x1="100"
+     y1="120"
+     x2="120"
+     y2="120"
+     stroke="#800000"
+     stroke-width="3"
+     id="line46" />
+  <line
+     x1="100"
+     y1="260"
+     x2="120"
+     y2="260"
+     stroke="#800000"
+     stroke-width="3"
+     id="line48" />
+  <!-- Open Back End -->
+  <rect
+     x="680"
+     y="120"
+     width="20"
+     height="140"
+     fill="none"
+     stroke="#800000"
+     stroke-width="3"
+     id="rect50" />
+  <line
+     x1="680"
+     y1="120"
+     x2="700"
+     y2="120"
+     stroke="#800000"
+     stroke-width="3"
+     id="line52" />
+  <line
+     x1="680"
+     y1="260"
+     x2="700"
+     y2="260"
+     stroke="#800000"
+     stroke-width="3"
+     id="line54" />
+  <!-- Door -->
+  <!-- Roof -->
+  <rect
+     x="90"
+     y="110"
+     width="620"
+     height="20"
+     fill="#8b4513"
+     stroke="#000000"
+     stroke-width="2"
+     rx="5"
+     id="rect60" />
+  <rect
+     x="85"
+     y="100"
+     width="630"
+     height="15"
+     fill="#8b4513"
+     stroke="#000000"
+     stroke-width="2"
+     rx="10"
+     id="rect62" />
+  <!-- Trolley Poles -->
+  <line
+     x1="400"
+     y1="100"
+     x2="400"
+     y2="50"
+     stroke="#000000"
+     stroke-width="3"
+     id="line64" />
+  <line
+     x1="400"
+     y1="50"
+     x2="450"
+     y2="20"
+     stroke="#000000"
+     stroke-width="2"
+     id="line66" />
+  <circle
+     cx="450"
+     cy="20"
+     r="5"
+     fill="#666666"
+     stroke="#000000"
+     stroke-width="1"
+     id="circle68" />
+  <!-- Chassis/Undercarriage -->
+  <rect
+     x="120"
+     y="260"
+     width="560"
+     height="10"
+     fill="#8b4513"
+     stroke="#000000"
+     stroke-width="2"
+     id="rect70" />
+  <rect
+     x="140"
+     y="270"
+     width="520"
+     height="5"
+     fill="#666666"
+     stroke="#000000"
+     stroke-width="1"
+     id="rect72" />
+  <!-- Front Wheel Truck -->
+  <rect
+     x="120"
+     y="275"
+     width="120"
+     height="15"
+     fill="#333333"
+     stroke="#000000"
+     stroke-width="2"
+     id="rect74" />
+  <!-- Front Wheels -->
+  <circle
+     cx="150"
+     cy="290"
+     r="25"
+     fill="#333333"
+     stroke="#000000"
+     stroke-width="3"
+     id="circle76" />
+  <circle
+     cx="150"
+     cy="290"
+     r="12"
+     fill="#666666"
+     stroke="#000000"
+     stroke-width="2"
+     id="circle78" />
+  <circle
+     cx="210"
+     cy="290"
+     r="25"
+     fill="#333333"
+     stroke="#000000"
+     stroke-width="3"
+     id="circle80" />
+  <circle
+     cx="210"
+     cy="290"
+     r="12"
+     fill="#666666"
+     stroke="#000000"
+     stroke-width="2"
+     id="circle82" />
+  <!-- Rear Wheel Truck -->
+  <rect
+     x="560"
+     y="275"
+     width="120"
+     height="15"
+     fill="#333333"
+     stroke="#000000"
+     stroke-width="2"
+     id="rect84" />
+  <!-- Rear Wheels -->
+  <circle
+     cx="590"
+     cy="290"
+     r="25"
+     fill="#333333"
+     stroke="#000000"
+     stroke-width="3"
+     id="circle86" />
+  <circle
+     cx="590"
+     cy="290"
+     r="12"
+     fill="#666666"
+     stroke="#000000"
+     stroke-width="2"
+     id="circle88" />
+  <circle
+     cx="650"
+     cy="290"
+     r="25"
+     fill="#333333"
+     stroke="#000000"
+     stroke-width="3"
+     id="circle90" />
+  <circle
+     cx="650"
+     cy="290"
+     r="12"
+     fill="#666666"
+     stroke="#000000"
+     stroke-width="2"
+     id="circle92" />
+  <!-- Details -->
+  <rect
+     x="120"
+     y="210"
+     width="560"
+     height="5"
+     fill="#800000"
+     stroke="#000000"
+     stroke-width="1"
+     id="rect94" />
+  <!-- Steps -->
+  <rect
+     x="400"
+     y="260"
+     width="50"
+     height="5"
+     fill="#8b4513"
+     stroke="#000000"
+     stroke-width="1"
+     id="rect96" />
+  <rect
+     x="405"
+     y="265"
+     width="40"
+     height="5"
+     fill="#8b4513"
+     stroke="#000000"
+     stroke-width="1"
+     id="rect98" />
+  <rect
+     x="410"
+     y="270"
+     width="30"
+     height="5"
+     fill="#8b4513"
+     stroke="#000000"
+     stroke-width="1"
+     id="rect100" />
+  <!-- Resistor Pack 1 (Left) -->
+  <rect
+     x="250"
+     y="275"
+     width="60"
+     height="25"
+     fill="#444444"
+     stroke="#000000"
+     stroke-width="2"
+     rx="3"
+     id="rect102" />
+  <line
+     x1="255"
+     y1="275"
+     x2="255"
+     y2="300"
+     stroke="#222222"
+     stroke-width="1"
+     id="line104" />
+  <line
+     x1="265"
+     y1="275"
+     x2="265"
+     y2="300"
+     stroke="#222222"
+     stroke-width="1"
+     id="line106" />
+  <line
+     x1="275"
+     y1="275"
+     x2="275"
+     y2="300"
+     stroke="#222222"
+     stroke-width="1"
+     id="line108" />
+  <line
+     x1="285"
+     y1="275"
+     x2="285"
+     y2="300"
+     stroke="#222222"
+     stroke-width="1"
+     id="line110" />
+  <line
+     x1="295"
+     y1="275"
+     x2="295"
+     y2="300"
+     stroke="#222222"
+     stroke-width="1"
+     id="line112" />
+  <line
+     x1="305"
+     y1="275"
+     x2="305"
+     y2="300"
+     stroke="#222222"
+     stroke-width="1"
+     id="line114" />
+  <!-- Resistor Pack 2 (Middle) -->
+  <rect
+     x="370"
+     y="275"
+     width="60"
+     height="25"
+     fill="#444444"
+     stroke="#000000"
+     stroke-width="2"
+     rx="3"
+     id="rect116" />
+  <line
+     x1="375"
+     y1="275"
+     x2="375"
+     y2="300"
+     stroke="#222222"
+     stroke-width="1"
+     id="line118" />
+  <line
+     x1="385"
+     y1="275"
+     x2="385"
+     y2="300"
+     stroke="#222222"
+     stroke-width="1"
+     id="line120" />
+  <line
+     x1="395"
+     y1="275"
+     x2="395"
+     y2="300"
+     stroke="#222222"
+     stroke-width="1"
+     id="line122" />
+  <line
+     x1="405"
+     y1="275"
+     x2="405"
+     y2="300"
+     stroke="#222222"
+     stroke-width="1"
+     id="line124" />
+  <line
+     x1="415"
+     y1="275"
+     x2="415"
+     y2="300"
+     stroke="#222222"
+     stroke-width="1"
+     id="line126" />
+  <line
+     x1="425"
+     y1="275"
+     x2="425"
+     y2="300"
+     stroke="#222222"
+     stroke-width="1"
+     id="line128" />
+  <!-- Resistor Pack 3 (Right) -->
+  <rect
+     x="490"
+     y="275"
+     width="60"
+     height="25"
+     fill="#444444"
+     stroke="#000000"
+     stroke-width="2"
+     rx="3"
+     id="rect130" />
+  <line
+     x1="495"
+     y1="275"
+     x2="495"
+     y2="300"
+     stroke="#222222"
+     stroke-width="1"
+     id="line132" />
+  <line
+     x1="505"
+     y1="275"
+     x2="505"
+     y2="300"
+     stroke="#222222"
+     stroke-width="1"
+     id="line134" />
+  <line
+     x1="515"
+     y1="275"
+     x2="515"
+     y2="300"
+     stroke="#222222"
+     stroke-width="1"
+     id="line136" />
+  <line
+     x1="525"
+     y1="275"
+     x2="525"
+     y2="300"
+     stroke="#222222"
+     stroke-width="1"
+     id="line138" />
+  <line
+     x1="535"
+     y1="275"
+     x2="535"
+     y2="300"
+     stroke="#222222"
+     stroke-width="1"
+     id="line140" />
+  <line
+     x1="545"
+     y1="275"
+     x2="545"
+     y2="300"
+     stroke="#222222"
+     stroke-width="1"
+     id="line142" />
+  <!-- Connecting Cables from Resistors -->
+  <line
+     x1="280"
+     y1="300"
+     x2="280"
+     y2="310"
+     stroke="#000000"
+     stroke-width="2"
+     id="line144" />
+  <line
+     x1="400"
+     y1="300"
+     x2="400"
+     y2="310"
+     stroke="#000000"
+     stroke-width="2"
+     id="line146" />
+  <line
+     x1="520"
+     y1="300"
+     x2="520"
+     y2="310"
+     stroke="#000000"
+     stroke-width="2"
+     id="line148" />
+  <rect
+     x="400.56595"
+     y="133.98189"
+     width="48.868073"
+     height="125.45214"
+     fill="#8b4513"
+     stroke="#000000"
+     stroke-width="3.13193"
+     id="rect56" />
+  <rect
+     x="429.08929"
+     y="201.56335"
+     width="15.868902"
+     height="52.344524"
+     fill="#add8e6"
+     stroke="#000000"
+     stroke-width="1.01671"
+     id="rect34-3-5"
+     ry="6.4051514" />
+  <line
+     x1="425"
+     y1="135.0428"
+     x2="425"
+     y2="258.81165"
+     stroke="#000000"
+     stroke-width="1.57334"
+     id="line58" />
+  <rect
+     x="404.79721"
+     y="142.16673"
+     width="15.868902"
+     height="52.344524"
+     fill="#add8e6"
+     stroke="#000000"
+     stroke-width="1.01671"
+     id="rect34-3"
+     ry="6.4051514" />
+  <rect
+     x="429.61639"
+     y="143.0442"
+     width="15.868902"
+     height="52.344524"
+     fill="#add8e6"
+     stroke="#000000"
+     stroke-width="1.01671"
+     id="rect34-3-6"
+     ry="6.4051514" />
+  <rect
+     x="405.82709"
+     y="200.74062"
+     width="15.868902"
+     height="52.344524"
+     fill="#add8e6"
+     stroke="#000000"
+     stroke-width="1.01671"
+     id="rect34-3-7"
+     ry="6.4051514" />
+</svg>

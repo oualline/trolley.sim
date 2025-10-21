@@ -7,8 +7,8 @@ a = Analysis(
     binaries=[
 	('/usr/lib/x86_64-linux-gnu/vlc/plugins/', 'vlc/plugins'),
 	('/usr/lib/x86_64-linux-gnu/libvlc*', 'lib'),
-	('image/*.png', '.'),
-	('image/*.svg', '.')
+	('image/*.png', 'image'),
+	('image/*.svg', 'image')
     ],
     datas=[
 #	('splash.png', '.'),

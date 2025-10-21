@@ -1,0 +1,412 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   viewBox="0 0 800 400"
+   version="1.1"
+   id="svg150"
+   sodipodi:docname="trolley-wire-bg.svg"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs154" />
+  <sodipodi:namedview
+     id="namedview152"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="false"
+     inkscape:zoom="2.2766005"
+     inkscape:cx="385.88237"
+     inkscape:cy="164.28003"
+     inkscape:window-width="1920"
+     inkscape:window-height="1012"
+     inkscape:window-x="1920"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg150" />
+  <!-- Background -->
+  <!-- Track -->
+  <line
+     x1="50"
+     y1="320"
+     x2="750"
+     y2="320"
+     stroke="#666666"
+     stroke-width="8"
+     id="line4" />
+  <line
+     x1="50"
+     y1="323"
+     x2="750"
+     y2="323"
+     stroke="#333333"
+     stroke-width="2"
+     id="line6" />
+  <!-- Cross Ties -->
+  <g
+     fill="#8b4513"
+     stroke="#000000"
+     stroke-width="1"
+     id="g24">
+    <rect
+       x="100"
+       y="315"
+       width="40"
+       height="10"
+       id="rect8" />
+    <rect
+       x="180"
+       y="315"
+       width="40"
+       height="10"
+       id="rect10" />
+    <rect
+       x="260"
+       y="315"
+       width="40"
+       height="10"
+       id="rect12" />
+    <rect
+       x="340"
+       y="315"
+       width="40"
+       height="10"
+       id="rect14" />
+    <rect
+       x="420"
+       y="315"
+       width="40"
+       height="10"
+       id="rect16" />
+    <rect
+       x="500"
+       y="315"
+       width="40"
+       height="10"
+       id="rect18" />
+    <rect
+       x="580"
+       y="315"
+       width="40"
+       height="10"
+       id="rect20" />
+    <rect
+       x="660"
+       y="315"
+       width="40"
+       height="10"
+       id="rect22" />
+  </g>
+  <!-- Trolley Body (with open ends) -->
+  <!-- Windows -->
+  <!-- Open Front End -->
+  <!-- Open Back End -->
+  <!-- Door -->
+  <!-- Roof -->
+  <!-- Trolley Poles -->
+  <!-- Chassis/Undercarriage -->
+  <!-- Front Wheel Truck -->
+  <!-- Front Wheels -->
+  <g
+     id="g2560"
+     transform="translate(309.81456,0.21069805)">
+    <rect
+       x="120"
+       y="275"
+       width="120"
+       height="15"
+       fill="#333333"
+       stroke="#000000"
+       stroke-width="2"
+       id="rect74" />
+    <circle
+       cx="150"
+       cy="290"
+       r="25"
+       fill="#333333"
+       stroke="#000000"
+       stroke-width="3"
+       id="circle76" />
+  </g>
+  <g
+     id="g2556"
+     transform="translate(309.81456,0.21069805)">
+    <circle
+       cx="150"
+       cy="290"
+       r="12"
+       fill="#666666"
+       stroke="#000000"
+       stroke-width="2"
+       id="circle78" />
+    <circle
+       cx="210"
+       cy="290"
+       r="25"
+       fill="#333333"
+       stroke="#000000"
+       stroke-width="3"
+       id="circle80" />
+    <circle
+       cx="210"
+       cy="290"
+       r="12"
+       fill="#666666"
+       stroke="#000000"
+       stroke-width="2"
+       id="circle82" />
+  </g>
+  <!-- Rear Wheel Truck -->
+  <rect
+     x="560"
+     y="275"
+     width="120"
+     height="15"
+     fill="#333333"
+     stroke="#000000"
+     stroke-width="2"
+     id="rect84" />
+  <!-- Rear Wheels -->
+  <circle
+     cx="590"
+     cy="290"
+     r="25"
+     fill="#333333"
+     stroke="#000000"
+     stroke-width="3"
+     id="circle86" />
+  <circle
+     cx="590"
+     cy="290"
+     r="12"
+     fill="#666666"
+     stroke="#000000"
+     stroke-width="2"
+     id="circle88" />
+  <circle
+     cx="650"
+     cy="290"
+     r="25"
+     fill="#333333"
+     stroke="#000000"
+     stroke-width="3"
+     id="circle90" />
+  <circle
+     cx="650"
+     cy="290"
+     r="12"
+     fill="#666666"
+     stroke="#000000"
+     stroke-width="2"
+     id="circle92" />
+  <!-- Details -->
+  <!-- Steps -->
+  <!-- Resistor Pack 1 (Left) -->
+  <rect
+     x="293.2327"
+     y="275.80722"
+     width="60"
+     height="25"
+     fill="#444444"
+     stroke="#000000"
+     stroke-width="2"
+     rx="3"
+     id="rect102" />
+  <line
+     x1="298.67197"
+     y1="275.80722"
+     x2="298.67197"
+     y2="300.80722"
+     stroke="#222222"
+     stroke-width="1"
+     id="line104" />
+  <line
+     x1="308.2327"
+     y1="275.80722"
+     x2="308.2327"
+     y2="300.80722"
+     stroke="#222222"
+     stroke-width="1"
+     id="line106" />
+  <line
+     x1="318.2327"
+     y1="275.80722"
+     x2="318.2327"
+     y2="300.80722"
+     stroke="#222222"
+     stroke-width="1"
+     id="line108" />
+  <line
+     x1="328.2327"
+     y1="275.80722"
+     x2="328.2327"
+     y2="300.80722"
+     stroke="#222222"
+     stroke-width="1"
+     id="line110" />
+  <line
+     x1="338.2327"
+     y1="275.80722"
+     x2="338.2327"
+     y2="300.80722"
+     stroke="#222222"
+     stroke-width="1"
+     id="line112" />
+  <line
+     x1="348.2327"
+     y1="275.80722"
+     x2="348.2327"
+     y2="300.80722"
+     stroke="#222222"
+     stroke-width="1"
+     id="line114" />
+  <!-- Resistor Pack 2 (Middle) -->
+  <rect
+     x="361.6507"
+     y="275.14166"
+     width="60"
+     height="25"
+     fill="#444444"
+     stroke="#000000"
+     stroke-width="2"
+     rx="3"
+     id="rect116" />
+  <line
+     x1="366.6507"
+     y1="275.14166"
+     x2="366.6507"
+     y2="300.14166"
+     stroke="#222222"
+     stroke-width="1"
+     id="line118" />
+  <line
+     x1="376.6507"
+     y1="275.14166"
+     x2="376.6507"
+     y2="300.14166"
+     stroke="#222222"
+     stroke-width="1"
+     id="line120" />
+  <line
+     x1="386.6507"
+     y1="275.14166"
+     x2="386.6507"
+     y2="300.14166"
+     stroke="#222222"
+     stroke-width="1"
+     id="line122" />
+  <line
+     x1="396.6507"
+     y1="275.14166"
+     x2="396.6507"
+     y2="300.14166"
+     stroke="#222222"
+     stroke-width="1"
+     id="line124" />
+  <line
+     x1="406.6507"
+     y1="275.14166"
+     x2="406.6507"
+     y2="300.14166"
+     stroke="#222222"
+     stroke-width="1"
+     id="line126" />
+  <line
+     x1="416.6507"
+     y1="275.14166"
+     x2="416.6507"
+     y2="300.14166"
+     stroke="#222222"
+     stroke-width="1"
+     id="line128" />
+  <!-- Resistor Pack 3 (Right) -->
+  <rect
+     x="226.25075"
+     y="276.47433"
+     width="60"
+     height="25"
+     fill="#444444"
+     stroke="#000000"
+     stroke-width="2"
+     rx="3"
+     id="rect130" />
+  <line
+     x1="231.25075"
+     y1="276.47433"
+     x2="231.25075"
+     y2="301.47433"
+     stroke="#222222"
+     stroke-width="1"
+     id="line132" />
+  <line
+     x1="241.25075"
+     y1="276.47433"
+     x2="241.25075"
+     y2="301.47433"
+     stroke="#222222"
+     stroke-width="1"
+     id="line134" />
+  <line
+     x1="251.25075"
+     y1="276.47433"
+     x2="251.25075"
+     y2="301.47433"
+     stroke="#222222"
+     stroke-width="1"
+     id="line136" />
+  <line
+     x1="261.25076"
+     y1="276.47433"
+     x2="261.25076"
+     y2="301.47433"
+     stroke="#222222"
+     stroke-width="1"
+     id="line138" />
+  <line
+     x1="271.25076"
+     y1="276.47433"
+     x2="271.25076"
+     y2="301.47433"
+     stroke="#222222"
+     stroke-width="1"
+     id="line140" />
+  <line
+     x1="281.25076"
+     y1="276.47433"
+     x2="281.25076"
+     y2="301.47433"
+     stroke="#222222"
+     stroke-width="1"
+     id="line142" />
+  <!-- Connecting Cables from Resistors -->
+  <line
+     x1="323.2327"
+     y1="300.80722"
+     x2="323.2327"
+     y2="310.80722"
+     stroke="#000000"
+     stroke-width="2"
+     id="line144" />
+  <line
+     x1="391.6507"
+     y1="300.14166"
+     x2="391.6507"
+     y2="310.14166"
+     stroke="#000000"
+     stroke-width="2"
+     id="line146" />
+  <line
+     x1="256.25076"
+     y1="301.47433"
+     x2="256.25076"
+     y2="311.4743"
+     stroke="#000000"
+     stroke-width="2"
+     id="line148" />
+</svg>
