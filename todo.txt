@@ -1,18 +1,20 @@
-Attract mode.
-Then do you want video help
-Find out what ddls needed and remove all others
+Enhancements:
+1. Attract mode.
+2. Then do you want video help
+3. Find out what ddls needed and remove all others
+4. QT6
+5. use python video player
+6. New video
 
 Bugs
 
-1. No image when starting in easy mode
-2. Check all events are there for full mode
-3. Full mode, problem list
-4. Full mode, congradulations when complete
-5. Windows
-6. Help rework
-7. Easy mode video rework
-8. Start/stop mode video rework
-9. Full mode video rework
+1. Need to allow to stop at store
+2. Full mode, problem list
+3. Full mode, congradulations when complete
+4. Help rework
+5. Easy mode video rework
+6. Start/stop mode video rework
+7. Full mode video rework
 
 
 Notes:
@@ -28,5 +30,4 @@ Acceleration
 		1 = 3a  = a=1/3
 
 
-Click/clack	3 seconds / normal speed
-		3 / video speed -- time between clicks	
+Click/clack	every 3% of track distance

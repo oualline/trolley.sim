@@ -24,8 +24,6 @@ from PyQt5.QtGui import QBrush, QPen, QFont, QPixmap, QPainter
 
 import state
 
-CONTROLLER_CENTER_X = 350   # Location of the center of the controller
-CONTROLLER_CENTER_Y = 150   # Location of the center of the controller
 CONTROLLER_X_OFFSET = 80    # Move the controller over this amount
 
 # Try and adjust the center of the handle to the correct location
@@ -64,6 +62,9 @@ class ControllerGraphics():
 
         self.Height = MainWindow.ControllerGraphicsView.height()
         Width = MainWindow.ControllerGraphicsView.width()
+        # TODO: Figure out why the /4 here
+        self.ControllerCenterX = (Width/2) + CONTROLLER_X_OFFSET/4
+        self.ControllerCenterY = (self.Height/2)
 
         self.ControllerScene = QGraphicsScene(0, 0, Width-self.MARGIN, self.Height-self.MARGIN)
 
@@ -204,7 +205,7 @@ class ControllerGraphics():
                 self.MainWindow.SetDirection(state.DirectionEnum.NEUTRAL)
             return
 
-        Angle = math.degrees(math.atan2(y-CONTROLLER_CLICK_Y, x-CONTROLLER_CLICK_X))
+        Angle = math.degrees(math.atan2(y - self.ControllerCenterY, x - self.ControllerCenterX))
 
         ClosestDelta = 9999
         # Loop through each runlevel to find nearest angle

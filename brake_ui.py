@@ -373,7 +373,8 @@ class BrakeUi():
                 state.Log("Braking %f" % state.State.BrakeAcceleration)
 
         elif (state.State.BrakeValvePosition  == state.BrakeEnum.RELEASE):
-            sound.PlaySound.Play(sound.SoundEnum.RELEASE, True)
+            if (self.RedPressure > 0):
+                sound.PlaySound.Play(sound.SoundEnum.RELEASE, True)
             # We are releasing, so drop brake pressure
             self.RedPressure -= RELEASE_RATE
             self.PumpAllowed = True

@@ -252,10 +252,47 @@ STOP_SIGNAL_TIME=2      # Must have two seconds before stop to avoid confusion
 STORE_POSITION=0.95     # Beginning of the store
 END_OF_VIDEO=0.98       # After this there is no more video
 
-CLICK_CLACK_NORMAL_INTERVAL = 3.0       # Click/clack 3 seconds at normal speed
+CLICK_CLACK_DISTANCE = 0.03             # Distance between click/clack
 
 CENTRAL_BELL_START = 0.36       # Location to start sounding central bell
-CENTRAL_BELL_STOP = 0.45        # Location to stop sounding central bell
+CENTRAL_BELL_STOP = 0.41        # Location to stop sounding central bell
+
+class TrackEvent():
+    """
+    Holds information about an event that will occur on the track
+    """
+    def __init__(self, Where, Action):
+        """
+        When the car passes "Where" perform "Action"
+
+        Args:
+            Where -- Where the event occurs
+            Action -- What to do when it occurs
+        """
+        self.Where = Where
+        self.Action = Action
+        self.Done = False
+
+    def Check(self, Where):
+        """ 
+        Check to see if we need to perform an action
+
+        Args:
+            Where -- Where we are
+        """
+        if (self.Done):
+            return
+        if (Where >= self.Where):
+            if (self.Action == None):
+                print("Internal error -- Abort", Where)
+                sys.exit(8)
+            self.Action()
+            self.Done = True
+
+GLOBAL_EVENTS = [
+    TrackEvent(CENTRAL_BELL_START, lambda: sound.PlaySound.Play(sound.SoundEnum.CENTRAL_BELL, True)),
+    TrackEvent(CENTRAL_BELL_STOP,  lambda: sound.PlaySound.Stop(sound.SoundEnum.CENTRAL_BELL)),
+]
 
 def ComputeAcceleration(Level):
     """
@@ -298,10 +335,16 @@ class EasyMode:
     Run1 will accelerate to the Run1 speed.  If you are faster that that it brakes.
     Run2 will accelerate to the Run2 speed.  If you are faster that that we have an internal error
     """
-    def __init__(self):                 # EasyMode
+    def __init__(self, MainWindow):                 # EasyMode
+        """
+        Create the mode
+
+        Args:
+            MainWindow -- The top level window (not used)
+        """
         # The deacceleration speed
         self.SlowDownAcceleration = -0.5
-        self.CentralSounding = False
+        self.Events = GLOBAL_EVENTS
 
     """
     Mode where you move by setting Run-1 and Run-2.  
@@ -385,17 +428,6 @@ class EasyMode:
                 state.State.Acceleration = 0
         state.Log("(ModeUpdate) Speed %1.3f Acceleration %1.3f" % (state.State.Speed, state.State.Acceleration))
 
-        ##@@ Make common code
-        if ((MainWindow.Video.GetPosition() >= CENTRAL_BELL_START) and 
-            (not self.CentralSounding)):
-            self.CentralSounding = True
-            sound.PlaySound.Play(sound.SoundEnum.CENTRAL_BELL, True)
-
-        if ((MainWindow.Video.GetPosition() >= CENTRAL_BELL_STOP) and 
-            (self.CentralSounding)):
-            self.CentralSounding = False
-            sound.PlaySound.Stop(sound.SoundEnum.CENTRAL_BELL)
-
     def RulesCheck(self, MainWindow):   # EasyMode
         """
         Check to see if we violated any of the rules
@@ -421,8 +453,14 @@ class StartStopMode:
     """
     Name = "Start/Stop Mode"
 
-    def __init__(self):
-        self.CentralSounding = False
+    def __init__(self, MainWindow):
+        """
+        Create the mode
+
+        Args:
+            MainWindow -- The top level window (not used)
+        """
+        self.Events = GLOBAL_EVENTS
 
     def ModeSetRun(self, MainWindow, RunLevel):         # StartStopMode
         """
@@ -512,15 +550,6 @@ class StartStopMode:
                 state.State.Acceleration = 0
                 state.Log("Acceleration %f" % state.State.Acceleration)
 
-        if ((MainWindow.Video.GetPosition() >= CENTRAL_BELL_START) and (not self.CentralSounding)):
-            self.CentralSounding = True
-            sound.PlaySound.Play(sound.SoundEnum.CENTRAL_BELL, True)
-
-        if ((MainWindow.Video.GetPosition() >= CENTRAL_BELL_STOP) and (self.CentralSounding)):
-            self.CentralSounding = Flse
-            sound.PlaySound.Stop(sound.SoundEnum.CENTRAL_BELL)
-
-
     def RulesCheck(self, MainWindow):   # Start stop mode
         """
         Check to see if we violated any of the rules
@@ -581,7 +610,7 @@ class FullMode(StartStopMode):
         3. Stop at broadway
         4. Sound bell when crossing.
         5. Sound bell when crossing center.
-        6. Stop at CB4
+        6. Stop at CB2
         7. No power at Zorch point / broadway spur
         8. Bell crossing broadway
         9. No power at Zorch point / main spur
@@ -597,16 +626,11 @@ class FullMode(StartStopMode):
     BROADWAY_STOP_CHECK=0.15        # Position of where we check to see if Broadway stop done
     ##@@ REmove above
 
-    CB4_STOP_BEGIN=0.58             # Position of the start of where can do a CB4 stop
-    CB4_STOP_END=0.61               # Position of the end of where can do a CB4 stop
+    CB2_STOP_BEGIN=0.58             # Position of the start of where can do a CB2 stop
+    CB2_STOP_END=0.61               # Position of the end of where can do a CB2 stop
 
-    ##@@ Make real
     THOMAS_STOP_BEGIN=0.87           # Position of the start of the Thomas stop
     THOMAS_STOP_END=0.93             # Position of the end of the Thomas stop
-
-    STOP_CHECKS_START = (BROADWAY_STOP_BEGIN, CB4_STOP_BEGIN, THOMAS_STOP_BEGIN)
-    STOP_CHECKS_END =   (BROADWAY_STOP_END,   CB4_STOP_END,   THOMAS_STOP_BEGIN)
-    STOP_MESSAGE    =   ("Broadway",          "Carbarn 2",    "Thomas")
 
     ########
     ######## Crossing information
@@ -620,10 +644,6 @@ class FullMode(StartStopMode):
     BROADWAY_SOUTH_BEGIN=0.70       # Position where we start crossing Broadway (South)
     BROADWAY_SOUTH_END=0.75         # Position where we stop crossing Broadway (South)
 
-    CROSSING_START   = (BROADWAY_NORTH_BEGIN, CENTRAL_BEGIN, BROADWAY_SOUTH_END)
-    CROSSING_END     = (BROADWAY_NORTH_END,   CENTRAL_END,   BROADWAY_SOUTH_END)
-    CROSSING_MESSAGE = ("Broadway north",     "Central",     "Broadway South")
-
     CROSSING_DING_COUNT=3           # Number of dings needed at each crossing
 
     ########
@@ -634,14 +654,78 @@ class FullMode(StartStopMode):
     ZORCH1_POS_END=0.73                   # Zorch position 1 ending
     ZORCH2_POS_END=0.79                   # Zorch position 2 ending
 
-    ZORCH_START   = (ZORCH1_POS_START, ZORCH2_POS_START)
-    ZORCH_END     = (ZORCH1_POS_END,   ZORCH2_POS_END)
-    ZORCH_MESSAGE = ("Carbarn1 lead", "Main line spur")
-
     Name = "Full Mode"
 
-    def __init__(self):
-        self.CentralSounding = False
+    def __init__(self, MainWindow):
+        """
+        Args:
+            Main Window -- The main window
+        """
+        super().__init__(MainWindow)
+
+        self.LOCAL_EVENTS = [
+            TrackEvent(self.BROADWAY_NORTH_END, lambda: self.DingCheck(self.BROADWAY_NORTH_BEGIN, self.BROADWAY_NORTH_END, "Broadway North")),
+            TrackEvent(self.CENTRAL_END,        lambda: self.DingCheck(self.CENTRAL_BEGIN,        self.CENTRAL_END,        "Central")),
+            TrackEvent(self.BROADWAY_SOUTH_END, lambda: self.DingCheck(self.BROADWAY_SOUTH_BEGIN, self.BROADWAY_SOUTH_END, "Broadway South")),
+
+            TrackEvent(self.BROADWAY_STOP_END,  lambda: self.StopCheck(self.BROADWAY_STOP_BEGIN, self.BROADWAY_STOP_END, "Broadway")),
+            TrackEvent(self.CB2_STOP_END,       lambda: self.StopCheck(self.CB2_STOP_BEGIN,      self.CB2_STOP_END,      "Carbarn 2")),
+            TrackEvent(self.THOMAS_STOP_END,    lambda: self.StopCheck(self.THOMAS_STOP_BEGIN,   self.THOMAS_STOP_END,   "Thomas")),
+
+            TrackEvent(self.ZORCH1_POS_START, lambda: self.ZorchStart("Carbarn 1 Lead")),
+            TrackEvent(self.ZORCH1_POS_END,   lambda: self.ZorchStop()),
+
+            TrackEvent(self.ZORCH2_POS_START, lambda: self.ZorchStart("Main Line spur")),
+            TrackEvent(self.ZORCH2_POS_END,   lambda: self.ZorchStop())
+
+        ]
+        self.Events = GLOBAL_EVENTS + self.LOCAL_EVENTS
+        self.MainWindow = MainWindow
+        self.LastStop = -1
+        self.ZorchEnable = False
+
+    def ZorchStart(self, What):
+        """
+        Start zorch checking
+
+        Args:
+            What -- What we are looking for
+        """
+        self.ZorchEnable = True
+        self.ZorchMessage = What
+
+    def ZorchStop(self):
+        """
+        Stop zorch checking
+        """
+        self.ZorchEnable = True
+
+    def StopCheck(self, Start, Stop, What):
+        """
+        Check to see if we stopped at the right place
+
+        Args:
+           Start -- Earliest stopping location
+           Stop -- Latest stopping location
+           What -- Our name
+        """
+        if (self.LastStop >= Start) and (self.LastStop <= Stop):
+            return
+        self.MainWindow.AddWarning("Failed to stop at %s" % What)
+
+    def DingCheck(self, Start, Stop, What):
+        """
+        Check to see if enough dings occurred during an interval
+
+        Args:
+           Start -- Where the dings should start
+           Stop -- Where the dings should stop
+           What -- Our name
+        """
+        DingDingDing = self.DingCount(self.MainWindow.DingPosition, Start, Stop)
+
+        if (DingDingDing < self.CROSSING_DING_COUNT):
+            self.MainWindow.AddWarning("Failed to sound bell crossing %s" % What)
 
     def ModeSetRun(self, MainWindow, RunLevel):         # FullMode
         """
@@ -666,11 +750,7 @@ class FullMode(StartStopMode):
         self.LastSpeed = 0              # The speed before this one
         self.CurrentSpeed = 0           # The speed we have now
 
-        self.StopTime = 0               # Time of last stop is old
-
-        self.StopCheckDone = [False, False, False]      # Have we checked for a stop
-        self.CrossingCheckDone = [False, False, False]  # Did we ring at a crossing
-        self.ZorchDone = [False, False]                 # Did we do a zorch
+        self.StopTime = 0               # Time of last stop 
 
     def ModeUpdate(self, MainWindow):           # FullMode
         """
@@ -774,54 +854,15 @@ class FullMode(StartStopMode):
 
         self.CheckStartStopDing(MainWindow)
 
-        # Check bell at crossing
-        for Index in range(len(self.CROSSING_START)):
-            if (self.CrossingCheckDone[Index]):
-                continue
-
-            if (MainWindow.Video.GetPosition() >= self.CROSSING_END[Index]):
-               # Get the number of time we dinged here
-               DingDingDing = self.DingCount(MainWindow.DingPosition, 
-                   self.CROSSING_START[Index], self.CROSSING_END[Index])
-
-               if (DingDingDing < self.CROSSING_DING_COUNT):
-                   MainWindow.AddWarning("Failed to sound bell crossing %s" % self.CROSSING_MESSAGE[Index])
-
-               self.CrossingCheckDone[Index] = True
-
-        # Check stops
-        for Index in range(len(self.STOP_CHECKS_START)):
-            if (self.StopCheckDone[Index]):
-                continue
-            if ((self.CurrentSpeed == 0) and 
-                (MainWindow.Video.GetPosition() >= self.STOP_CHECKS_START[Index]) and 
-                (MainWindow.Video.GetPosition() <= self.STOP_CHECKS_END[Index])):
-                state.Log("Setting Stop for %s" % self.STOP_MESSAGE[Index])
-                self.StopCheckDone[Index] = True
-                continue
-
-            if (MainWindow.Video.GetPosition() > self.STOP_CHECKS_END[Index]):
-                self.StopCheckDone[Inde] = True
-                MainWindow.AddWarning("Failed stop at %s" % self.STOP_MESSAGE[Index])
+        if (self.CurrentSpeed == 0):
+            self.LastStop = MainWindow.Video.GetPosition()
 
         # Check Zorching
-        for Index in range(len(self.ZORCH_START)):
-            if ((MainWindow.Video.GetPosition() >= self.ZORCH_START[Index]) and
-                (MainWindow.Video.GetPosition() <= self.ZORCH_END[Index])):
-                if (state.State.RunLevel != 0):
-                    state.Log("Zorch at position %0.2f" % MainWindow.Video.GetPosition())
-                    sound.PlaySound.Play(sound.SoundEnum.ZORCH, False)
-                    if (not self.ZorchDone[Index]):
-                        MainWindow.AddWarning("Zorched %s" % self.ZORCH_MESSAGE[Index])
-                        self.ZorchDone[Index] = True
-
-        if (MainWindow.Video.GetPosition() > STORE_POSITION) and \
-            (state.State.Speed <= 00.):
-            state.Log("Stopped correctly at store")
-            MainWindow.MainReset()
-            MainWindow.DisplayWarnings()
-            MainWindow.GoodStop();
-            return (False)
+        if (self.ZorchEnable and state.State.RunLevel != 0):
+            state.Log("Zorch at position %0.2f" % MainWindow.Video.GetPosition())
+            sound.PlaySound.Play(sound.SoundEnum.ZORCH, False)
+            MainWindow.AddWarning("Zorched %s" % self.ZorchMessage)
+            self.ZorchEnable = False
 
         return True
 
@@ -1113,31 +1154,30 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         if (not Continue):
             return
 
+        Position = mainWindow.Video.GetPosition()
+        for Event in self.Mode.Events:
+            Event.Check(Position)
+
         self.Video.SetRate(state.State.Speed)
 
-        state.Log("ClickClackTime %f" % self.ClickClackTime)
-        if (self.ClickClackTime == 0):
-            if (state.State.Speed > 0.0):
-                state.Log("ClickClackPlay")
-                sound.PlaySound.Play(sound.SoundEnum.CLICK_CLACK, False)
-                self.ClickClackTime = time.monotonic() + CLICK_CLACK_NORMAL_INTERVAL / state.State.Speed
-                state.Log("ClickClackTime %f" % self.ClickClackTime)
-        else:
-            if (time.monotonic() > self.ClickClackTime):
-                if (state.State.Speed > 0):
-                    state.Log("ClickClackPlay")
-                    sound.PlaySound.Play(sound.SoundEnum.CLICK_CLACK, False)
-                    self.ClickClackTime = time.monotonic() + CLICK_CLACK_NORMAL_INTERVAL / state.State.Speed
-                else:   # Not moving, shutdown click/clack
-                    self.ClickClackTime = 0.0
-                state.Log("ClickClackTime %f" % self.ClickClackTime)
-
+        if (Position > self.ClickClackPos):
+            state.Log("ClickClackPlay Distance=%f" % self.ClickClackPos)
+            sound.PlaySound.Play(sound.SoundEnum.CLICK_CLACK, False)
+            self.ClickClackPos += CLICK_CLACK_DISTANCE
 
         StatusMsg = "Run %d Pos %.2f Speed %.2f Acc %.3f Brake Acc. %.3f Brake:%2.2f Res:%2.2f Extend: %.2f" % \
              (state.State.RunLevel, self.Video.GetPosition(), state.State.Speed, 
              state.State.Acceleration, state.State.BrakeAcceleration, self.BrakeUi.RedPressure, self.BrakeUi.BlackPressure, self.BrakeUi.Extend)
         state.Log(StatusMsg)
         self.StatusLabel.setText(StatusMsg)
+
+        if (self.Video.GetPosition() > STORE_POSITION) and \
+            (state.State.Speed <= 0.0):
+            state.Log("Stopped correctly at store")
+            self.MainReset()
+            self.DisplayWarnings()
+            self.GoodStop();
+            return (False)
 
         if (self.Video.GetPosition() > END_OF_VIDEO):
             self.AddWarning("Failed to stop at store")
@@ -1183,11 +1223,11 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         """
         ModeType = self.SelectWindow.GetMode()
         if (ModeType == ModeEnum.EASY):
-            self.Mode = EasyMode()
+            self.Mode = EasyMode(self)
         elif (ModeType == ModeEnum.START_STOP):
-            self.Mode = StartStopMode()
+            self.Mode = StartStopMode(self)
         elif (ModeType == ModeEnum.FULL):
-            self.Mode = FullMode()
+            self.Mode = FullMode(self)
 
         self.ModeLabel.setText(self.Mode.Name)
 
@@ -1203,6 +1243,8 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         self.Mode.ModeReset()
         self.WarningList = []
         self.WarningLabel.setText("")
+        for Event in self.Mode.Events:
+            Event.Done = False
 
         self.DeadmanButton.setChecked(False)
         self.DeadmanGraphic.setChecked(False)
@@ -1218,7 +1260,7 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
 
         self.DingTime = []
         self.DingPosition = []
-        self.ClickClackTime = 0.0
+        self.ClickClackPos = CLICK_CLACK_DISTANCE
 
     def BrakeApplyClicked(self): 
         """
@@ -1353,7 +1395,7 @@ Press "Restart" to start another run""")
         MessageBox.setWindowTitle("Finished")
         MessageBox.setInformativeText("""You've made it around the loop.
 
-And you stopped back at the store
+And you stopped back at the store.
 Press "Restart" to start another run""")
         MessageBox.setStandardButtons(QMessageBox.Ok)
         ButtonOk = MessageBox.button(QMessageBox.Ok)
