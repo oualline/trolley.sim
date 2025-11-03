@@ -1,5 +1,5 @@
 Enhancements:
-1. Attract mode.
+1. Attract mode. -- edit video to crop window
 2. Then do you want video help
 3. Find out what ddls needed and remove all others
 4. QT6

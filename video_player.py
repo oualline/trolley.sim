@@ -23,15 +23,23 @@ def play_video(video_path):
     
     try:
         if operating_system == "Windows":
-            # On Windows, use the default associated program
-            os.startfile(video_path)
+            # Windows: Use PowerShell's Start-Process to launch default video player
+            # Note: Not all Windows video players support loop flags
+            Process = subprocess.Popen(
+                ['powershell', '-command', f'Start-Process "{self.video_path}"'],
+                shell=True,
+                stdout=subprocess.DEVNULL,  # Suppress output
+                stderr=subprocess.DEVNULL
+            )
+            return (Process)
         
         elif operating_system == "Darwin":  # macOS
             # Try to use QuickTime Player first, fall back to 'open' command
             try:
-                subprocess.Popen(['open', '-a', 'QuickTime Player', video_path])
+                Process = subprocess.Popen(['open', '-a', 'QuickTime Player', video_path])
             except:
-                subprocess.Popen(['open', video_path])
+                Process = subprocess.Popen(['open', video_path])
+            return (Process)
         
         elif operating_system == "Linux":
             # Try common Linux video players in order of preference
@@ -44,26 +52,23 @@ def play_video(video_path):
             
             for player in linux_players:
                 try:
-                    subprocess.Popen(player)
-                    break  # Stop trying if a player was found
+                    Process = subprocess.Popen(player)
+                    return (Process)
                 except FileNotFoundError:
                     continue
             else:
                 # If no player was found
                 print("Error: No suitable video player found on this Linux system.")
                 print("Please install one of: vlc, mpv, mplayer, or set a default application with xdg-mime.")
-                return False
+                sys.exit(8)
         
         else:
             print(f"Error: Unsupported operating system: {operating_system}")
-            return False
+            sys.exit(8)
             
-        print(f"Playing video: {video_path}")
-        return True
-        
     except Exception as e:
         print(f"Error playing video: {e}")
-        return False
+        sys.exit(8)
 
 if __name__ == "__main__":
     # Check if a video file was provided as argument

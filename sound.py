@@ -7,6 +7,7 @@ import state
 import os
 import threading
 import time
+import main
 
 PlaySound = None        # The sound playing class (singleton)
 
@@ -61,7 +62,7 @@ class PlaySoundClass:
             Repeat -- Repeat the sound
         """
         while not self.StopFlag[Sound]:
-            playsound3.playsound(self.SoundFiles[Sound])
+            playsound3.playsound(os.path.join(main.DIR, 'mp3', self.SoundFiles[Sound]))
             if not Repeat:
                 break
         

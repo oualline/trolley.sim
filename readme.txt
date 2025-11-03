@@ -57,7 +57,7 @@ Command Line
 ============
 
 Usage:
-    python3 main.py [-b<bottom>] [-t<top>] [-l<left>] [-r<right>] [-d] [-v] [-f]
+    python3 main.py [-b<bottom>] [-t<top>] [-l<left>] [-r<right>] [-d] [-v] [-f] [-a]
 
     Where
 	    -b <bottom> -- Set bottom margin
@@ -67,6 +67,7 @@ Usage:
 	    -d -- Debug (show button bar)
 	    -v -- Verbose
 	    -f -- Start in full screen
+	    -a -- Enable attract mode
 
 License
 =======

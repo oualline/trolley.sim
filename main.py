@@ -20,6 +20,7 @@ import threading
 import time
 import webbrowser
 import vlc      ##@@
+import pynput
 
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import ( QApplication, QDialog, QMainWindow, QMessageBox )
@@ -44,6 +45,9 @@ TopMargin = None        # Margins
 BottomMargin = None
 LeftMargin = None
 RightMargin = None
+AttractEnable = False   # Enable attract mode
+
+ATTRACT_TIMEOUT = 300000 # 5 minutes = 300,000 milliseconds
 
 VideoFile = os.path.join("video", "trolley.m4v")
 
@@ -1095,6 +1099,169 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         self.ClickTargets.clicked.connect(self.ToggleTargets)
         self.Targets = True
 
+        ##@@self.mousePressEvent = self.OnMouseClick
+
+        if (AttractEnable):
+            # ============================================================
+            # Timer Setup (5 minutes = 300,000 milliseconds)
+            # ============================================================
+            # QTimer triggers an event after a specified interval
+            # Reference: https://doc.qt.io/qt-6/qtimer.html
+            self.AttractTimer = QtCore.QTimer()
+            self.AttractTimer.timeout.connect(self.OnTimeout)
+            self.AttractTimer.setSingleShot(True)  # Timer fires only once
+            self.AttractTimer.start(ATTRACT_TIMEOUT)  # 5 minutes in milliseconds
+            self.AttractMouseListener = None
+            self.AttractVideoProcess = None
+            self.AttrictVideoCheckTimer = QtCore.QTimer()
+            self.AttrictVideoCheckTimer.timeout.connect(self.AttractCheckVideoStatus)
+
+    def mousePressEvent(self, event):
+        """
+        Called when a mouse event occurs
+
+        Args:
+            event -- Mouse event
+        """
+        if (AttractEnable):
+            self.AttractTimer.stop()
+            self.AttractTimer.start(ATTRACT_TIMEOUT)  # Restart 5-minute timer
+
+    def AttractStartMouseListener(self):
+        """
+        Start global mouse listener using pynput library.
+        
+        The pynput mouse listener captures all mouse events system-wide,
+        even outside the Qt application window.
+        
+        Reference: https://pynput.readthedocs.io/en/latest/mouse.html
+        """
+        if self.AttractMouseListener is None:
+            # Create listener with callbacks for click and move events
+            self.AttractMouseListener = pynput.mouse.Listener(
+                on_click=self.OnMouseClick
+            )
+            self.AttractMouseListener.start()
+
+    def OnMouseClick(self, X, Y, Button, Pressed):
+        """
+        Handle global mouse click events from pynput.
+        
+        Args:
+            X (int): X coordinate of click
+            Y (int): Y coordinate of click
+            Button: Mouse button that was clicked
+            Pressed (bool): True if button was pressed, False if released
+            
+        Returns:
+            bool: False to stop listener, True to continue
+            
+        Reference: https://pynput.readthedocs.io/en/latest/mouse.html#monitoring-the-mouse
+        """
+        if self.AttractIsPlayingVideo and Pressed:
+            # Any mouse click stops the video
+            # Use QTimer.singleShot to ensure stop_video runs in Qt's main thread
+            # Reference: https://doc.qt.io/qt-6/qtimer.html#singleShot
+            QtCore.QTimer.singleShot(0, self.StopAttractVideo)
+            return False  # Stop the listener
+        return True
+
+    def StopAttractVideo(self):
+        """
+        Stop video playback and restore normal state.
+        
+        This method:
+        1. Releases the mouse grab
+        2. Stops the global mouse listener
+        3. Terminates the video player process
+        4. Restores the cursor position
+        5. Restarts the 5-minute timer
+        
+        Uses graceful termination (SIGTERM) followed by forceful kill (SIGKILL)
+        if the process doesn't respond within 2 seconds.
+        
+        Reference: https://docs.python.org/3/library/subprocess.html#subprocess.Popen.terminate
+        """
+        if not self.AttractIsPlayingVideo:
+            return
+            
+        self.AttractIsPlayingVideo = False
+        self.AttrictVideoCheckTimer.stop()
+
+        # Release exclusive mouse grab
+        # Reference: https://doc.qt.io/qt-6/qwidget.html#releaseMouse
+        self.releaseMouse()
+        
+        # Stop global mouse listener
+        if self.AttractMouseListener:
+            self.AttractMouseListener.stop()
+            self.AttractMouseListener = None
+        
+        # Terminate video player process
+        # Works consistently across Linux, Windows, and macOS
+        if self.AttractVideoProcess:
+            try:
+                # Step 1: Try graceful termination
+                # Sends SIGTERM on Unix/Linux/macOS, close request on Windows
+                # Reference: https://docs.python.org/3/library/subprocess.html#subprocess.Popen.terminate
+                self.AttractVideoProcess.terminate()
+                
+                try:
+                    # Wait up to 2 seconds for process to terminate gracefully
+                    # Reference: https://docs.python.org/3/library/subprocess.html#subprocess.Popen.wait
+                    self.AttractVideoProcess.wait(timeout=2)
+                except subprocess.TimeoutExpired:
+                    # Step 2: Force kill if still running after timeout
+                    # Sends SIGKILL on Unix/Linux/macOS, TerminateProcess on Windows
+                    # Reference: https://docs.python.org/3/library/subprocess.html#subprocess.Popen.kill
+                    self.AttractVideoProcess.kill()
+                    self.AttractVideoProcess.wait()  # Wait indefinitely for kill to complete
+            except Exception as e:
+                print(f"Error stopping video: {e}")
+            self.AttractVideoProcess = None
+            
+        # Restart the 5-minute countdown timer
+        self.AttractTimer.start(ATTRACT_TIMEOUT)
+
+    def OnTimeout(self):
+        """
+        Handle timer timeout event.
+        
+        Called when 5 minutes elapse without button press. Initiates mouse
+        grab and video playback sequence.
+        """
+        self.AttractIsPlayingVideo = True
+        
+        # Start global mouse event listener using pynput
+        self.AttractStartMouseListener()
+        
+        # Launch external video player
+        self.AttractVideoProcess = video_player.play_video(os.path.join("video", "attract.mp4"))
+        
+        # Start checking video status every 500ms to enable looping
+        self.AttrictVideoCheckTimer.start(500)
+        
+        # Grab mouse exclusively - prevents other apps from receiving mouse input
+        # Reference: https://doc.qt.io/qt-6/qwidget.html#grabMouse
+        self.grabMouse()
+
+    def AttractCheckVideoStatus(self):
+        """
+        Periodically check if video process has ended and restart for looping.
+        
+        This method is called by AttrictVideoCheckTimer every 500ms. If the video
+        player process has terminated, it restarts the video to create a loop.
+        
+        Reference: https://docs.python.org/3/library/subprocess.html#subprocess.Popen.poll
+        """
+        if not self.AttractIsPlayingVideo:
+            return
+            
+        # poll() returns None if process is still running, otherwise returns exit code
+        if self.AttractVideoProcess and self.AttractVideoProcess.poll() is not None:
+            # Video process ended, restart it (loop)
+            selv.AttractVideoProcess = video_player.play_video(os.path.join("video", "attract.mp4"))
+
     def ToggleTargets(self, Checked):
         """
         Toggle the click targets
@@ -1624,7 +1791,7 @@ Where
 
 if __name__ == "__main__":
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "b:t:l:r:dvf")
+        opts, args = getopt.getopt(sys.argv[1:], "b:t:l:r:dvfa")
     except getopt.GetoptError as err:
         # print help information and exit:
         print(err)  # will print something like "option -a not recognized"
@@ -1646,6 +1813,8 @@ if __name__ == "__main__":
             Verbose = True
         elif Option == "-f":
             FullScreen = True
+        elif Option == '-a':
+            AttractEnable = True
         else:
             print("unhandled option:", Option)
             Usage()
