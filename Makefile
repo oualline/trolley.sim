@@ -45,7 +45,7 @@ FILES= bugs.txt developers.txt help.pdf readme.txt LICENSE.txt
 DIR=/tmp/trolley.sim
 OLD_DIR := $(shell pwd)
 
-output: $(FILES) dist/trolley-linux dist/trolley-windows.exe
+output: $(FILES) dist/trolley-linux dist/trolley-windows
 	rm -rf $(DIR)
 	mkdir $(DIR)
 	cp $(FILES) $(DIR)
