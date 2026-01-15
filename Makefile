@@ -24,13 +24,10 @@ mode_window.py: mode_window.ui
 clean: 
 	rm -f sim_ui4.py mode_window.py
 	rm -rf __pycache__ build dist
-	rm -f quick.pdf help.pdf
+	rm -f quick.pdf help.pdf trolley.zip
 
 linux: mode_window.py sim_ui4.py
 	pyinstaller trolley-linux.spec
-	# This is because we develop from a FAT32 usb stick and permissions don't work on it
-	cp dist/trolley-linux /tmp
-	chmod a+x /tmp/trolley-linux
 
 windows: mode_window.py sim_ui4.py
 	pyinstaller -y trolley-windows.spec

@@ -19,7 +19,6 @@ import sys
 import threading
 import time
 import webbrowser
-import vlc      ##@@
 import pynput
 
 from PyQt5 import QtWidgets, QtCore

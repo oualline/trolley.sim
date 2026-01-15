@@ -1,0 +1,1 @@
+export PYQTDESIGNERPATH=$PWD/plugins

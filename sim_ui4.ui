@@ -32,7 +32,7 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
-         <widget class="QFrame" name="VideoFrame">
+         <widget class="QVideoWidget" name="VideoFrame">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
             <horstretch>0</horstretch>
@@ -44,9 +44,6 @@
             <width>200</width>
             <height>200</height>
            </size>
-          </property>
-          <property name="frameShape">
-           <enum>QFrame::NoFrame</enum>
           </property>
          </widget>
         </item>
@@ -730,6 +727,13 @@
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QVideoWidget</class>
+   <extends></extends>
+   <header>PyQt5/QtMultimediaWidgets</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections>
   <connection>

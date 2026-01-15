@@ -9,7 +9,6 @@ import sys
 import pprint   #pylint: disable=W0611
 import platform
 import time
-import vlc
 import enum
 import subprocess
 import math
