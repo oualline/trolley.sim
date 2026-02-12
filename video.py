@@ -7,19 +7,18 @@ The QMediaPlayer is created in the main thread but its playback control
 operations are delegated to a worker thread to prevent blocking the GUI.
 
 API Documentation References:
-- QMediaPlayer: https://doc.qt.io/qt-5/qmediaplayer.html
-- QMediaContent: https://doc.qt.io/qt-5/qmediacontent.html
-- QVideoWidget: https://doc.qt.io/qt-5/qvideowidget.html
-- QUrl: https://doc.qt.io/qt-5/qurl.html
-- QThread: https://doc.qt.io/qt-5/qthread.html
-- QObject: https://doc.qt.io/qt-5/qobject.html
-- QMetaObject: https://doc.qt.io/qt-5/qmetaobject.html
+- QMediaPlayer: https://doc.qt.io/qt-6/qmediaplayer.html
+- QVideoWidget: https://doc.qt.io/qt-6/qvideowidget.html
+- QUrl: https://doc.qt.io/qt-6/qurl.html
+- QThread: https://doc.qt.io/qt-6/qthread.html
+- QObject: https://doc.qt.io/qt-6/qobject.html
+- QMetaObject: https://doc.qt.io/qt-6/qmetaobject.html
 """
 import time
 
-from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
-from PyQt5.QtMultimediaWidgets import QVideoWidget
-from PyQt5.QtCore import QUrl, QThread, QObject, pyqtSignal, pyqtSlot, QMetaObject, Qt, Q_ARG
+from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
+from PyQt6.QtMultimediaWidgets import QVideoWidget
+from PyQt6.QtCore import QUrl, QThread, QObject, pyqtSignal, pyqtSlot
 
 import state
 
@@ -58,10 +57,11 @@ class VideoPlayerWorker(QObject):
         self.MediaPlayer = player
         
         # Connect internal signals for monitoring state changes
-        # https://doc.qt.io/qt-5/qmediaplayer.html#positionChanged
+        # https://doc.qt.io/qt-6/qmediaplayer.html#positionChanged
         self.MediaPlayer.positionChanged.connect(self._onPositionChanged)
-        # https://doc.qt.io/qt-5/qmediaplayer.html#stateChanged
-        self.MediaPlayer.stateChanged.connect(self._onStateChanged)
+        # In Qt6, stateChanged is replaced with playbackStateChanged
+        # https://doc.qt.io/qt-6/qmediaplayer.html#playbackStateChanged
+        self.MediaPlayer.playbackStateChanged.connect(self._onStateChanged)
 
     @pyqtSlot(str)
     def reset(self, VideoFile):
@@ -72,8 +72,8 @@ class VideoPlayerWorker(QObject):
         rate to normal speed, and positions the video at the first frame
         in a paused state.
         
-        QMediaContent API: https://doc.qt.io/qt-5/qmediacontent.html
-        QUrl API: https://doc.qt.io/qt-5/qurl.html
+        QUrl API: https://doc.qt.io/qt-6/qurl.html
+        QMediaPlayer API: https://doc.qt.io/qt-6/qmediaplayer.html
         
         Args:
             VideoFile -- Path to the video file to play
@@ -81,23 +81,21 @@ class VideoPlayerWorker(QObject):
         if self.MediaPlayer is None:
             return
             
-        # Create a QMediaContent object from the video file path
+        # Set the media source directly from the video file path
         # QUrl.fromLocalFile() converts a local file path to a proper URL
-        # https://doc.qt.io/qt-5/qurl.html#fromLocalFile
-        media_content = QMediaContent(QUrl.fromLocalFile(VideoFile))
-        
-        # Load the media content into the player
-        # https://doc.qt.io/qt-5/qmediaplayer.html#setMedia
-        self.MediaPlayer.setMedia(media_content)
+        # https://doc.qt.io/qt-6/qurl.html#fromLocalFile
+        # In Qt6, setMedia() is replaced with setSource()
+        # https://doc.qt.io/qt-6/qmediaplayer.html#source-prop
+        self.MediaPlayer.setSource(QUrl.fromLocalFile(VideoFile))
         
         # Set playback rate to 1.0 (normal speed)
         # Rate values: 0.0 = paused, 1.0 = normal, 2.0 = double speed, etc.
-        # https://doc.qt.io/qt-5/qmediaplayer.html#playbackRate-prop
+        # https://doc.qt.io/qt-6/qmediaplayer.html#playbackRate-prop
         self.MediaPlayer.setPlaybackRate(1.0)
         
         # Play briefly to load the first frame, then pause
         # This ensures the video is ready and the first frame is displayed
-        # https://doc.qt.io/qt-5/qmediaplayer.html#play
+        # https://doc.qt.io/qt-6/qmediaplayer.html#play
         state.Log("Reset: Play")
         self.MediaPlayer.play()
         
@@ -105,7 +103,7 @@ class VideoPlayerWorker(QObject):
         time.sleep(0.01)
         
         # Pause the video at the first frame
-        # https://doc.qt.io/qt-5/qmediaplayer.html#pause
+        # https://doc.qt.io/qt-6/qmediaplayer.html#pause
         state.Log("Reset: Pause")
         self.MediaPlayer.pause()
         
@@ -118,7 +116,7 @@ class VideoPlayerWorker(QObject):
         is in the correct state (playing or paused) based on the rate
         and the current speed from the state module.
         
-        QMediaPlayer States: https://doc.qt.io/qt-5/qmediaplayer.html#State-enum
+        QMediaPlayer States: https://doc.qt.io/qt-6/qmediaplayer.html#PlaybackState-enum
         - StoppedState: The media player is not playing content
         - PlayingState: The media player is currently playing content
         - PausedState: The media player has paused playback
@@ -139,8 +137,8 @@ class VideoPlayerWorker(QObject):
         should_play = Rate > 0.0
         
         # Check current state
-        # https://doc.qt.io/qt-5/qmediaplayer.html#state-prop
-        is_playing = self.MediaPlayer.state() == QMediaPlayer.PlayingState
+        # https://doc.qt.io/qt-6/qmediaplayer.html#playbackState-prop
+        is_playing = self.MediaPlayer.playbackState() == QMediaPlayer.PlaybackState.PlayingState
         
         # Update play/pause state before setting rate
         # This ensures smooth transitions when changing speed
@@ -224,9 +222,9 @@ class VideoPlayerWorker(QObject):
     
     def isPlaying(self):
         """
-        Check if the video is currently playing
+        Check if the media player is currently playing
         
-        State API: https://doc.qt.io/qt-5/qmediaplayer.html#State-enum
+        State API: https://doc.qt.io/qt-6/qmediaplayer.html#PlaybackState-enum
         
         Returns:
             True if media player is in PlayingState, False otherwise
@@ -235,8 +233,8 @@ class VideoPlayerWorker(QObject):
             return False
             
         # Compare current state to PlayingState enum value
-        # https://doc.qt.io/qt-5/qmediaplayer.html#state-prop
-        return self.MediaPlayer.state() == QMediaPlayer.PlayingState
+        # https://doc.qt.io/qt-6/qmediaplayer.html#playbackState-prop
+        return self.MediaPlayer.playbackState() == QMediaPlayer.PlaybackState.PlayingState
     
     def _onPositionChanged(self, position):
         """
@@ -259,13 +257,13 @@ class VideoPlayerWorker(QObject):
         Emits playing state to main thread
         
         Args:
-            state -- QMediaPlayer.State enum value
+            state -- QMediaPlayer.PlaybackState enum value
         """
-        is_playing = (state == QMediaPlayer.PlayingState)
+        is_playing = (state == QMediaPlayer.PlaybackState.PlayingState)
         self.playingStateChanged.emit(is_playing)
 
 
-class Video:
+class Video(QObject):
     """
     Main Video class that manages the video player with worker thread
     
@@ -277,6 +275,11 @@ class Video:
     Thread Basics: https://doc.qt.io/qt-5/thread-basics.html
     """
     
+    # Signals for communication with worker thread
+    resetSignal = pyqtSignal(str)
+    setRateSignal = pyqtSignal(float)
+    setPositionSignal = pyqtSignal(float)
+    
     def __init__(self, MainWindow, VideoFile):
         """
         Create video player with worker thread
@@ -284,13 +287,15 @@ class Video:
         The QMediaPlayer is created in the main thread where the VideoWidget
         lives, but operations are controlled through a worker in a separate thread.
         
-        QThread API: https://doc.qt.io/qt-5/qthread.html
+        QThread API: https://doc.qt.io/qt-6/qthread.html
 
         Args:
             MainWindow -- Window in which we display the video
                          MainWindow.VideoFrame must be a QVideoWidget
             VideoFile -- Path to the video file to play
         """
+        super().__init__()
+        
         #-----------------------------------------------------------
         # Setup video player in main thread
         #-----------------------------------------------------------
@@ -298,22 +303,23 @@ class Video:
         
         # Create QMediaPlayer instance in the MAIN thread
         # This avoids cross-thread parenting issues with QVideoWidget
-        # https://doc.qt.io/qt-5/qmediaplayer.html#QMediaPlayer
-        self.MediaPlayer = QMediaPlayer(None, QMediaPlayer.VideoSurface)
+        # In Qt6, the constructor no longer takes flags parameter
+        # https://doc.qt.io/qt-6/qmediaplayer.html#QMediaPlayer
+        self.MediaPlayer = QMediaPlayer()
+        
+        # Create QAudioOutput for audio control (Qt6 requirement)
+        # https://doc.qt.io/qt-6/qaudiooutput.html
+        self.AudioOutput = QAudioOutput()
+        self.MediaPlayer.setAudioOutput(self.AudioOutput)
         
         # Set the video output widget where frames will be rendered
         # Both QMediaPlayer and QVideoWidget live in the main thread
-        # https://doc.qt.io/qt-5/qmediaplayer.html#setVideoOutput
+        # https://doc.qt.io/qt-6/qmediaplayer.html#setVideoOutput
         self.MediaPlayer.setVideoOutput(MainWindow.VideoFrame)
         
-        # Mute the audio output
-        # https://doc.qt.io/qt-5/qmediaplayer.html#muted-prop
-        self.MediaPlayer.setMuted(True)
-        
-        # Set volume to 0 as an additional safeguard
-        # Volume range is 0-100
-        # https://doc.qt.io/qt-5/qmediaplayer.html#volume-prop
-        self.MediaPlayer.setVolume(0)
+        # Mute the audio output by setting volume to 0
+        # https://doc.qt.io/qt-6/qaudiooutput.html#setVolume
+        self.AudioOutput.setVolume(0.0)
         
         #-----------------------------------------------------------
         # Setup worker thread for playback control
@@ -339,6 +345,11 @@ class Video:
         # The media player stays in the main thread, but the worker
         # will control it through queued connections
         self.worker.setMediaPlayer(self.MediaPlayer)
+        
+        # Connect signals to worker slots for thread-safe communication
+        self.resetSignal.connect(self.worker.reset)
+        self.setRateSignal.connect(self.worker.setRate)
+        self.setPositionSignal.connect(self.worker.setPosition)
 
     def Reset(self):
         """
@@ -346,12 +357,8 @@ class Video:
         
         This call is thread-safe - it uses Qt's signal/slot mechanism
         to invoke the reset method in the worker thread.
-        
-        QMetaObject.invokeMethod: https://doc.qt.io/qt-5/qmetaobject.html#invokeMethod
         """
-        # Invoke the reset slot in the worker thread
-        # Using Qt.QueuedConnection ensures thread safety
-        QMetaObject.invokeMethod(self.worker, "reset", Qt.QueuedConnection, Q_ARG(str, self.VideoFile))
+        self.resetSignal.emit(self.VideoFile)
         
     def SetRate(self, Rate):
         """
@@ -363,8 +370,7 @@ class Video:
         Args:
             Rate -- Rate to play the video at
         """
-        # Invoke the setRate slot in the worker thread
-        QMetaObject.invokeMethod(self.worker, "setRate", Qt.QueuedConnection, Q_ARG(float, Rate))
+        self.setRateSignal.emit(Rate)
 
     def GetPosition(self):
         """
@@ -388,8 +394,7 @@ class Video:
         Args:
             Position -- Position from 0.0 to 1.0
         """
-        # Invoke the setPosition slot in the worker thread
-        QMetaObject.invokeMethod(self.worker, "setPosition", Qt.QueuedConnection, Q_ARG(float, Position))
+        self.setPositionSignal.emit(Position)
 
     def IsPlaying(self):
         """

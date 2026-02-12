@@ -21,12 +21,12 @@ import time
 import webbrowser
 import pynput
 
-from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtWidgets import ( QApplication, QDialog, QMainWindow, QMessageBox )
-from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsEllipseItem, QGraphicsRectItem, QGraphicsLineItem, QGraphicsTextItem
-from PyQt5.QtCore import Qt, pyqtSignal, QThread, QPointF, QEvent, QUrl, QRect
-from PyQt5.QtGui import QMouseEvent
-from PyQt5.QtGui import QBrush, QPen, QFont, QPixmap, QPainter
+from PyQt6 import QtWidgets, QtCore
+from PyQt6.QtWidgets import ( QApplication, QDialog, QMainWindow, QMessageBox )
+from PyQt6.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsEllipseItem, QGraphicsRectItem, QGraphicsLineItem, QGraphicsTextItem
+from PyQt6.QtCore import Qt, pyqtSignal, QThread, QPointF, QEvent, QUrl, QRect
+from PyQt6.QtGui import QMouseEvent
+from PyQt6.QtGui import QBrush, QPen, QFont, QPixmap, QPainter
 
 import mode_window
 import sim_ui4
@@ -1007,8 +1007,8 @@ class BrakeGraphics():
         """
         CENTER_X = 129  # Center of the image
         CENTER_Y = 53   # Center of the Y image
-        x = Event.x()
-        y = Event.y()
+        x = Event.position().x()
+        y = Event.position().y()
         ClosestDelta = 9999
 
         for Index in range(len(self.BRAKE_STATE)):
@@ -1480,7 +1480,7 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         if (len(self.WarningList) == 0):
             return
         MessageBox = QMessageBox()
-        MessageBox.setIcon(QMessageBox.Critical)
+        MessageBox.setIcon(QMessageBox.Icon.Critical)
         MessageBox.setText("<H1 ALIGN=\"CENTER\"><B>You made some mistakes</B></H1>")
         MessageBox.setWindowTitle("Warnings")
         Message = "Warning:\n"
@@ -1498,7 +1498,7 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         """
         state.Log("ErrorDeadman")
         MessageBox = QMessageBox()
-        MessageBox.setIcon(QMessageBox.Critical)
+        MessageBox.setIcon(QMessageBox.Icon.Critical)
         MessageBox.setText("<H1 ALIGN=\"CENTER\"><B>Deadman not engaged</B></H1>")
         MessageBox.setWindowTitle("Deadman not engaged")
         MessageBox.setInformativeText("""<HTML>
@@ -1516,9 +1516,9 @@ The deadman is located in the lower left corner.
 <TR><TD>Wrong</TD><TD>Right</TD></TR>
 </TABLE>
 """)
-        MessageBox.setTextFormat(Qt.RichText)
-        MessageBox.setStandardButtons(QMessageBox.Ok)
-        ButtonOk = MessageBox.button(QMessageBox.Ok)
+        MessageBox.setTextFormat(Qt.TextFormat.RichText)
+        MessageBox.setStandardButtons(QMessageBox.StandardButton.Ok)
+        ButtonOk = MessageBox.button(QMessageBox.StandardButton.Ok)
         ButtonOk.setText("Restart")
         ReturnValue = MessageBox.exec()
 
@@ -1540,7 +1540,7 @@ The deadman is located in the lower left corner.
         Display the information message that you completed the course
         """
         MessageBox = QMessageBox()
-        MessageBox.setIcon(QMessageBox.Information)
+        MessageBox.setIcon(QMessageBox.Icon.Information)
         MessageBox.setText("<H1 ALIGN=\"CENTER\"><B>Congratulations: The run is complete</B></H1>")
         MessageBox.setWindowTitle("Finished")
         MessageBox.setInformativeText("""You've made it around the loop.
@@ -1556,7 +1556,7 @@ Press "Restart" to start another run""")
         The player stopped at the correct position at the store
         """
         MessageBox = QMessageBox()
-        MessageBox.setIcon(QMessageBox.Information)
+        MessageBox.setIcon(QMessageBox.Icon.Information)
         MessageBox.setText("<H1 ALIGN=\"CENTER\"><B>Congratulations: The run is complete</B></H1>")
         MessageBox.setWindowTitle("Finished")
         MessageBox.setInformativeText("""You've made it around the loop.
@@ -1583,7 +1583,7 @@ Press "Restart" to start another run""")
         """
         self.ErrorStart()
         MessageBox = QMessageBox()
-        MessageBox.setIcon(QMessageBox.Critical)
+        MessageBox.setIcon(QMessageBox.Icon.Critical)
         MessageBox.setText("<H1 ALIGN=\"CENTER\"><B>Speed limit exceeded</B></H1>")
         MessageBox.setWindowTitle("Speed Limit Exceeded")
         MessageBox.setInformativeText("""This is not a high speed trolley.
@@ -1602,7 +1602,7 @@ Please try again, only slower""")
         """
         self.ErrorStart()
         MessageBox = QMessageBox()
-        MessageBox.setIcon(QMessageBox.Critical)
+        MessageBox.setIcon(QMessageBox.Icon.Critical)
         MessageBox.setText("<H1 ALIGN=\"CENTER\"><B>Overheated Resisters</B></H1>")
         MessageBox.setWindowTitle("Overheated Resisters")
         MessageBox.setInformativeText("""You stayed in Run-%d too long.
@@ -1622,7 +1622,7 @@ You can only stay in Run-%d for %d seconds.
         """
         self.ErrorStart()
         MessageBox = QMessageBox()
-        MessageBox.setIcon(QMessageBox.Critical)
+        MessageBox.setIcon(QMessageBox.Icon.Critical)
         MessageBox.setText("<H1 ALIGN=\"CENTER\"><B>Electrical Overload</B></H1>")
         MessageBox.setWindowTitle("Electrical Overload")
         MessageBox.setInformativeText("""Going from Run-x to idle should be done
@@ -1642,7 +1642,7 @@ So slam that controller back to idle and avoid this problem.
         """
         self.ErrorStart()
         MessageBox = QMessageBox()
-        MessageBox.setIcon(QMessageBox.Critical)
+        MessageBox.setIcon(QMessageBox.Icon.Critical)
         MessageBox.setText("<H1 ALIGN=\"CENTER\"><B>Reverser not set</B></H1>")
         MessageBox.setWindowTitle("Reverser not set")
         MessageBox.setInformativeText("""You must select "Forward" on the reverser
@@ -1663,7 +1663,7 @@ Please set direction and try again.""")
         self.ErrorStart()
 
         MessageBox = QMessageBox()
-        MessageBox.setIcon(QMessageBox.Critical)
+        MessageBox.setIcon(QMessageBox.Icon.Critical)
         MessageBox.setText("<H1 ALIGN=\"CENTER\"><B>Attempt to move with brakes set</B></H1>")
         MessageBox.setWindowTitle("Move with brakes on")
         MessageBox.setInformativeText("""The brakes and the motor should never be on at the same time.
@@ -1685,7 +1685,7 @@ Simulation will now reset.
         self.ErrorStart()
 
         MessageBox = QMessageBox()
-        MessageBox.setIcon(QMessageBox.Critical)
+        MessageBox.setIcon(QMessageBox.Icon.Critical)
         MessageBox.setText("<H1 ALIGN=\"CENTER\"><B>Reverser moved while car in motion</B></H1>")
         MessageBox.setWindowTitle("Reverser move while car in motion")
         MessageBox.setInformativeText("""You cannot change the reverser while the trolley is in motion.
@@ -1840,7 +1840,7 @@ if __name__ == "__main__":
 
     # this will remove minimized status
     # and restore window with keeping maximized/normal state
-    mainWindow.setWindowState(mainWindow.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
+    mainWindow.setWindowState(mainWindow.windowState() & ~QtCore.Qt.WindowState.WindowMinimized | QtCore.Qt.WindowState.WindowActive)
 
     # this will activate the window
     mainWindow.activateWindow()

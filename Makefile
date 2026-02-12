@@ -16,10 +16,10 @@ help.pdf: help.odt
 	libreoffice --headless --convert-to pdf  help.odt
 
 sim_ui4.py: sim_ui4.ui
-	pyuic5 -o sim_ui4.py sim_ui4.ui
+	pyuic6 -o sim_ui4.py sim_ui4.ui
 
 mode_window.py: mode_window.ui
-	pyuic5 -o mode_window.py mode_window.ui
+	pyuic6 -o mode_window.py mode_window.ui
 
 clean: 
 	rm -f sim_ui4.py mode_window.py

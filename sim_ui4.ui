@@ -185,7 +185,6 @@
            <widget class="QLabel" name="DeadmanLabel">
             <property name="font">
              <font>
-              <weight>75</weight>
               <bold>true</bold>
              </font>
             </property>
@@ -233,7 +232,6 @@
               <property name="font">
                <font>
                 <pointsize>32</pointsize>
-                <weight>75</weight>
                 <bold>true</bold>
                </font>
               </property>
@@ -272,7 +270,6 @@
               <property name="font">
                <font>
                 <pointsize>32</pointsize>
-                <weight>75</weight>
                 <bold>true</bold>
                </font>
               </property>
@@ -290,7 +287,6 @@
            <widget class="QLabel" name="ControllerLabel">
             <property name="font">
              <font>
-              <weight>75</weight>
               <bold>true</bold>
              </font>
             </property>
@@ -329,7 +325,6 @@
            <widget class="QLabel" name="BrakeLabel">
             <property name="font">
              <font>
-              <weight>75</weight>
               <bold>true</bold>
              </font>
             </property>
@@ -731,7 +726,7 @@
   <customwidget>
    <class>QVideoWidget</class>
    <extends></extends>
-   <header>PyQt5/QtMultimediaWidgets</header>
+   <header>PyQt6/QtMultimediaWidgets</header>
   </customwidget>
  </customwidgets>
  <resources/>

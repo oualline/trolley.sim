@@ -8,11 +8,11 @@ import subprocess
 import os
 import signal
 
-from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtWidgets import ( QApplication, QDialog, QMainWindow, QMessageBox )
-from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsEllipseItem, QGraphicsRectItem, QGraphicsLineItem, QGraphicsTextItem
-from PyQt5.QtCore import Qt, QUrl, QRect
-from PyQt5.QtGui import QBrush, QPen, QFont, QPixmap, QPainter
+from PyQt6 import QtWidgets, QtCore
+from PyQt6.QtWidgets import ( QApplication, QDialog, QMainWindow, QMessageBox )
+from PyQt6.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsEllipseItem, QGraphicsRectItem, QGraphicsLineItem, QGraphicsTextItem
+from PyQt6.QtCore import Qt, QUrl, QRect
+from PyQt6.QtGui import QBrush, QPen, QFont, QPixmap, QPainter
 
 import state
 import sound
@@ -167,14 +167,14 @@ class BrakeUi():
         # Not a typo.  We want the circle centered at the top of the Scene
         Ellipse = QGraphicsEllipseItem(0, 0, GAUGE_SIZE, GAUGE_SIZE)
 
-        Pen = QPen(Qt.black)
+        Pen = QPen(Qt.GlobalColor.black)
         Pen.setWidth(3)
         Ellipse.setPen(Pen)
         self.Scene.addItem(Ellipse)
 
         if DEBUG:
             DebugRect = QGraphicsRectItem(0,0,DRAW_X_SIZE, DRAW_Y_SIZE)
-            DebugPen = QPen(Qt.red)
+            DebugPen = QPen(Qt.GlobalColor.red)
             DebugPen.setWidth(3)
             DebugRect.setPen(DebugPen)
 
@@ -189,7 +189,7 @@ class BrakeUi():
             DebugLine.setPen(DebugPen)
             self.Scene.addItem(DebugLine)
 
-        TickPen = QPen(Qt.black)
+        TickPen = QPen(Qt.GlobalColor.black)
         TickPen.setWidth(2)
 
         DebugPressure = 0
@@ -412,4 +412,3 @@ class BrakeUi():
 
         self.SetGauge()
         self.PumpCheck()
-

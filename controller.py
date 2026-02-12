@@ -15,11 +15,11 @@ import math
 import os
 
 
-from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtWidgets import ( QApplication, QDialog, QMainWindow, QMessageBox )
-from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsEllipseItem, QGraphicsRectItem, QGraphicsLineItem, QGraphicsTextItem
-from PyQt5.QtCore import Qt, QUrl, QRect
-from PyQt5.QtGui import QBrush, QPen, QFont, QPixmap, QPainter
+from PyQt6 import QtWidgets, QtCore
+from PyQt6.QtWidgets import ( QApplication, QDialog, QMainWindow, QMessageBox )
+from PyQt6.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsEllipseItem, QGraphicsRectItem, QGraphicsLineItem, QGraphicsTextItem
+from PyQt6.QtCore import Qt, QUrl, QRect
+from PyQt6.QtGui import QBrush, QPen, QFont, QPixmap, QPainter
 
 import state
 
@@ -185,8 +185,8 @@ class ControllerGraphics():
 
         :param Event: Mouse click event
         """
-        x = Event.x()
-        y = Event.y()
+        x = Event.position().x()
+        y = Event.position().y()
 
         CONTROLLER_CLICK_X = 171   # Center of the controller
         CONTROLLER_CLICK_Y = 56
@@ -281,4 +281,3 @@ class ControllerButtons():
         """
         for Button in range(len(self.DirectionList)):
             self.DirectionList[Button].setChecked(Button == Direction.value)
-
