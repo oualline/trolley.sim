@@ -19,7 +19,6 @@ import sys
 import threading
 import time
 import webbrowser
-import vlc      ##@@
 import pynput
 
 from PyQt5 import QtWidgets, QtCore
@@ -54,17 +53,16 @@ VideoFile = os.path.join("video", "trolley.m4v")
 if '_PYI_APPLICATION_HOME_DIR' in os.environ:
     DIR=os.environ['_PYI_APPLICATION_HOME_DIR']
     os.chdir(DIR)
-    VideoFile = os.path.join(DIR, VideoFile)
 else:
     # Detect the operating system
     operating_system = platform.system()
-    # Window is strange.  VLC and getcwd don't like each other
     if operating_system != "Windows":
         DIR=os.getcwd()
     else:
         DIR="."
 
 VideoFile = os.path.join(DIR, VideoFile)
+IMAGE_DIR = os.path.join(DIR, "frames")
 
 class ModeEnum(enum.Enum):
     EASY = 0         # Mode is easy
@@ -187,15 +185,15 @@ if IS_LINUX:
             elif (Command == "Deadman"):
                 self.MainWindow.DeadmanClicked(not state.State.Deadman)
             elif (Command == "Apply"):
-                self.MainWindow.BrakeGUI.MoveBrakeLever(state.BrakeEnum.APPLY)
+                self.MainWindow.BrakeUI.SetBrake(state.BrakeEnum.APPLY)
             elif (Command == "Lap"):
-                self.MainWindow.BrakeGUI.MoveBrakeLever(state.BrakeEnum.LAP)
+                self.MainWindow.BrakeUI.SetBrake(state.BrakeEnum.LAP)
             elif (Command == "Release"):
-                self.MainWindow.BrakeGUI.MoveBrakeLever(state.BrakeEnum.RELEASE)
+                self.MainWindow.BrakeUI.SetBrake(state.BrakeEnum.RELEASE)
             elif (Command == "Emergency"):
-                self.MainWindow.BrakeGUI.MoveBrakeLever(state.BrakeEnum.EMERGENCY)
+                self.MainWindow.BrakeUI.SetBrake(state.BrakeEnum.EMERGENCY)
             elif (Command == "Bell"):
-                self.MainWindow.Ding(state.BrakeEnum.EMERGENCY)
+                self.MainWindow.Ding()
             else:
                 print("Unknown pipe command %s" % Command)
 
@@ -310,7 +308,6 @@ def ComputeAcceleration(Level):
 
     return((MAX_SPEED[Level] - MAX_SPEED[Level-1]) / SPEED_TIME)
 
-##@@
 # Event list / easy mode
 #       Central bell start
 #       Central bell stop
@@ -628,7 +625,6 @@ class FullMode(StartStopMode):
     BROADWAY_STOP_BEGIN=0.09        # Position of the start of where can do a Broadway stop
     BROADWAY_STOP_END=0.12          # Position of the end of where can do a Broadway stop
     BROADWAY_STOP_CHECK=0.15        # Position of where we check to see if Broadway stop done
-    ##@@ REmove above
 
     CB2_STOP_BEGIN=0.58             # Position of the start of where can do a CB2 stop
     CB2_STOP_END=0.61               # Position of the end of where can do a CB2 stop
@@ -1056,20 +1052,14 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         self.MinusButton.clicked.connect(self.MinusButtonClicked)
         self.PlusButton.clicked.connect(self.PlusButtonClicked)
 
-        self.Video = video.Video(self, VideoFile)
-
-        self.VideoFrame.setStyleSheet("""
-            background-image: url(%s) 0 0 0 0 stretch stretch;
-            background-repeat: no-repeat;
-            background-position: center;
-            """ % os.path.join(DIR, "image", "background.png"))
+        self.Video = video.Video(self, VideoFile, IMAGE_DIR)
 
         self.BrakeUi = brake_ui.BrakeUi(self)
 
         self.BrakeView.setScene(self.BrakeUi.Scene)
         self.BrakeView.show()
 
-        self.BrakeGUI = BrakeGraphics(self)
+        self.BrakeGraphics = BrakeGraphics(self)
         self.ControllerGraphics = controller.ControllerGraphics(self)
         self.ControllerButtons = controller.ControllerButtons(self)
 
@@ -1402,7 +1392,7 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         """ 
         Reset to the starting position
         """
-        self.Video.SetPosition(0.0)
+        self.Video.Reset()
         self.SetSimulatorMode()
         state.State.Reset()
         self.Video.SetRate(state.State.Speed)
@@ -1419,9 +1409,7 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         self.SetRun(0)
         self.SetDirection(state.DirectionEnum.NEUTRAL)
 
-        self.Video.Reset()
-
-        self.BrakeGUI.MoveBrakeLever(state.BrakeEnum.APPLY)
+        self.BrakeGraphics.MoveBrakeLever(state.BrakeEnum.APPLY)
         self.BrakeUi.SetBrake(state.BrakeEnum.APPLY)
         self.BrakeUi.BrakeReset()
 
@@ -1776,7 +1764,7 @@ def Usage():
     Tell user what to do
     """
     print("""Usage is:
-python3 main.py [-b<bottom>] [-t<top>] [-l<left>] [-r<right>] [-d] [-v] [-f]
+python3 main.py [-b<bottom>] [-t<top>] [-l<left>] [-r<right>] [-d] [-v] [-f] [-a]
 
 Where
         -b <bottom> -- Set bottom margin
@@ -1786,6 +1774,7 @@ Where
         -d -- Debug (show button bar)
         -v -- Verbose
         -f -- Start in full screen
+        -a -- Enable attract mode
     """)
     sys.exit(8)
 
@@ -1803,7 +1792,7 @@ if __name__ == "__main__":
             BottomMargin = int(Arg)
         elif Option == "-t":
             TopMargin = int(Arg)
-        if Option == "-l":
+        elif Option == "-l":
             LeftMargin = int(Arg)
         elif Option == "-r":
             RightMargin = int(Arg)
@@ -1845,6 +1834,7 @@ if __name__ == "__main__":
 
     # this will activate the window
     mainWindow.activateWindow()
+    mainWindow.Video.Reset()
     mainWindow.raise_()
     state.Log("New run----------------------------------------------------------------")
 

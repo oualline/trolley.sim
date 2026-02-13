@@ -25,6 +25,7 @@ clean:
 	rm -f sim_ui4.py mode_window.py
 	rm -rf __pycache__ build dist
 	rm -f quick.pdf help.pdf
+	rm -rf frames
 
 linux: mode_window.py sim_ui4.py
 	pyinstaller trolley-linux.spec

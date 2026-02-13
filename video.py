@@ -4,14 +4,19 @@ Module to handle the playing of video
 Currently uses VLC for video output
 """
 import time
+import os
+import glob
+import sys
 
-import vlc
-import platform
+from PyQt5 import QtWidgets, QtCore
+from PyQt5.QtGui import QBrush, QPen, QFont, QPixmap, QPainter
+from PyQt5.QtCore import Qt
 
 import state
+import video_to_frames
 
 class Video:
-    def __init__(self, MainWindow, VideoFile):
+    def __init__(self, MainWindow, VideoFile, ImageDirectory):
         """
         Create video player
 
@@ -19,40 +24,87 @@ class Video:
             MainWindow -- Window in which we display the stuff
             VideoFile -- Video file to play
         """
-        #-----------------------------------------------------------
-        # Setup video player
-        #-----------------------------------------------------------
         self.VideoFile = VideoFile
-        self.Instance = vlc.Instance()  # Create an instance of the player
-        self.MediaPlayer = self.Instance.media_player_new()
-        self.MediaPlayer.audio_output_device_set("adummy", "/dev/null")
-        self.MediaPlayer.audio_set_mute(True)
+        self.ImageDirectory = ImageDirectory
+        self.ImageLabel = MainWindow.VideoFrame
 
-        if platform.system() == "Linux": # for Linux using the X Server
-            self.MediaPlayer.set_xwindow(int(MainWindow.VideoFrame.winId()))
-        elif platform.system() == "Windows": # for Windows
-            self.MediaPlayer.set_hwnd(int(MainWindow.VideoFrame.winId()))
-        elif platform.system() == "Darwin": # for MacOS
-            self.MediaPlayer.set_nsobject(int(MainWindow.VideoFrame.winId()))
+        self.LoadImages()
+        if (len(self.ImageFiles) == 0):
+            self.ExtractImages()
+            self.LoadImages()
+            if (len(self.ImageFiles) == 0):
+                print("FATAL ERROR: Unable to get video files")
+                sys.exit(8)
+        self.Reset()
+
+    def ExtractImages(self):
+        """
+        Extract the frames from the video
+        """
+        video_to_frames.extract_frames(self.VideoFile, self.ImageDirectory)
+
+    def LoadImages(self):
+        """
+        Load the image names into the system
+        """
+        # Find all files matching the pattern frame_XXXX.png
+        Pattern = os.path.join(self.ImageDirectory, 'frame_*.png')
+        Files = glob.glob(Pattern)
+        
+        # Sort files to ensure correct order
+        self.ImageFiles = sorted(Files)
+
+        self.FrameTimer = QtCore.QTimer()
+        self.FrameTimer.timeout.connect(self.NextFrame)
+        
+        self.BaseFps = 25               # Make sure this matches the video
+        self.SpeedMultiplier = 1.0
+
+    def NextFrame(self):
+        """
+        Display the next frame
+
+        Stop at end
+        """
+        if self.ImageFiles:
+            if (self.CurrentFrame < len(self.ImageFiles)):
+                self.CurrentFrame = self.CurrentFrame + 1
+                self.ShowCurrentFrame()
+
+                # Calculate interval in milliseconds
+                # interval = 1000ms / (fps * speed_multiplier)
+                Interval = int(1000 / (self.BaseFps * self.Rate))
+                self.FrameTimer.setInterval(Interval)
+            else:
+                state.Log("Ran out of video")
+                self.FrameTimer.stop()
+
+    def ShowCurrentFrame(self):
+        """Display the current frame"""
+        # If the system has not initilized things
+        if (self.ImageLabel.width() == 100):
+            return
+        if self.ImageFiles and 0 <= self.CurrentFrame < len(self.ImageFiles):
+            Pixmap = QPixmap(self.ImageFiles[self.CurrentFrame])
+            
+            # Scale pixmap to fit label while maintaining aspect ratio
+            ScaledPixmap = Pixmap.scaled(
+                self.ImageLabel.size(),
+                Qt.KeepAspectRatio,
+                Qt.SmoothTransformation
+            )
+            #
+            self.ImageLabel.setPixmap(ScaledPixmap)
+            #self.ImageLabel.setPixmap(Pixmap)
 
     def Reset(self):
         """
         Reset the video
         """
-        self.Media = self.Instance.media_new(self.VideoFile)
-        self.MediaPlayer.set_media(self.Media)
-        self.Media.parse()
+        self.SetRate(0)
+        self.CurrentFrame = 0
+        self.ShowCurrentFrame()
 
-        self.MediaPlayer.audio_set_volume(0)
-        state.Log("Reset: Pause")
-        self.MediaPlayer.pause()
-        self.MediaPlayer.set_rate(1.0)
-        self.MediaPlayer.play()
-        state.Log("Reset: Play")
-        time.sleep(0.01)
-        state.Log("Reset: Pause")
-        self.MediaPlayer.pause()
-        
     def SetRate(self, Rate):
         """
         Tell video player we are going at a different speed.
@@ -62,35 +114,25 @@ class Video:
         """
         if (Rate < 0):
             Rate = 0.0
-        self.MediaPlayer.set_rate(Rate)
-        if ((self.MediaPlayer.get_state() != vlc.State.Playing) and \
-                    (state.State.Speed > 0.0)):
-            state.Log("MediaPlayer.play()")
-            Result = self.MediaPlayer.play()
+        self.Rate = Rate
 
-        elif ((self.MediaPlayer.get_state() == vlc.State.Playing) and \
-                    (state.State.Speed <= 0.0)):
-            state.Log("MediaPlayer.pause()")
-            Result = self.MediaPlayer.pause()
+        # Do we need to pause
+        if (Rate <= 0.0):
+            if (self.FrameTimer.isActive()):
+                self.FrameTimer.stop()
+                state.Log("FrameTimer stop")
+            return
+
+        # Do we need to start
+        if Rate > 0.0:
+            if (not self.FrameTimer.isActive()):
+                self.FrameTimer.start()
+                state.Log("FrameTimer start")
+
+                self.NextFrame()
 
     def GetPosition(self):
         """
         Return the position of the video as a fraction of the total video
         """
-        return (self.MediaPlayer.get_position())
-
-    def SetPosition(self, Position):
-        """
-        Set the position of the video as a fraction of the total video
-
-        Args:
-            Position -- Position from 0.0 to 1.0
-        """
-        self.MediaPlayer.set_position(Position)
-
-    def IsPlaying(self):
-        """
-        Is the video playing.
-        ##Check for use
-        """
-        return (self.MediaPlayer.get_state() == vlc.State.Playing)
+        return ( float(self.CurrentFrame) / float(len(self.ImageFiles)) )

@@ -329,7 +329,8 @@ class BrakeUi():
         state.State.BrakeValvePosition = What
         # Emergency sound here.  All others in the update function
         if (What == state.BrakeEnum.EMERGENCY):
-            sound.PlaySound.Play(sound.SoundEnum.EMERGENCY, False)
+            if (self.BlackPressure > 0):
+                sound.PlaySound.Play(sound.SoundEnum.EMERGENCY, False)
         BrakeIndex = state.State.BrakeValvePosition.value
         state.Log("SetBrake(%s[%d])" % (What, BrakeIndex))
 
