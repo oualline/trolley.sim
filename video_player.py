@@ -26,12 +26,12 @@ def play_video(video_path):
             # Windows: Use PowerShell's Start-Process to launch default video player
             # Note: Not all Windows video players support loop flags
             Process = subprocess.Popen(
-                ['powershell', '-command', f'Start-Process "{self.video_path}"'],
+                ['powershell', '-command', f'Start-Process "{video_path}"'],
                 shell=True,
                 stdout=subprocess.DEVNULL,  # Suppress output
                 stderr=subprocess.DEVNULL
             )
-            return (Process)
+            return (True)
         
         elif operating_system == "Darwin":  # macOS
             # Try to use QuickTime Player first, fall back to 'open' command
@@ -39,7 +39,7 @@ def play_video(video_path):
                 Process = subprocess.Popen(['open', '-a', 'QuickTime Player', video_path])
             except:
                 Process = subprocess.Popen(['open', video_path])
-            return (Process)
+            return (True)
         
         elif operating_system == "Linux":
             # Try common Linux video players in order of preference

@@ -408,7 +408,7 @@ class BrakeUi():
             state.State.BrakeAcceleration = ComputeBrakeAcceleration(MAX_BRAKE_PRESSURE)
             state.Log("BrakeAcceleration %f" % state.State.BrakeAcceleration)
         else:
-            printf("Internal error: Impossible brake mode %s" % state.State.BrakeValvePosition )
+            print("Internal error: Impossible brake mode %s" % state.State.BrakeValvePosition )
             sys.exit(8)
 
         self.SetGauge()

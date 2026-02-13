@@ -152,7 +152,7 @@ class ControllerGraphics():
         """
         Reset the controller and the reverser
         """
-        state.Log("Controller run level %d Angle %d" % (state.State.RunLevel, self.RUN_TO_ANGLE[RunLevel]))
+        state.Log("Controller run level %d Angle %d" % (state.State.RunLevel, self.RUN_TO_ANGLE[state.State.RunLevel]))
         self.ControllerHandleItem.setRotation(self.RUN_TO_ANGLE[state.State.RunLevel])
         self.ReverseHandleItem.setRotation(0)  
 
@@ -271,8 +271,8 @@ class ControllerButtons():
         """
         Reset the controller and the reverser
         """
-        SetControllerRun(0)
-        SetReverse(state.DirectionList.NEUTRAL)
+        self.SetControllerRun(0)
+        self.SetReverse(state.DirectionEnum.NEUTRAL)
 
     def SetReverse(self, Direction):
         """
