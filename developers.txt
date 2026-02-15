@@ -6,7 +6,7 @@ view the source code and modify it.  The only restriction
 is that if you do improve it and distribute the improvements
 you must distribute the source code too.
 
-You should have a working knowledge of Python and QT4 to
+You should have a working knowledge of Python and QT5 to
 work on this code.
 
 Github

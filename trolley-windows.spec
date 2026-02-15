@@ -3,7 +3,6 @@ a = Analysis(
     ['brake_ui.py', 'controller.py', 'main.py', 'mode_window.py', 'sim_ui4.py', 'sound.py', 'state.py', 'video_player.py'],
     pathex=[],
     binaries=[
-	('C:\\Program Files\\VideoLAN\\VLC\\', 'VLC'),
 	('image/*.png', 'image'),
 	('image/*.svg', 'image')
     ],

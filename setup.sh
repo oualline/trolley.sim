@@ -8,6 +8,7 @@ sudo apt-get install default-jre libreoffice-java-common
 sudo apt install python3-pip
 sudo pip install playsound3 --break-system-packages
 sudo apt install python3-pynput
+sudo apt install python3-opencv
 
 # For gstreamer which has proven to complex
 #sudo apt install python-gobject-devel

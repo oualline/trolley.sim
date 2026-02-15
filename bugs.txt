@@ -27,7 +27,4 @@ Know bugs:
 
 2. When an error occurs, the video does not rewind to the start properly.
 
-3. Tons of vlc error get printed when running this on linux.  And I have no
-idea (yet) what to do about them.
-
 

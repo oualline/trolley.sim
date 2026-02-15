@@ -24,23 +24,7 @@ This procedure will install Python, VLC, and all required Python modules to run 
    - Type: `python --version`
    - You should see output like: `Python 3.11.x`
 
-## Step 2: Install VLC Media Player
-
-1. **Download VLC:**
-   - Visit [https://www.videolan.org/vlc/](https://www.videolan.org/vlc/)
-   - Click "Download VLC" button
-   - Download the Windows installer (64-bit recommended)
-
-2. **Install VLC:**
-   - Run the downloaded installer
-   - Follow the installation wizard with default settings
-   - Click "Install"
-   - Click "Close" when complete
-
-3. **Verify VLC Installation:**
-   - VLC should be installed in `C:\Program Files\VideoLAN\VLC\`
-
-## Step 3: Install Required Python Modules
+## Step 2: Install Required Python Modules
 
 Open Command Prompt as Administrator:
 - Press `Win + X`
@@ -49,11 +33,6 @@ Open Command Prompt as Administrator:
 ### Install PyQt5
 ```cmd
 pip install PyQt5
-```
-
-### Install python-vlc
-```cmd
-pip install python-vlc
 ```
 
 ### Install playsound3
@@ -71,10 +50,9 @@ You should see these packages listed:
 - PyQt5
 - PyQt5-Qt5
 - PyQt5-sip
-- python-vlc
 - playsound3
 
-## Step 4: Verify Complete Installation
+## Step 3: Verify Complete Installation
 
 Create a test script to verify all modules load correctly:
 
@@ -90,13 +68,6 @@ try:
     print("✓ PyQt5 installed successfully")
 except ImportError as e:
     print(f"✗ PyQt5 installation failed: {e}")
-    sys.exit(1)
-
-try:
-    import vlc
-    print("✓ python-vlc installed successfully")
-except ImportError as e:
-    print(f"✗ python-vlc installation failed: {e}")
     sys.exit(1)
 
 try:
@@ -147,10 +118,6 @@ python main.py
   2. Edit "Path" variable
   3. Add: `C:\Users\YourUsername\AppData\Local\Programs\Python\Python311`
   4. Add: `C:\Users\YourUsername\AppData\Local\Programs\Python\Python311\Scripts`
-
-### If VLC videos don't play:
-- Ensure VLC is installed in the default location
-- Try reinstalling VLC with default settings
 
 ### If playsound3 doesn't work:
 - Try alternative: `pip uninstall playsound3` then `pip install playsound`

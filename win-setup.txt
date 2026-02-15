@@ -1,9 +1,6 @@
 For development on windows
 
 Install:
-    Install vlc -- Make sure to get 64 bit version
-	https://www.videolan.org/vlc/
-
     Install python
        https://www.python.org/downloads
 	CHECK ADD TO PATH

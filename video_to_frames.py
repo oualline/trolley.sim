@@ -25,11 +25,12 @@ pip install opencv-python
 
 import cv2  # OpenCV library for video processing
 import os
+import sys
 import argparse
 from pathlib import Path
 
 
-def extract_frames(video_source, output_dir="frames", frame_prefix="frame", skip_frames=0):
+def extract_frames(video_source, output_dir="frames", Callback=None, frame_prefix="frame", skip_frames=0):
     """
     Extract frames from a video stream and save as PNG files.
     
@@ -41,6 +42,12 @@ def extract_frames(video_source, output_dir="frames", frame_prefix="frame", skip
     """
     # Create output directory if it doesn't exist
     Path(output_dir).mkdir(parents=True, exist_ok=True)
+    try:
+        # We do this to remove any old junk that may have been in the directory
+        os.remove(os.path.join(output_dir, "fps.txt"))
+    except FileNotFoundError:
+        pass
+
     
     # API: cv2.VideoCapture(source)
     # Opens a video file or camera stream for reading
@@ -75,6 +82,8 @@ def extract_frames(video_source, output_dir="frames", frame_prefix="frame", skip
     print(f"  Output directory: {output_dir}")
     print(f"  Skip frames: {skip_frames}")
     print()
+    if Callback is not None:
+        Callback(1, f'Resolution {width}x{height} Frames {total_frames} FPS: {fps}')
     
     frame_count = 0
     saved_count = 0
@@ -104,14 +113,18 @@ def extract_frames(video_source, output_dir="frames", frame_prefix="frame", skip
                 cv2.imwrite(filepath, frame)
                 saved_count += 1
                 
-                # Print progress every 100 saved frames
-                if saved_count % 100 == 0:
-                    print(f"Saved {saved_count} frames...")
+                # Print progress every 10 saved frames
+                if saved_count % 10 == 0:
+                    if (Callback is not None):
+                        Callback(2, f"Frames {saved_count} / {total_frames}")
             
             frame_count += 1
+        SpeedFile = open(os.path.join(output_dir, "fps.txt"), "w")
+        print(fps, file=SpeedFile)
     
     except KeyboardInterrupt:
         print("\nInterrupted by user")
+        sys.exit(8)
     
     finally:
         # API: VideoCapture.release()
@@ -122,7 +135,6 @@ def extract_frames(video_source, output_dir="frames", frame_prefix="frame", skip
         print(f"Total frames processed: {frame_count}")
         print(f"Total frames saved: {saved_count}")
         print(f"Frames saved to: {os.path.abspath(output_dir)}")
-
 
 def main():
     parser = argparse.ArgumentParser(
@@ -156,7 +168,7 @@ def main():
     if video_source.isdigit():
         video_source = int(video_source)
     
-    extract_frames(video_source, args.output, args.prefix, args.skip)
+    extract_frames(video_source, args.output, None, args.prefix, args.skip)
 
 
 if __name__ == "__main__":

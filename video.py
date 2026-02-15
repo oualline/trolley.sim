@@ -1,3 +1,5 @@
+# TODO: Read FPS
+# TODO: No fps, no files
 """
 Module to handle the playing of video
 
@@ -13,17 +15,21 @@ from PyQt5.QtGui import QBrush, QPen, QFont, QPixmap, QPainter
 from PyQt5.QtCore import Qt
 
 import state
+import frames_ui
 import video_to_frames
 
 class Video:
-    def __init__(self, MainWindow, VideoFile, ImageDirectory):
+    def __init__(self, app, MainWindow, VideoFile, ImageDirectory):
         """
         Create video player
 
         Args:
+            app -- The qt application 
             MainWindow -- Window in which we display the stuff
             VideoFile -- Video file to play
+            ImageDirectory -- Where the images go
         """
+        self.app = app
         self.VideoFile = VideoFile
         self.ImageDirectory = ImageDirectory
         self.ImageLabel = MainWindow.VideoFrame
@@ -37,11 +43,39 @@ class Video:
                 sys.exit(8)
         self.Reset()
 
+    def CallBack(self, Code, Message):
+        """
+        Called when extracting frames
+
+        Args
+            Code -- Message type code
+            Message -- Message
+        """
+        self.app.processEvents()
+        print("### Code", Code, " Message ", Message)
+        if (Code == 1):
+            self.Progress.VideoInfoLabel.setText(Message)
+        elif (Code == 2):
+            self.Progress.ProgressLabel.setText(Message)
+        else:
+            print("INTERNAL ERROR: Illegal callback code:", Code)
+
     def ExtractImages(self):
         """
         Extract the frames from the video
         """
-        video_to_frames.extract_frames(self.VideoFile, self.ImageDirectory)
+        self.ProgressDialog = QtWidgets.QDialog()
+
+        self.Progress = frames_ui.Ui_FramePopup()
+        self.Progress.setupUi(self.ProgressDialog)
+
+        self.ProgressDialog.show()
+        self.ProgressDialog.raise_()
+        self.ProgressDialog.activateWindow()
+        self.app.processEvents()
+        video_to_frames.extract_frames(self.VideoFile, self.ImageDirectory, self.CallBack)
+        self.ProgressDialog.hide()
+        print("### Done")
 
     def LoadImages(self):
         """

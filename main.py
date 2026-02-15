@@ -62,7 +62,10 @@ else:
         DIR="."
 
 VideoFile = os.path.join(DIR, VideoFile)
-IMAGE_DIR = os.path.join(DIR, "frames")
+if 'TEMP' in os.environ:
+    IMAGE_DIR = os.path.join(os.environ['TEMP'], "frames")
+else:
+    IMAGE_DIR = os.path.join(DIR, "frames")
 
 class ModeEnum(enum.Enum):
     EASY = 0         # Mode is easy
@@ -1029,11 +1032,12 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
     """
     Main window in which everything happens
     """
-    def __init__(self, parent=None):
+    def __init__(self, app, parent=None):
         """
         Create the main window
 
         :param self: This class
+        :param app: Qt app
         :param parent: Parent of this class
         """
         global FullScreen 
@@ -1052,7 +1056,7 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         self.MinusButton.clicked.connect(self.MinusButtonClicked)
         self.PlusButton.clicked.connect(self.PlusButtonClicked)
 
-        self.Video = video.Video(self, VideoFile, IMAGE_DIR)
+        self.Video = video.Video(app, self, VideoFile, IMAGE_DIR)
 
         self.BrakeUi = brake_ui.BrakeUi(self)
 
@@ -1813,7 +1817,7 @@ if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)  #pylint: disable=I1101
 
     state.Init()
-    mainWindow = Window()
+    mainWindow = Window(app)
     if (FullScreen):
         mainWindow.showFullScreen()
     else:

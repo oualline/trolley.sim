@@ -1,6 +1,6 @@
 #${HOME}/tmp/10-minute.mp4 ${HOME}/tmp/trolley.mp4 mode_window.py
 
-all: sim_ui4.py mode_window.py quick.pdf help.pdf 
+all: sim_ui4.py mode_window.py quick.pdf help.pdf frames_ui.py
 
 help:
 	@echo "make -- make local program"
@@ -18,11 +18,14 @@ help.pdf: help.odt
 sim_ui4.py: sim_ui4.ui
 	pyuic5 -o sim_ui4.py sim_ui4.ui
 
+frames_ui.py: frames_ui.ui
+	pyuic5 -o frames_ui.py frames_ui.ui
+
 mode_window.py: mode_window.ui
 	pyuic5 -o mode_window.py mode_window.ui
 
 clean: 
-	rm -f sim_ui4.py mode_window.py
+	rm -f sim_ui4.py mode_window.py frames_ui.py
 	rm -rf __pycache__ build dist
 	rm -f quick.pdf help.pdf
 	rm -rf frames

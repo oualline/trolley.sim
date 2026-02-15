@@ -5,8 +5,6 @@ a = Analysis(
     ['brake_ui.py', 'controller.py', 'main.py', 'mode_window.py', 'sim_ui4.py', 'sound.py', 'state.py', 'video_player.py'],
     pathex=[],
     binaries=[
-	('/usr/lib/x86_64-linux-gnu/vlc/plugins/', 'vlc/plugins'),
-	('/usr/lib/x86_64-linux-gnu/libvlc*', 'lib'),
 	('image/*.png', 'image'),
 	('image/*.svg', 'image')
     ],
