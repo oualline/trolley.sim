@@ -1,9 +1,14 @@
 # TODO: Read FPS
 # TODO: No fps, no files
+# TODO: Check timestamp of video and fps.txt
 """
 Module to handle the playing of video
 
-Currently uses VLC for video output
+Currently uses a series of extracted frames
+as video.  
+
+As soon as I figure out how to get the media player working
+this will be fixed.
 """
 import time
 import os
@@ -52,7 +57,6 @@ class Video:
             Message -- Message
         """
         self.app.processEvents()
-        print("### Code", Code, " Message ", Message)
         if (Code == 1):
             self.Progress.VideoInfoLabel.setText(Message)
         elif (Code == 2):
@@ -75,7 +79,6 @@ class Video:
         self.app.processEvents()
         video_to_frames.extract_frames(self.VideoFile, self.ImageDirectory, self.CallBack)
         self.ProgressDialog.hide()
-        print("### Done")
 
     def LoadImages(self):
         """

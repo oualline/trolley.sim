@@ -1,0 +1,5 @@
+Use $HOME/trolley.sim.frames for frames.
+Round FPS.
+Add note to frames (safely delete)
+
+Later/General change icon

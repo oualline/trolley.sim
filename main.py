@@ -63,9 +63,14 @@ else:
 
 VideoFile = os.path.join(DIR, VideoFile)
 if 'TEMP' in os.environ:
-    IMAGE_DIR = os.path.join(os.environ['TEMP'], "frames")
+    IMAGE_DIR = os.path.join(os.environ['TEMP'], "trolley.sim.temp.frames")
 else:
-    IMAGE_DIR = os.path.join(DIR, "frames")
+    if 'HOME' in os.environ:
+        IMAGE_DIR = os.path.join(os.environ['HOME'], "trolley.sim.temp.frames")
+    else:
+        IMAGE_DIR = os.path.join(DIR, "trolley.sim.temp.frames")
+
+print("### IMAGE_DIR ", IMAGE_DIR)
 
 class ModeEnum(enum.Enum):
     EASY = 0         # Mode is easy
@@ -1821,7 +1826,7 @@ if __name__ == "__main__":
     if (FullScreen):
         mainWindow.showFullScreen()
     else:
-        mainWindow.showNormal()
+        #mainWindow.showNormal()
         mainWindow.showMaximized()
 
 

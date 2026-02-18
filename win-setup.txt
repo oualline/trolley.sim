@@ -5,5 +5,8 @@ Install:
        https://www.python.org/downloads
 	CHECK ADD TO PATH
 
+     Add to path:
+         C:\Users\YourUsername\AppData\Local\Programs\Python\Python313\Scripts
+
      Open command (cmd) windows AS ADMINSTRATOR.
      Run win-setup.bat

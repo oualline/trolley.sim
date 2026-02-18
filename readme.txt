@@ -13,13 +13,22 @@ Sorry, but this is a volunteer project and there's only so much
 one volunteer can do. Thank you for your understanding and please
 don't call in with support questions.
 
+Warning
+=======
+
+Because of the way things are packaged, the program takes some time to 
+start.
+
+Also the first time you run it, the program unpacks the video into 
+image files.  This takes time.
+
 Quick Start
 ===========
 
 Linux:
      Open a terminal window.
 
-     Go to the "linux" directory on the USB drive.
+     Go to the top directory on the USB drive.
 
      Enter the command:
 
@@ -31,19 +40,29 @@ Linux:
 
 Windows:
    
-Use the file manager to open the folder <usb-drive>\Windows.
-Copy the directory trolley-windows on to your hard drive.
-Inside the folder you'll find the file trolley-windows.exe
-which you can now run.
+    Use the file manager to open the folder <usb-drive>\Windows.
+    Copy the directory trolley-windows on to your hard drive.
+    Inside the folder you'll find the file trolley-windows.exe
+    which you can now run.
 
-You can run it directly from the USB drive, but it runs
-very very slow.
+    You can run it directly from the USB drive, but it runs
+    very very slow.
 
-WARNING: The program starts slow even when run from a hard
-drive.
+    WARNING: The program starts slow even when run from a hard
+    drive.
 
 Apple:
-     Not supported, but watch this space.
+    Open a terminal window.
+
+    Go to the top directory on the USB drive.
+
+    Enter the command:
+
+    $ sh install-macos.sh
+
+    Run the program with the command:
+
+    $ ~/bin/trolley
 
 Introduction
 ============
@@ -57,7 +76,7 @@ Command Line
 ============
 
 Usage:
-    python3 main.py [-b<bottom>] [-t<top>] [-l<left>] [-r<right>] [-d] [-v] [-f] [-a]
+    <program> [-b<bottom>] [-t<top>] [-l<left>] [-r<right>] [-d] [-v] [-f] [-a]
 
     Where
 	    -b <bottom> -- Set bottom margin

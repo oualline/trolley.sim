@@ -1,6 +1,8 @@
 #${HOME}/tmp/10-minute.mp4 ${HOME}/tmp/trolley.mp4 mode_window.py
 
-all: sim_ui4.py mode_window.py quick.pdf help.pdf frames_ui.py
+GENERATED=mode_window.py sim_ui4.py frames_ui.py
+HELP=quick.pdf help.pdf
+all: $(HELP) $(GENERATED)
 
 help:
 	@echo "make -- make local program"
@@ -29,15 +31,21 @@ clean:
 	rm -rf __pycache__ build dist
 	rm -f quick.pdf help.pdf
 	rm -rf frames
+	rm -rf venv
+	rm -rf .DS_Store ._.DS_Store
 
-linux: mode_window.py sim_ui4.py
+linux: $(GENERATED) $(HELP)
 	pyinstaller trolley-linux.spec
 	# This is because we develop from a FAT32 usb stick and permissions don't work on it
 	cp dist/trolley-linux /tmp
 	chmod a+x /tmp/trolley-linux
 
-windows: mode_window.py sim_ui4.py
+windows: $(GENERATED) $(HELP)
 	pyinstaller -y trolley-windows.spec
+
+macos: $(GENERATED) $(HELP)
+	if [ x$$VIRTUAL_ENV_PROMPT == x ] ; then echo "Must be inside the venv."; exit 8; fi
+	pyinstaller -y trolley-macos.spec
 
 junk:
 	#pyinstaller --distpath=/home/user/dist --log-level DEBUG -y trolley-windows.spec
@@ -49,12 +57,15 @@ FILES= bugs.txt developers.txt help.pdf readme.txt LICENSE.txt
 DIR=/tmp/trolley.sim
 OLD_DIR := $(shell pwd)
 
-output: $(FILES) dist/trolley-linux dist/trolley-windows
+output: $(FILES) dist/trolley-linux dist/trolley-windows dist/trolley-macos
 	rm -rf $(DIR)
 	mkdir $(DIR)
 	cp $(FILES) $(DIR)
 	mkdir $(DIR)/linux
 	cp dist/trolley-linux $(DIR)/linux/trolley
+	cp dist/trolley-macos $(DIR)/macos/trolley
+	cp install-linux.sh $(DIR)
+	cp install-macos.sh $(DIR)
 	chmod a+x $(DIR)/linux/trolley
 	#
 	mkdir $(DIR)/windows

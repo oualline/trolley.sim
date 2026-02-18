@@ -23,8 +23,9 @@ this video game.
 
 Know bugs:
 
-1. The video will glitch on startup and show strange colors.
+1. MacOS you get the error:
+Unable to create basic Accelerated OpenGL renderer.
+Core Image is now using the software OpenGL renderer. This will be slow.
 
 2. When an error occurs, the video does not rewind to the start properly.
-
 
