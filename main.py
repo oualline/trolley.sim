@@ -70,8 +70,6 @@ else:
     else:
         IMAGE_DIR = os.path.join(DIR, "trolley.sim.temp.frames")
 
-print("### IMAGE_DIR ", IMAGE_DIR)
-
 class ModeEnum(enum.Enum):
     EASY = 0         # Mode is easy
     START_STOP = 1   # Mode is start/stop
@@ -1250,8 +1248,6 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         
         This method is called by AttrictVideoCheckTimer every 500ms. If the video
         player process has terminated, it restarts the video to create a loop.
-        
-        Reference: https://docs.python.org/3/library/subprocess.html#subprocess.Popen.poll
         """
         if not self.AttractIsPlayingVideo:
             return
@@ -1259,7 +1255,7 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         # poll() returns None if process is still running, otherwise returns exit code
         if self.AttractVideoProcess and self.AttractVideoProcess.poll() is not None:
             # Video process ended, restart it (loop)
-            selv.AttractVideoProcess = video_player.play_video(os.path.join("video", "attract.mp4"))
+            self.AttractVideoProcess = video_player.play_video(os.path.join("video", "attract.mp4"))
 
     def ToggleTargets(self, Checked):
         """

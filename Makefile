@@ -28,7 +28,7 @@ mode_window.py: mode_window.ui
 
 clean: 
 	rm -f sim_ui4.py mode_window.py frames_ui.py
-	rm -rf __pycache__ build dist
+	rm -rf __pycache__ build dist build.macos
 	rm -f quick.pdf help.pdf
 	rm -rf frames
 	rm -rf venv
@@ -36,16 +36,15 @@ clean:
 
 linux: $(GENERATED) $(HELP)
 	pyinstaller trolley-linux.spec
-	# This is because we develop from a FAT32 usb stick and permissions don't work on it
-	cp dist/trolley-linux /tmp
-	chmod a+x /tmp/trolley-linux
+	chmod a+x dist/trolley-linux
 
 windows: $(GENERATED) $(HELP)
 	pyinstaller -y trolley-windows.spec
 
 macos: $(GENERATED) $(HELP)
 	if [ x$$VIRTUAL_ENV_PROMPT == x ] ; then echo "Must be inside the venv."; exit 8; fi
-	pyinstaller -y trolley-macos.spec
+	pyinstaller --workpath build.macos -y trolley-macos.spec
+	chmod a+x dist/trolley-macos
 
 junk:
 	#pyinstaller --distpath=/home/user/dist --log-level DEBUG -y trolley-windows.spec
@@ -62,6 +61,7 @@ output: $(FILES) dist/trolley-linux dist/trolley-windows dist/trolley-macos
 	mkdir $(DIR)
 	cp $(FILES) $(DIR)
 	mkdir $(DIR)/linux
+	mkdir $(DIR)/macos
 	cp dist/trolley-linux $(DIR)/linux/trolley
 	cp dist/trolley-macos $(DIR)/macos/trolley
 	cp install-linux.sh $(DIR)

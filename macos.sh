@@ -65,31 +65,32 @@ install_python() {
 # Setup virtual environment
 setup_venv() {
     echo "Setting Up Virtual Environment"
+    rm -rf ~/venv
     
     # Remove old venv if it exists with wrong Python version
-    if [[ -d "venv" ]]; then
-        VENV_PYTHON=$(venv/bin/python3 --version 2>/dev/null | cut -d' ' -f2 | cut -d. -f1-2)
+    if [[ -d "$HOME/venv" ]]; then
+        VENV_PYTHON=$($HOME/venv/bin/python3 --version 2>/dev/null | cut -d' ' -f2 | cut -d. -f1-2)
         if [[ "$VENV_PYTHON" == "3.8" ]]; then
             echo "Removing old venv with Python 3.8..."
-            rm -rf venv
+            rm -rf $HOME/venv
         fi
     fi
     
-    if [[ -d "venv" ]]; then
+    if [[ -d "$HOME/venv" ]]; then
         echo "Virtual environment already exists"
     else
         echo "Creating virtual environment..."
         # Try python3.11 first, then python3
         if command_exists python3.11; then
-            python3.11 -m venv venv
+            python3.11 -m venv $HOME/venv
         else
-            python3 -m venv venv
+            python3 -m venv $HOME/venv
         fi
         echo "Virtual environment created"
     fi
     
     echo "Activating virtual environment..."
-    source venv/bin/activate
+    source $HOME/venv/bin/activate
     
     # Verify Python version in venv
     VENV_VERSION=$(python3 --version)
@@ -130,4 +131,4 @@ echo "Setup Complete!"
 echo "================================"
 echo ""
 echo "To activate the virtual environment in future sessions:"
-echo "  source venv/bin/activate"
+echo "  source $HOME/venv/bin/activate"
