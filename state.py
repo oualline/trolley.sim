@@ -25,7 +25,6 @@ class TrolleyState:
     """
     The current state of the trolley
 
-    BrakeValve  -- Brake valve position
     RunLevel -- Current run level
     Reverser -- Reverser position
     Deadman -- Deadman on or off
@@ -34,7 +33,6 @@ class TrolleyState:
     Acceleration -- Current acceleration
     """
     def Reset(self):
-        self.BrakeValve = BrakeEnum.APPLY  # Brake valve position
         self.RunLevel = 0       # Current run level
         self.Reverser = DirectionEnum.FORWARD   # Reverser position
         self.Deadman = False    # Deadman on or off

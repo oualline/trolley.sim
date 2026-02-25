@@ -42,7 +42,7 @@ windows: $(GENERATED) $(HELP)
 	pyinstaller -y trolley-windows.spec
 
 macos: $(GENERATED) $(HELP)
-	if [ x$$VIRTUAL_ENV_PROMPT == x ] ; then echo "Must be inside the venv."; exit 8; fi
+	if [ x$$VIRTUAL_ENV_PROMPT == x ] ; then echo "Must be inside the venv."; echo "source ~/venv/bin/activate";exit 8; fi
 	pyinstaller --workpath build.macos -y trolley-macos.spec
 	chmod a+x dist/trolley-macos
 

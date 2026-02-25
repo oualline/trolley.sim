@@ -266,7 +266,7 @@ class BrakeUi():
 
         if (self.BlackPressure >= MAX_BRAKE_PRESSURE):
             self.BlackPressure = MAX_BRAKE_PRESSURE
-            self.PumpStop()
+            self.SetPumping(False)
 
     def SetGauge(self):
         """
@@ -301,10 +301,10 @@ class BrakeUi():
         """
         The Brake:Emergency button clicked
         """
-        self.BlackPressure = 0
-        self.RedPressure = 0
         self.SetGauge()
         self.SetBrake(state.BrakeEnum.EMERGENCY)
+        self.BlackPressure = 0
+        self.RedPressure = 0
 
     def BrakeReset(self):
         """

@@ -121,6 +121,7 @@ def extract_frames(video_source, output_dir="frames", Callback=None, frame_prefi
             frame_count += 1
         SpeedFile = open(os.path.join(output_dir, "fps.txt"), "w")
         print(fps, file=SpeedFile)
+        SpeedFile.close()
     
     except KeyboardInterrupt:
         print("\nInterrupted by user")

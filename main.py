@@ -1,3 +1,4 @@
+import cProfile
 #
 # Copyright 2024 by Steve Oualline
 # Licensed under the GNU Public License (GPL)
@@ -352,6 +353,7 @@ class EasyMode:
         # The deacceleration speed
         self.SlowDownAcceleration = -0.5
         self.Events = GLOBAL_EVENTS
+        self.MaxSpeed = 0
 
     """
     Mode where you move by setting Run-1 and Run-2.  
@@ -468,6 +470,7 @@ class StartStopMode:
             MainWindow -- The top level window (not used)
         """
         self.Events = GLOBAL_EVENTS
+        self.MaxSpeed = 0
 
     def ModeSetRun(self, MainWindow, RunLevel):         # StartStopMode
         """
@@ -689,6 +692,7 @@ class FullMode(StartStopMode):
         self.MainWindow = MainWindow
         self.LastStop = -1
         self.ZorchEnable = False
+        self.MaxSpeed = 0
 
     def ZorchStart(self, What):
         """
@@ -704,7 +708,7 @@ class FullMode(StartStopMode):
         """
         Stop zorch checking
         """
-        self.ZorchEnable = True
+        self.ZorchEnable = False
 
     def StopCheck(self, Start, Stop, What):
         """
@@ -919,7 +923,7 @@ class SelectWindow(QMainWindow, mode_window.Ui_SelectWindow):
         """
         Window closed so restore old mode
         """
-        self.setMode(self.OldMode)
+        self.SetMode(self.OldMode)
 
     def GetMode(self):
         """
@@ -1316,7 +1320,7 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         if (not Continue):
             return
 
-        Position = mainWindow.Video.GetPosition()
+        Position = self.Video.GetPosition()
         for Event in self.Mode.Events:
             Event.Check(Position)
 
@@ -1813,7 +1817,7 @@ if __name__ == "__main__":
             print("unhandled option:", Option)
             Usage()
 
-    sound.Init()
+    sound.Init(DIR)
 
     app = QtWidgets.QApplication(sys.argv)  #pylint: disable=I1101
 

@@ -7,7 +7,6 @@ import state
 import os
 import threading
 import time
-import main
 
 PlaySound = None        # The sound playing class (singleton)
 
@@ -27,10 +26,14 @@ class SoundEnum(enum.IntEnum):
     ZORCH = 10
 
 class PlaySoundClass:
-    def __init__(self):
+    def __init__(self, BaseDir):
         """ 
         Create a sound playing class for all our sounds
+
+        Args:
+            BaseDir -- Dir in which the application resides
         """
+        self.BaseDir = BaseDir
         # Must match SoundEnum above
         self.SoundFiles = ( 
                 "trolley-bell.mp3",     # 0
@@ -62,7 +65,7 @@ class PlaySoundClass:
             Repeat -- Repeat the sound
         """
         while not self.StopFlag[Sound]:
-            playsound3.playsound(os.path.join(main.DIR, 'mp3', self.SoundFiles[Sound]))
+            playsound3.playsound(os.path.join(self.BaseDir, 'mp3', self.SoundFiles[Sound]))
             if not Repeat:
                 break
         
@@ -97,19 +100,22 @@ class PlaySoundClass:
         Parameters
              Sound -- Sound to stop enum
         """
-        state.Log("Stop Sound %s" % SoundEnum(Sound))
+        state.Log("Stop Sound %s" % Sound)
         self.StopFlag[Sound] = True
         
-def Init():
+def Init(BaseDir):
     """ 
     Initialize the sound system
+
+    Args:
+        BaseDir -- Dir in which the application resides
     """
     global PlaySound
 
-    PlaySound = PlaySoundClass()
+    PlaySound = PlaySoundClass(BaseDir)
 
 if __name__ == "__main__":
-    Init()
+    Init(os.getcwd())
     print("Bell")
     PlaySound.Play(SoundEnum.BELL, False)
     time.sleep(5)
