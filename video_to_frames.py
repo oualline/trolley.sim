@@ -30,6 +30,8 @@ import argparse
 from pathlib import Path
 
 
+FPS_FILE="fps.txt"      # Where we put the fps
+
 def extract_frames(video_source, output_dir="frames", Callback=None, frame_prefix="frame", skip_frames=0):
     """
     Extract frames from a video stream and save as PNG files.
@@ -44,7 +46,7 @@ def extract_frames(video_source, output_dir="frames", Callback=None, frame_prefi
     Path(output_dir).mkdir(parents=True, exist_ok=True)
     try:
         # We do this to remove any old junk that may have been in the directory
-        os.remove(os.path.join(output_dir, "fps.txt"))
+        os.remove(os.path.join(output_dir, FPS_FILE))
     except FileNotFoundError:
         pass
 
@@ -103,7 +105,7 @@ def extract_frames(video_source, output_dir="frames", Callback=None, frame_prefi
             # Save frame if it's time (based on skip_frames)
             if frame_count % (skip_frames + 1) == 0:
                 # Generate filename with zero-padded number
-                filename = f"{frame_prefix}_{saved_count:06d}.png"
+                filename = f"{frame_prefix}_{saved_count:06d}.bmp"
                 filepath = os.path.join(output_dir, filename)
                 
                 # API: cv2.imwrite(filename, img, [params])
@@ -119,7 +121,7 @@ def extract_frames(video_source, output_dir="frames", Callback=None, frame_prefi
                         Callback(2, f"Frames {saved_count} / {total_frames}")
             
             frame_count += 1
-        SpeedFile = open(os.path.join(output_dir, "fps.txt"), "w")
+        SpeedFile = open(os.path.join(output_dir, FPS_FILE), "w")
         print(fps, file=SpeedFile)
         SpeedFile.close()
     

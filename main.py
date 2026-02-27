@@ -46,6 +46,7 @@ BottomMargin = None
 LeftMargin = None
 RightMargin = None
 AttractEnable = False   # Enable attract mode
+SkipCount=1             # How many frames to skip to speed video
 
 ATTRACT_TIMEOUT = 300000 # 5 minutes = 300,000 milliseconds
 
@@ -1063,7 +1064,7 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         self.MinusButton.clicked.connect(self.MinusButtonClicked)
         self.PlusButton.clicked.connect(self.PlusButtonClicked)
 
-        self.Video = video.Video(app, self, VideoFile, IMAGE_DIR)
+        self.Video = video.Video(app, self, VideoFile, IMAGE_DIR, SkipCount)
 
         self.BrakeUi = brake_ui.BrakeUi(self)
 
@@ -1773,7 +1774,7 @@ def Usage():
     Tell user what to do
     """
     print("""Usage is:
-python3 main.py [-b<bottom>] [-t<top>] [-l<left>] [-r<right>] [-d] [-v] [-f] [-a]
+python3 main.py [-b<bottom>] [-t<top>] [-l<left>] [-r<right>] [-d] [-v] [-f] [-a] [-s<count>]
 
 Where
         -b <bottom> -- Set bottom margin
@@ -1784,12 +1785,13 @@ Where
         -v -- Verbose
         -f -- Start in full screen
         -a -- Enable attract mode
+        -s<count> -- Skip <count>-1 frames, then display 1 (faster video)
     """)
     sys.exit(8)
 
 if __name__ == "__main__":
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "b:t:l:r:dvfa")
+        opts, args = getopt.getopt(sys.argv[1:], "b:t:l:r:dvfas:")
     except getopt.GetoptError as err:
         # print help information and exit:
         print(err)  # will print something like "option -a not recognized"
@@ -1813,6 +1815,8 @@ if __name__ == "__main__":
             FullScreen = True
         elif Option == '-a':
             AttractEnable = True
+        elif Option == '-s':
+            SkipCount = int(Arg)
         else:
             print("unhandled option:", Option)
             Usage()

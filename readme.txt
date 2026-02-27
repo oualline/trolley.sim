@@ -76,7 +76,7 @@ Command Line
 ============
 
 Usage:
-    <program> [-b<bottom>] [-t<top>] [-l<left>] [-r<right>] [-d] [-v] [-f] [-a]
+    <program> [-b<bottom>] [-t<top>] [-l<left>] [-r<right>] [-d] [-v] [-f] [-a] [-s<skip>]
 
     Where
 	    -b <bottom> -- Set bottom margin
@@ -87,6 +87,12 @@ Usage:
 	    -v -- Verbose
 	    -f -- Start in full screen
 	    -a -- Enable attract mode
+	    -s<skip> -- Number of frames to skip when displaying frames
+		1 -- Display every frame
+		2 -- Display every other frame
+		3 -- Display every third frame
+		and so on.
+		(For slow systems)
 
 License
 =======

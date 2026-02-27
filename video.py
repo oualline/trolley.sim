@@ -22,9 +22,11 @@ from PyQt5.QtCore import Qt
 import state
 import frames_ui
 import video_to_frames
+from line_profiler import profile
 
 class Video:
-    def __init__(self, app, MainWindow, VideoFile, ImageDirectory):
+    @profile
+    def __init__(self, app, MainWindow, VideoFile, ImageDirectory, SkipCount):
         """
         Create video player
 
@@ -39,15 +41,26 @@ class Video:
         self.ImageDirectory = ImageDirectory
         self.ImageLabel = MainWindow.VideoFrame
 
-        self.LoadImages()
-        if (len(self.ImageFiles) == 0):
+        FullFpsFile = os.path.join(self.ImageDirectory, video_to_frames.FPS_FILE)
+        NeedRebuild = False
+        if (not os.path.isfile(FullFpsFile)):
+            NeedRebuild = True
+        else:
+            if os.path.getmtime(FullFpsFile) < os.path.getmtime(self.VideoFile):
+                NeedRebuild = True
+
+        if (not NeedRebuild):
+            self.LoadImages()
+        if (NeedRebuild or len(self.ImageFiles) == 0):
             self.ExtractImages()
             self.LoadImages()
             if (len(self.ImageFiles) == 0):
                 print("FATAL ERROR: Unable to get video files")
                 sys.exit(8)
+        self.SkipCount = SkipCount
         self.Reset()
 
+    @profile
     def CallBack(self, Code, Message):
         """
         Called when extracting frames
@@ -64,6 +77,7 @@ class Video:
         else:
             print("INTERNAL ERROR: Illegal callback code:", Code)
 
+    @profile
     def ExtractImages(self):
         """
         Extract the frames from the video
@@ -80,12 +94,19 @@ class Video:
         video_to_frames.extract_frames(self.VideoFile, self.ImageDirectory, self.CallBack)
         self.ProgressDialog.hide()
 
+    @profile
     def LoadImages(self):
         """
         Load the image names into the system
         """
-        # Find all files matching the pattern frame_XXXX.png
-        Pattern = os.path.join(self.ImageDirectory, 'frame_*.png')
+        FpsFile = open(os.path.join(self.ImageDirectory, video_to_frames.FPS_FILE), "r")
+        Line = FpsFile.readline()
+        if (Line == ''):
+            self.ImageFiles = []
+            return
+        self.BaseFps = float(Line.strip())               # Get the video speed
+        # Find all files matching the pattern frame_XXXX.bmp
+        Pattern = os.path.join(self.ImageDirectory, 'frame_*.bmp')
         Files = glob.glob(Pattern)
         
         # Sort files to ensure correct order
@@ -94,9 +115,9 @@ class Video:
         self.FrameTimer = QtCore.QTimer()
         self.FrameTimer.timeout.connect(self.NextFrame)
         
-        self.BaseFps = 25               # Make sure this matches the video
         self.SpeedMultiplier = 1.0
 
+    @profile
     def NextFrame(self):
         """
         Display the next frame
@@ -110,17 +131,23 @@ class Video:
 
                 # Calculate interval in milliseconds
                 # interval = 1000ms / (fps * speed_multiplier)
-                Interval = int(1000 / (self.BaseFps * self.Rate))
+                Interval = int((1000.0 / (self.BaseFps * self.Rate)))
                 self.FrameTimer.setInterval(Interval)
             else:
                 state.Log("Ran out of video")
                 self.FrameTimer.stop()
 
+    @profile
     def ShowCurrentFrame(self):
         """Display the current frame"""
         # If the system has not initilized things
         if (self.ImageLabel.width() == 100):
             return
+
+        # Do we need to skip some frames
+        if ((self.CurrentFrame % self.SkipCount) != 0):
+            return
+
         if self.ImageFiles and 0 <= self.CurrentFrame < len(self.ImageFiles):
             Pixmap = QPixmap(self.ImageFiles[self.CurrentFrame])
             
@@ -134,6 +161,7 @@ class Video:
             self.ImageLabel.setPixmap(ScaledPixmap)
             #self.ImageLabel.setPixmap(Pixmap)
 
+    @profile
     def Reset(self):
         """
         Reset the video
@@ -142,6 +170,7 @@ class Video:
         self.CurrentFrame = 0
         self.ShowCurrentFrame()
 
+    @profile
     def SetRate(self, Rate):
         """
         Tell video player we are going at a different speed.
@@ -168,6 +197,7 @@ class Video:
 
                 self.NextFrame()
 
+    @profile
     def GetPosition(self):
         """
         Return the position of the video as a fraction of the total video
