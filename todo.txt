@@ -2,7 +2,7 @@ Enhancements:
 1. Then do you want video help
 2. Find out what ddls needed and remove all others
 3. QT6
-4. use QT MediaPlayer
+4. use QT MediaPlayer????
 6. New video
 
 Bugs
@@ -14,5 +14,3 @@ Bugs
 5. Easy mode video rework
 6. Start/stop mode video rework
 7. Full mode video rework
-
-

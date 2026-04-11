@@ -33,6 +33,7 @@ clean:
 	rm -rf frames
 	rm -rf venv
 	rm -rf .DS_Store ._.DS_Store
+	rm -f trolley.zip
 
 linux: $(GENERATED) $(HELP)
 	pyinstaller trolley-linux.spec
