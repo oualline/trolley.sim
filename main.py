@@ -416,9 +416,7 @@ class EasyMode:
             state.Log("Deadman is not set")
             state.State.Speed = 0.0
             MainWindow.Video.SetRate(0.0)
-            print("## Before ErrorDeadman")
             MainWindow.ErrorDeadman()
-            print("## After ErrorDeadman")
             MainWindow.MainReset()
             return
 
