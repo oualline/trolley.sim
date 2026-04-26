@@ -49,6 +49,7 @@ AttractEnable = False   # Enable attract mode
 SkipCount=1             # How many frames to skip to speed video
 
 ATTRACT_TIMEOUT = 300000 # 5 minutes = 300,000 milliseconds
+ERROR_TIMEOUT = 60*1000 # Number of seconds for timeout
 
 VideoFile = os.path.join("video", "trolley.m4v")
 
@@ -1141,9 +1142,18 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         if self.AttractMouseListener is None:
             # Create listener with callbacks for click and move events
             self.AttractMouseListener = pynput.mouse.Listener(
-                on_click=self.OnMouseClick
+                on_click=self.OnMouseClick, on_move = self.OnMove
             )
             self.AttractMouseListener.start()
+
+    def OnMove(self, X, Y):
+        if self.AttractIsPlayingVideo:
+            # Any mouse movement stops the video
+            # Use QTimer.singleShot to ensure stop_video runs in Qt's main thread
+            # Reference: https://doc.qt.io/qt-6/qtimer.html#singleShot
+            QtCore.QTimer.singleShot(0, self.StopAttractVideo)
+            return False  # Stop the listener
+        return True
 
     def OnMouseClick(self, X, Y, Button, Pressed):
         """
@@ -1383,6 +1393,36 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         """
         self.SetRun(state.State.RunLevel-1)
 
+    def ShowErrorMessage(self, icon, title, text, informative_text, button_text="OK"):
+        """
+        Display an error message that automatically closes after 60 seconds.
+        
+        :param icon: QMessageBox icon (e.g., QMessageBox.Critical)
+        :param title: Window title
+        :param text: Main message text
+        :param informative_text: Detailed informative text
+        :param button_text: Text for the OK button
+        """
+        MessageBox = QMessageBox(self)
+        MessageBox.setIcon(icon)
+        MessageBox.setText(text)
+        MessageBox.setWindowTitle(title)
+        MessageBox.setInformativeText(informative_text)
+        MessageBox.setStandardButtons(QMessageBox.Ok)
+        ButtonOk = MessageBox.button(QMessageBox.Ok)
+        ButtonOk.setText(button_text)
+        
+        # Create a timer to auto-close the dialog after 60 seconds (60000 milliseconds)
+        timer = QtCore.QTimer()
+        timer.setSingleShot(True)
+        timer.timeout.connect(MessageBox.accept)
+        timer.start(ERROR_TIMEOUT)  # 60 seconds
+        
+        # Show the dialog and clean up the timer when done
+        result = MessageBox.exec()
+        timer.stop()
+        return result
+
 
     def SetSimulatorMode(self):
         """
@@ -1496,11 +1536,11 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         You tried to run without setting the deadman
         """
         state.Log("ErrorDeadman")
-        MessageBox = QMessageBox()
-        MessageBox.setIcon(QMessageBox.Critical)
-        MessageBox.setText("<H1 ALIGN=\"CENTER\"><B>Deadman not engaged</B></H1>")
-        MessageBox.setWindowTitle("Deadman not engaged")
-        MessageBox.setInformativeText("""<HTML>
+        self.ShowErrorMessage(
+            QMessageBox.Critical,
+            "Deadman not engaged",
+            "<H1 ALIGN=\"CENTER\"><B>Deadman not engaged</B></H1>",
+            """<HTML>
 <BODY>
 <P>
 The deadman must be pressed (or clicked) 
@@ -1514,12 +1554,9 @@ The deadman is located in the lower left corner.
 <TR><TD><IMG SRC="image/dead-off.png" height="100"></TD><TD><IMG SRC="image/dead-on.png" height=100></TD></TR>
 <TR><TD>Wrong</TD><TD>Right</TD></TR>
 </TABLE>
-""")
-        MessageBox.setTextFormat(Qt.RichText)
-        MessageBox.setStandardButtons(QMessageBox.Ok)
-        ButtonOk = MessageBox.button(QMessageBox.Ok)
-        ButtonOk.setText("Restart")
-        ReturnValue = MessageBox.exec()
+""",
+            "Restart"
+        )
 
     def SetDirection(self, Direction):
         """
@@ -1581,121 +1618,107 @@ Press "Restart" to start another run""")
         Display the error message indicating that we exceeded the run limit
         """
         self.ErrorStart()
-        MessageBox = QMessageBox()
-        MessageBox.setIcon(QMessageBox.Critical)
-        MessageBox.setText("<H1 ALIGN=\"CENTER\"><B>Speed limit exceeded</B></H1>")
-        MessageBox.setWindowTitle("Speed Limit Exceeded")
-        MessageBox.setInformativeText("""This is not a high speed trolley.
+        self.ShowErrorMessage(
+            QMessageBox.Critical,
+            "Speed Limit Exceeded",
+            "<H1 ALIGN=\"CENTER\"><B>Speed limit exceeded</B></H1>",
+            """This is not a high speed trolley.
 The loop line speed limit is 15mph.
 It is not possible to use the controller at settings "Run-4" or above
 
-Please try again, only slower""")
-        MessageBox.setStandardButtons(QMessageBox.Ok)
-        ButtonOk = MessageBox.button(QMessageBox.Ok)
-        ButtonOk.setText("Restart")
-        ReturnValue = MessageBox.exec()
+Please try again, only slower""",
+            "Restart"
+        )
 
     def ErrorRunTooLong(self):
         """
         Display the error message when we stay in a run_x too long
         """
         self.ErrorStart()
-        MessageBox = QMessageBox()
-        MessageBox.setIcon(QMessageBox.Critical)
-        MessageBox.setText("<H1 ALIGN=\"CENTER\"><B>Overheated Resisters</B></H1>")
-        MessageBox.setWindowTitle("Overheated Resisters")
-        MessageBox.setInformativeText("""You stayed in Run-%d too long.
+        self.ShowErrorMessage(
+            QMessageBox.Critical,
+            "Overheated Resisters",
+            "<H1 ALIGN=\"CENTER\"><B>Overheated Resisters</B></H1>",
+            """You stayed in Run-%d too long.
 
 The resister pack overheated.  
 
 You can only stay in Run-%d for %d seconds.
-""" % (state.State.RunLevel, state.State.RunLevel, MAX_RUN_TIME))
-        MessageBox.setStandardButtons(QMessageBox.Ok)
-        ButtonOk = MessageBox.button(QMessageBox.Ok)
-        ButtonOk.setText("OK")
-        ReturnValue = MessageBox.exec()
+""" % (state.State.RunLevel, state.State.RunLevel, MAX_RUN_TIME),
+            "OK"
+        )
 
     def ErrorRunTooLongDown(self):
         """
         Display the error message when we stay in a run_x too long on the way down
         """
         self.ErrorStart()
-        MessageBox = QMessageBox()
-        MessageBox.setIcon(QMessageBox.Critical)
-        MessageBox.setText("<H1 ALIGN=\"CENTER\"><B>Electrical Overload</B></H1>")
-        MessageBox.setWindowTitle("Electrical Overload")
-        MessageBox.setInformativeText("""Going from Run-x to idle should be done
+        self.ShowErrorMessage(
+            QMessageBox.Critical,
+            "Electrical Overload",
+            "<H1 ALIGN=\"CENTER\"><B>Electrical Overload</B></H1>",
+            """Going from Run-x to idle should be done
 as quickly as possible.   Failure to do so causes the motors to act as
 generators and create feedback which can damage the trolley.
 
 So slam that controller back to idle and avoid this problem.
-""")
-        MessageBox.setStandardButtons(QMessageBox.Ok)
-        ButtonOk = MessageBox.button(QMessageBox.Ok)
-        ButtonOk.setText("OK")
-        ReturnValue = MessageBox.exec()
+""",
+            "OK"
+        )
 
     def ErrorNoForward(self):
         """
         Display the error message we should be in forward before starting
         """
         self.ErrorStart()
-        MessageBox = QMessageBox()
-        MessageBox.setIcon(QMessageBox.Critical)
-        MessageBox.setText("<H1 ALIGN=\"CENTER\"><B>Reverser not set</B></H1>")
-        MessageBox.setWindowTitle("Reverser not set")
-        MessageBox.setInformativeText("""You must select "Forward" on the reverser
+        self.ShowErrorMessage(
+            QMessageBox.Critical,
+            "Reverser not set",
+            "<H1 ALIGN=\"CENTER\"><B>Reverser not set</B></H1>",
+            """You must select "Forward" on the reverser
 before moving.
 
 Controller has been reset to Run-0
 
-Please set direction and try again.""")
-        MessageBox.setStandardButtons(QMessageBox.Ok)
-        ButtonOk = MessageBox.button(QMessageBox.Ok)
-        ButtonOk.setText("OK")
-        ReturnValue = MessageBox.exec()
+Please set direction and try again.""",
+            "OK"
+        )
 
     def ErrorMoveWithBrakesOn(self):
         """
         Display the error message indicating that you can't run with the brakes on
         """
         self.ErrorStart()
-
-        MessageBox = QMessageBox()
-        MessageBox.setIcon(QMessageBox.Critical)
-        MessageBox.setText("<H1 ALIGN=\"CENTER\"><B>Attempt to move with brakes set</B></H1>")
-        MessageBox.setWindowTitle("Move with brakes on")
-        MessageBox.setInformativeText("""The brakes and the motor should never be on at the same time.
+        self.ShowErrorMessage(
+            QMessageBox.Critical,
+            "Move with brakes on",
+            "<H1 ALIGN=\"CENTER\"><B>Attempt to move with brakes set</B></H1>",
+            """The brakes and the motor should never be on at the same time.
 
 Set the controller to "Run-0" before applying the brakes.
 Release the brakes before entering "Run-1".
 
 Simulation will now reset.
-""")
-        MessageBox.setStandardButtons(QMessageBox.Ok)
-        ButtonOk = MessageBox.button(QMessageBox.Ok)
-        ButtonOk.setText("OK")
-        ReturnValue = MessageBox.exec()
+""",
+            "OK"
+        )
 
     def ErrorReverserMoved(self):
         """
         Display the error message indicating the reverser moved while car in motion
         """
         self.ErrorStart()
-
-        MessageBox = QMessageBox()
-        MessageBox.setIcon(QMessageBox.Critical)
-        MessageBox.setText("<H1 ALIGN=\"CENTER\"><B>Reverser moved while car in motion</B></H1>")
-        MessageBox.setWindowTitle("Reverser move while car in motion")
-        MessageBox.setInformativeText("""You cannot change the reverser while the trolley is in motion.
+        self.ShowErrorMessage(
+            QMessageBox.Critical,
+            "Reverser move while car in motion",
+            "<H1 ALIGN=\"CENTER\"><B>Reverser moved while car in motion</B></H1>",
+            """You cannot change the reverser while the trolley is in motion.
 
 Reverser has been returned to "Forward"
 
-Press OK to continue""")
-        MessageBox.setStandardButtons(QMessageBox.Ok)
-        ButtonOk = MessageBox.button(QMessageBox.Ok)
-        ButtonOk.setText("OK")
-        ReturnValue = MessageBox.exec()
+Press OK to continue""",
+            "OK"
+        )
 
     def SetRun(self, Level):
         """
