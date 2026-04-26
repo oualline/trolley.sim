@@ -1,4 +1,3 @@
-import cProfile
 #
 # Copyright 2024 by Steve Oualline
 # Licensed under the GNU Public License (GPL)
@@ -21,6 +20,7 @@ import threading
 import time
 import webbrowser
 import pynput
+from pynput.mouse import Listener
 
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import ( QApplication, QDialog, QMainWindow, QMessageBox )
@@ -416,7 +416,9 @@ class EasyMode:
             state.Log("Deadman is not set")
             state.State.Speed = 0.0
             MainWindow.Video.SetRate(0.0)
+            print("## Before ErrorDeadman")
             MainWindow.ErrorDeadman()
+            print("## After ErrorDeadman")
             MainWindow.MainReset()
             return
 
@@ -1396,6 +1398,7 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
     def ShowErrorMessage(self, icon, title, text, informative_text, button_text="OK"):
         """
         Display an error message that automatically closes after 60 seconds.
+        Any mouse click will close the dialog (click is consumed and doesn't propagate).
         
         :param icon: QMessageBox icon (e.g., QMessageBox.Critical)
         :param title: Window title
@@ -1418,9 +1421,34 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         timer.timeout.connect(MessageBox.accept)
         timer.start(ERROR_TIMEOUT)  # 60 seconds
         
-        # Show the dialog and clean up the timer when done
+        # Create a mouse listener to close dialog on any click
+        mouse_listener = None
+        dialog_closed = [False]  # Use list to allow modification in nested function
+        
+        def on_click(x, y, button, pressed):
+            """Callback when mouse is clicked - close dialog on any click and consume the event"""
+            if pressed and not dialog_closed[0]:  # Only on press, not release
+                dialog_closed[0] = True
+                MessageBox.accept()
+                # Return False to stop the listener and consume the click
+                return False
+            return True
+        
+        # Start the mouse listener
+        mouse_listener = Listener(on_click=on_click)
+        mouse_listener.start()
+        
+        # Show the dialog and clean up when done
         result = MessageBox.exec()
         timer.stop()
+        
+        # Ensure mouse listener is stopped
+        if mouse_listener:
+            try:
+                mouse_listener.stop()
+            except:
+                pass
+        
         return result
 
 
