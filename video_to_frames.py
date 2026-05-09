@@ -32,14 +32,21 @@ from pathlib import Path
 
 FPS_FILE="fps.txt"      # Where we put the fps
 
-def extract_frames(video_source, output_dir="frames", Callback=None, frame_prefix="frame", skip_frames=0):
+def SetFPS(Prefix):
+    """
+    Set the name of the FPS_FILE based on prefix
+    """
+    global FPS_FILE
+    FPS_FILE = f"{Prefix}.fps.txt"
+
+def extract_frames(video_source, output_dir="frames", Callback=None, Prefix="generic", skip_frames=0):
     """
     Extract frames from a video stream and save as PNG files.
     
     Args:
         video_source: Path to video file or camera index (0 for default webcam)
         output_dir: Directory to save frames
-        frame_prefix: Prefix for frame filenames
+        Prefix: Prefix for frame filenames
         skip_frames: Number of frames to skip between saves (0 = save all frames)
     """
     # Create output directory if it doesn't exist
@@ -105,7 +112,7 @@ def extract_frames(video_source, output_dir="frames", Callback=None, frame_prefi
             # Save frame if it's time (based on skip_frames)
             if frame_count % (skip_frames + 1) == 0:
                 # Generate filename with zero-padded number
-                filename = f"{frame_prefix}_{saved_count:06d}.bmp"
+                filename = f"{Prefix}.frame_{saved_count:06d}.bmp"
                 filepath = os.path.join(output_dir, filename)
                 
                 # API: cv2.imwrite(filename, img, [params])

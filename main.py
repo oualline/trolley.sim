@@ -1065,7 +1065,8 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         self.MinusButton.clicked.connect(self.MinusButtonClicked)
         self.PlusButton.clicked.connect(self.PlusButtonClicked)
 
-        self.Video = video.Video(app, self, VideoFile, IMAGE_DIR, SkipCount)
+        ##@@ Use mode prefix here
+        self.Video = video.Video(app, self, VideoFile, "scrm", IMAGE_DIR, SkipCount)
 
         self.BrakeUi = brake_ui.BrakeUi(self)
 

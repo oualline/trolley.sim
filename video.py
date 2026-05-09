@@ -224,7 +224,7 @@ def frame_loader_proc(
 
 
 class Video:
-    def __init__(self, app, MainWindow, VideoFile, ImageDirectory, SkipCount):
+    def __init__(self, app, MainWindow, VideoFile, Prefix, ImageDirectory, SkipCount):
         """
         Create video player
 
@@ -236,9 +236,11 @@ class Video:
         """
         self.app = app
         self.VideoFile = VideoFile
+        self.Prefix = Prefix
         self.ImageDirectory = ImageDirectory
         self.ImageLabel = MainWindow.VideoFrame
 
+        video_to_frames.SetFPS(Prefix)
         FullFpsFile = os.path.join(self.ImageDirectory, video_to_frames.FPS_FILE)
         NeedRebuild = False
         if (not os.path.isfile(FullFpsFile)):
@@ -287,7 +289,7 @@ class Video:
         self.ProgressDialog.raise_()
         self.ProgressDialog.activateWindow()
         self.app.processEvents()
-        video_to_frames.extract_frames(self.VideoFile, self.ImageDirectory, self.CallBack)
+        video_to_frames.extract_frames(self.VideoFile, self.ImageDirectory, self.CallBack, self.Prefix)
         self.ProgressDialog.hide()
 
     def StartBackgroundProcess(self):
@@ -360,7 +362,7 @@ class Video:
             return
         self.BaseFps = float(Line.strip())               # Get the video speed
         # Find all files matching the pattern frame_XXXX.bmp
-        Pattern = os.path.join(self.ImageDirectory, 'frame_*.bmp')
+        Pattern = os.path.join(self.ImageDirectory, f'{self.Prefix}.frame_*.bmp')
         Files = glob.glob(Pattern)
         
         # Sort files to ensure correct order
