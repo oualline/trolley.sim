@@ -1120,6 +1120,43 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
             self.AttrictVideoCheckTimer = QtCore.QTimer()
             self.AttrictVideoCheckTimer.timeout.connect(self.AttractCheckVideoStatus)
 
+    def resizeEvent(self, event) -> None:
+        """
+        Notify the worker process of the label's new pixel dimensions by
+        writing into the shared ``_shared_w`` / ``_shared_h`` Values.
+
+        Qt calls this method after the layout engine has already recalculated
+        all child widget sizes, so ``self.video_label.size()`` returns the
+        correct new dimensions at the time this method runs.
+
+        The worker reads ``shared_w.value`` and ``shared_h.value`` at the top
+        of its loop, so the very next frame it processes after this write will
+        be scaled to the new size.
+
+        Frames already sitting in the queue were scaled to the previous size
+        and are displayed as-is (centred by Qt.AlignCenter).
+
+        Parameters
+        ----------
+        event : QResizeEvent
+            Carries the old and new window sizes; passed to super() so that
+            Qt's internal resize handling (layout recalculation, repainting)
+            runs normally.
+            https://doc.qt.io/qt-5/qresizeevent.html
+
+        Overrides
+        ---------
+        QWidget.resizeEvent:
+            https://doc.qt.io/qt-5/qwidget.html#resizeEvent
+        """
+        # Always call the base-class implementation first so Qt can finish its
+        # own resize bookkeeping before we read the new label size.
+        # https://doc.qt.io/qt-5/qwidget.html#resizeEvent
+        super().resizeEvent(event)
+        VideoSize = self.VideoFrame.size()
+        self.Video.SharedWidth.value = VideoSize.width()
+        self.Video.SharedHeight.value = VideoSize.height()
+
     def mousePressEvent(self, event):
         """
         Called when a mouse event occurs

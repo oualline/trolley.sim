@@ -317,8 +317,8 @@ class Video:
         # We use native_w/native_h here; the layout engine may adjust the
         # label slightly before the first frame, but that causes at most one
         # or two frames at a slightly wrong size — acceptable.
-        self._shared_w = multiprocessing.Value('i', self.native_w)
-        self._shared_h = multiprocessing.Value('i', self.native_h)
+        self.SharedWidth = multiprocessing.Value('i', self.native_w)
+        self.SharedHeight = multiprocessing.Value('i', self.native_h)
 
         # -------------------------------------------------------------------
         # Multiprocessing queue and stop event
@@ -340,8 +340,8 @@ class Video:
             target=frame_loader_proc,
             args=(
                 self.ImageFiles,                 # plain strings – picklable
-                self._shared_w,                  # shared target width
-                self._shared_h,                  # shared target height
+                self.SharedWidth,                # shared target width
+                self.SharedHeight,               # shared target height
                 self._frame_queue,
                 self._stop_event,
             ),
