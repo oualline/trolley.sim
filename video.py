@@ -71,12 +71,13 @@ import os
 import glob
 import sys
 import multiprocessing
+import queue
 
 from PIL import Image  # Pillow – https://pillow.readthedocs.io/en/stable/
 
-from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtGui import QBrush, QPen, QFont, QPixmap, QPainter, QImage
-from PyQt5.QtCore import Qt
+from PyQt6 import QtWidgets, QtCore
+from PyQt6.QtGui import QBrush, QPen, QFont, QPixmap, QPainter, QImage
+from PyQt6.QtCore import Qt
 
 import state
 import frames_ui
@@ -423,7 +424,7 @@ class Video:
             # Format_RGB888: packed 24-bit RGB, no alpha.
             # https://doc.qt.io/qt-5/qimage.html#QImage-8
             # https://doc.qt.io/qt-5/qimage.html#Format-enum
-            img = QImage(raw_bytes, w, h, w * 3, QImage.Format_RGB888)
+            img = QImage(raw_bytes, w, h, w * 3, QImage.Format.Format_RGB888)
 
             #
             self.ImageLabel.setPixmap(QPixmap.fromImage(img))

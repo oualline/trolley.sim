@@ -63,7 +63,7 @@ def Log(Message):
         if platform.system() == "Linux": # for Linux using the X Server
             LogFile = open("/tmp/trolley.log", "a", buffering=1)
         elif platform.system() == "Windows": # for Windows
-            if (os.environ["TEMP"] != None):
+            if "TEMP" in os.environ:
                 LogFile = open(os.path.join(os.environ["TEMP"], "trolley.log"), "a", buffering=1)
             else:
                 print("ERROR: No 'TEMP' environment variable")

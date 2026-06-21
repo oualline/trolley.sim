@@ -13,16 +13,16 @@ PlaySound = None        # The sound playing class (singleton)
 # List of sounds
 # Must match SoundFiles below
 class SoundEnum(enum.IntEnum):
-    BELL = 0,
-    NOT_USED1 = 1,
-    NOT_USED2 = 2,
-    APPLY = 3,
-    EMERGENCY = 4,
-    PUMP_UP = 5,
-    RELEASE = 6,
-    NOT_USED3 = 7,
-    CLICK_CLACK = 8,
-    CENTRAL_BELL = 9,
+    BELL = 0
+    NOT_USED1 = 1
+    NOT_USED2 = 2
+    APPLY = 3
+    EMERGENCY = 4
+    PUMP_UP = 5
+    RELEASE = 6
+    NOT_USED3 = 7
+    CLICK_CLACK = 8
+    CENTRAL_BELL = 9
     ZORCH = 10
 
 class PlaySoundClass:

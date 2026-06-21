@@ -18,13 +18,13 @@ help.pdf: help.odt
 	libreoffice --headless --convert-to pdf  help.odt
 
 sim_ui4.py: sim_ui4.ui
-	pyuic5 -o sim_ui4.py sim_ui4.ui
+	pyuic6 -o sim_ui4.py sim_ui4.ui
 
 frames_ui.py: frames_ui.ui
-	pyuic5 -o frames_ui.py frames_ui.ui
+	pyuic6 -o frames_ui.py frames_ui.ui
 
 mode_window.py: mode_window.ui
-	pyuic5 -o mode_window.py mode_window.ui
+	pyuic6 -o mode_window.py mode_window.ui
 
 clean: 
 	rm -f sim_ui4.py mode_window.py frames_ui.py
@@ -43,7 +43,7 @@ windows: $(GENERATED) $(HELP)
 	pyinstaller -y trolley-windows.spec
 
 macos: $(GENERATED) $(HELP)
-	if [ x$$VIRTUAL_ENV_PROMPT == x ] ; then echo "Must be inside the venv."; echo "source ~/venv/bin/activate";exit 8; fi
+	if [ "$$VIRTUAL_ENV" == "" ] ; then echo "Must be inside the venv."; echo "source ~/venv/bin/activate";exit 8; fi
 	pyinstaller --workpath build.macos -y trolley-macos.spec
 	chmod a+x dist/trolley-macos
 

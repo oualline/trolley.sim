@@ -21,11 +21,22 @@ tuning parameters in this code and send them to me.
 3. Zorch sound is not authentic.  But the real one is to subtle for 
 this video game.
 
-Know bugs:
+4. Video playing still needs work.
 
-1. MacOS you get the error:
-Unable to create basic Accelerated OpenGL renderer.
-Core Image is now using the software OpenGL renderer. This will be slow.
 
-2. When an error occurs, the video does not rewind to the start properly.
+Enhancements:
+`
+1. Click to dissmiss attract then ask "do you want video help"
+2. Find out what ddls needed and remove all others
+3. use mvp
+4. New video
 
+Bugs
+
+1. Need to allow to stop at store
+2. Full mode, problem list
+3. Full mode, congradulations when complete
+4. Help rework
+5. Easy mode video rework
+6. Start/stop mode video rework
+7. Full mode video rework

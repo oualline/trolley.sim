@@ -22,12 +22,12 @@ import webbrowser
 import pynput
 from pynput.mouse import Listener
 
-from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtWidgets import ( QApplication, QDialog, QMainWindow, QMessageBox )
-from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsEllipseItem, QGraphicsRectItem, QGraphicsLineItem, QGraphicsTextItem
-from PyQt5.QtCore import Qt, pyqtSignal, QThread, QPointF, QEvent, QUrl, QRect
-from PyQt5.QtGui import QMouseEvent
-from PyQt5.QtGui import QBrush, QPen, QFont, QPixmap, QPainter
+from PyQt6 import QtWidgets, QtCore
+from PyQt6.QtWidgets import ( QApplication, QDialog, QMainWindow, QMessageBox )
+from PyQt6.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsEllipseItem, QGraphicsRectItem, QGraphicsLineItem, QGraphicsTextItem
+from PyQt6.QtCore import Qt, pyqtSignal, QThread, QPointF, QEvent, QUrl, QRect
+from PyQt6.QtGui import QMouseEvent
+from PyQt6.QtGui import QBrush, QPen, QFont, QPixmap, QPainter
 
 import mode_window
 import sim_ui4
@@ -1016,8 +1016,8 @@ class BrakeGraphics():
         """
         CENTER_X = 129  # Center of the image
         CENTER_Y = 53   # Center of the Y image
-        x = Event.x()
-        y = Event.y()
+        x = int(Event.position().x())
+        y = int(Event.position().y())
         ClosestDelta = 9999
 
         for Index in range(len(self.BRAKE_STATE)):
@@ -1436,7 +1436,7 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         Display an error message that automatically closes after 60 seconds.
         Any mouse click will close the dialog (click is consumed and doesn't propagate).
         
-        :param icon: QMessageBox icon (e.g., QMessageBox.Critical)
+        :param icon: QMessageBox icon (e.g., QMessageBox.Icon.Critical)
         :param title: Window title
         :param text: Main message text
         :param informative_text: Detailed informative text
@@ -1447,8 +1447,8 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         MessageBox.setText(text)
         MessageBox.setWindowTitle(title)
         MessageBox.setInformativeText(informative_text)
-        MessageBox.setStandardButtons(QMessageBox.Ok)
-        ButtonOk = MessageBox.button(QMessageBox.Ok)
+        MessageBox.setStandardButtons(QMessageBox.StandardButton.Ok)
+        ButtonOk = MessageBox.button(QMessageBox.StandardButton.Ok)
         ButtonOk.setText(button_text)
         
         # Create a timer to auto-close the dialog after 60 seconds (60000 milliseconds)
@@ -1583,15 +1583,15 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         if (len(self.WarningList) == 0):
             return
         MessageBox = QMessageBox()
-        MessageBox.setIcon(QMessageBox.Critical)
+        MessageBox.setIcon(QMessageBox.Icon.Critical)
         MessageBox.setText("<H1 ALIGN=\"CENTER\"><B>You made some mistakes</B></H1>")
         MessageBox.setWindowTitle("Warnings")
         Message = "Warning:\n"
         for Index in range(len(self.WarningList)):
             Message += "%2d: %s\n" % (Index+1, self.WarningList[Index])
         MessageBox.setInformativeText(Message)
-        MessageBox.setStandardButtons(QMessageBox.Ok)
-        ButtonOk = MessageBox.button(QMessageBox.Ok)
+        MessageBox.setStandardButtons(QMessageBox.StandardButton.Ok)
+        ButtonOk = MessageBox.button(QMessageBox.StandardButton.Ok)
         ButtonOk.setText("Continue")
         ReturnValue = MessageBox.exec()
 
@@ -1601,7 +1601,7 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         """
         state.Log("ErrorDeadman")
         self.ShowErrorMessage(
-            QMessageBox.Critical,
+            QMessageBox.Icon.Critical,
             "Deadman not engaged",
             "<H1 ALIGN=\"CENTER\"><B>Deadman not engaged</B></H1>",
             """<HTML>
@@ -1640,14 +1640,14 @@ The deadman is located in the lower left corner.
         Display the information message that you completed the course
         """
         MessageBox = QMessageBox()
-        MessageBox.setIcon(QMessageBox.Information)
+        MessageBox.setIcon(QMessageBox.Icon.Information)
         MessageBox.setText("<H1 ALIGN=\"CENTER\"><B>Congratulations: The run is complete</B></H1>")
         MessageBox.setWindowTitle("Finished")
         MessageBox.setInformativeText("""You've made it around the loop.
 
 Press "Restart" to start another run""")
-        MessageBox.setStandardButtons(QMessageBox.Ok)
-        ButtonOk = MessageBox.button(QMessageBox.Ok)
+        MessageBox.setStandardButtons(QMessageBox.StandardButton.Ok)
+        ButtonOk = MessageBox.button(QMessageBox.StandardButton.Ok)
         ButtonOk.setText("Restart")
         ReturnValue = MessageBox.exec()
 
@@ -1656,15 +1656,15 @@ Press "Restart" to start another run""")
         The player stopped at the correct position at the store
         """
         MessageBox = QMessageBox()
-        MessageBox.setIcon(QMessageBox.Information)
+        MessageBox.setIcon(QMessageBox.Icon.Information)
         MessageBox.setText("<H1 ALIGN=\"CENTER\"><B>Congratulations: The run is complete</B></H1>")
         MessageBox.setWindowTitle("Finished")
         MessageBox.setInformativeText("""You've made it around the loop.
 
 And you stopped back at the store.
 Press "Restart" to start another run""")
-        MessageBox.setStandardButtons(QMessageBox.Ok)
-        ButtonOk = MessageBox.button(QMessageBox.Ok)
+        MessageBox.setStandardButtons(QMessageBox.StandardButton.Ok)
+        ButtonOk = MessageBox.button(QMessageBox.StandardButton.Ok)
         ButtonOk.setText("Restart")
         ReturnValue = MessageBox.exec()
 
@@ -1683,7 +1683,7 @@ Press "Restart" to start another run""")
         """
         self.ErrorStart()
         self.ShowErrorMessage(
-            QMessageBox.Critical,
+            QMessageBox.Icon.Critical,
             "Speed Limit Exceeded",
             "<H1 ALIGN=\"CENTER\"><B>Speed limit exceeded</B></H1>",
             """This is not a high speed trolley.
@@ -1700,7 +1700,7 @@ Please try again, only slower""",
         """
         self.ErrorStart()
         self.ShowErrorMessage(
-            QMessageBox.Critical,
+            QMessageBox.Icon.Critical,
             "Overheated Resisters",
             "<H1 ALIGN=\"CENTER\"><B>Overheated Resisters</B></H1>",
             """You stayed in Run-%d too long.
@@ -1718,7 +1718,7 @@ You can only stay in Run-%d for %d seconds.
         """
         self.ErrorStart()
         self.ShowErrorMessage(
-            QMessageBox.Critical,
+            QMessageBox.Icon.Critical,
             "Electrical Overload",
             "<H1 ALIGN=\"CENTER\"><B>Electrical Overload</B></H1>",
             """Going from Run-x to idle should be done
@@ -1736,7 +1736,7 @@ So slam that controller back to idle and avoid this problem.
         """
         self.ErrorStart()
         self.ShowErrorMessage(
-            QMessageBox.Critical,
+            QMessageBox.Icon.Critical,
             "Reverser not set",
             "<H1 ALIGN=\"CENTER\"><B>Reverser not set</B></H1>",
             """You must select "Forward" on the reverser
@@ -1754,7 +1754,7 @@ Please set direction and try again.""",
         """
         self.ErrorStart()
         self.ShowErrorMessage(
-            QMessageBox.Critical,
+            QMessageBox.Icon.Critical,
             "Move with brakes on",
             "<H1 ALIGN=\"CENTER\"><B>Attempt to move with brakes set</B></H1>",
             """The brakes and the motor should never be on at the same time.
@@ -1773,7 +1773,7 @@ Simulation will now reset.
         """
         self.ErrorStart()
         self.ShowErrorMessage(
-            QMessageBox.Critical,
+            QMessageBox.Icon.Critical,
             "Reverser move while car in motion",
             "<H1 ALIGN=\"CENTER\"><B>Reverser moved while car in motion</B></H1>",
             """You cannot change the reverser while the trolley is in motion.
@@ -1930,7 +1930,7 @@ if __name__ == "__main__":
 
     # this will remove minimized status
     # and restore window with keeping maximized/normal state
-    mainWindow.setWindowState(mainWindow.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
+    mainWindow.setWindowState(mainWindow.windowState() & ~QtCore.Qt.WindowState.WindowMinimized | QtCore.Qt.WindowState.WindowActive)
 
     # this will activate the window
     mainWindow.activateWindow()

@@ -49,7 +49,7 @@ install_python() {
             echo "Python $PYTHON_VERSION found (sufficient)"
             return 0
         else
-            echo "Python $PYTHON_VERSION is too old. Need 3.9+ for PyQt5 and PyObjC"
+            echo "Python $PYTHON_VERSION is too old. Need 3.9+ for PyQt6 and PyObjC"
         fi
     fi
     
@@ -104,12 +104,14 @@ install_python_deps() {
     echo "Upgrading pip..."
     python3 -m pip install --upgrade pip
     
-    # Install PyQt5 - pip will automatically use binary wheel if available
-    echo "Installing PyQt5 (using binary wheel)..."
-    pip install --only-binary :all: PyQt5 || pip install PyQt5
+    # Install PyQt6 - pip will automatically use binary wheel if available
+    echo "Installing PyQt6 (using binary wheel)..."
+    pip install --only-binary :all: PyQt6 || pip install PyQt6
     
     echo "Installing other dependencies..."
     pip install opencv-python playsound3 pynput pyinstaller
+    pip3 install Pillow
+
 
     echo "Python dependencies installed"
 }
