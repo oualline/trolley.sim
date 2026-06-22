@@ -125,11 +125,14 @@ class Video:
             self._pending_rate = Rate
             return
 
-        if Rate <= 0.0:
-            self.player.pause = True
-        else:
-            self.player.speed = Rate
-            self.player.pause = False
+        try:
+            if Rate <= 0.0:
+                self.player.pause = True
+            else:
+                self.player.speed = Rate
+                self.player.pause = False
+        except Exception:
+            pass
 
     def GetPosition(self):
         """
@@ -137,8 +140,11 @@ class Video:
         """
         if self.player is None:
             return 0.0
-        pos = self.player.time_pos
-        duration = self.player.duration
+        try:
+            pos = self.player.time_pos
+            duration = self.player.duration
+        except Exception:
+            return 0.0
         if pos is None or duration is None or duration == 0:
             return 0.0
         return min(1.0, pos / duration)
