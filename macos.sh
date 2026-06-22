@@ -97,21 +97,32 @@ setup_venv() {
     echo "Virtual environment Python: $VENV_VERSION"
 }
 
+install_mpv() {
+    echo "Checking mpv"
+
+    if command_exists mpv; then
+        echo "mpv already installed"
+        return 0
+    fi
+
+    echo "Installing mpv via Homebrew..."
+    brew install mpv
+    echo "mpv installed"
+}
+
 install_python_deps() {
     echo "Installing Python Dependencies"
-    
+
     # Ensure pip is up to date
     echo "Upgrading pip..."
     python3 -m pip install --upgrade pip
-    
+
     # Install PyQt6 - pip will automatically use binary wheel if available
     echo "Installing PyQt6 (using binary wheel)..."
     pip install --only-binary :all: PyQt6 || pip install PyQt6
-    
-    echo "Installing other dependencies..."
-    pip install opencv-python playsound3 pynput pyinstaller
-    pip3 install Pillow
 
+    echo "Installing other dependencies..."
+    pip install playsound3 pynput pyinstaller python-mpv
 
     echo "Python dependencies installed"
 }
@@ -124,6 +135,7 @@ echo ""
 
 install_homebrew
 install_python  # FIXED: was "install python" (typo)
+install_mpv
 setup_venv
 install_python_deps
 

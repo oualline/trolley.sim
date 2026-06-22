@@ -1,23 +1,26 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-
 a = Analysis(
-    ['brake_ui.py', 'controller.py', 'main.py', 'mode_window.py', 'sim_ui4.py', 'sound.py', 'state.py', 'video_player.py'],
+    ['brake_ui.py', 'controller.py', 'main.py', 'mode_window.py', 'sim_ui4.py', 'sound.py', 'state.py', 'video.py', 'video_player.py'],
     pathex=[],
     binaries=[
-	('image/*.png', 'image'),
-	('image/*.svg', 'image')
+        ('image/*.png', 'image'),
+        ('image/*.svg', 'image'),
+        # libmpv is loaded at runtime via ctypes; bundle the Homebrew library so
+        # the app runs on machines without mpv installed.
+        # Install mpv first: brew install mpv
+        # Then adjust the path below if needed (arm64 uses /opt/homebrew, x86 uses /usr/local).
+        ('/opt/homebrew/lib/libmpv.dylib', '.'),
     ],
     datas=[
-#	('splash.png', '.'),
-        ('mp3/*.mp3', '.'), 
-        ('video/trolley.m4v', 'video'), 
-        ('video/easy.mp4', 'video'), 
-        ('video/start-stop.mp4', 'video'), 
-        ('video/full.mp4', 'video'), 
+        ('mp3/*.mp3', '.'),
+        ('video/trolley.m4v', 'video'),
+        ('video/easy.mp4', 'video'),
+        ('video/start-stop.mp4', 'video'),
+        ('video/full.mp4', 'video'),
         ('help.pdf', '.')
     ],
-    hiddenimports=[],
+    hiddenimports=['mpv'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -41,7 +44,7 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,
     upx_exclude=[],
     runtime_tmpdir=None,
     console=False,

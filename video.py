@@ -4,6 +4,10 @@ Module to handle the playing of video using mpv.
 mpv is embedded directly into the VideoFrame Qt widget via its window ID,
 so no frame extraction or manual image display is needed.
 
+Initialisation is deferred until the first Qt event-loop iteration
+(via QTimer.singleShot) so that the VideoFrame widget has a real X11
+window handle by the time it is passed to mpv.
+
 API
 ---
 Video(app, MainWindow, VideoFile, Prefix, ImageDirectory, SkipCount)
@@ -25,11 +29,14 @@ Video.SharedWidth / Video.SharedHeight
     compatibility with the resizeEvent() in main.py.  mpv scales its own
     output to fill the embedded window, so these values are not used.
 """
-import sys
+import locale
 
 import mpv
 
 from PyQt6 import QtCore
+
+# mpv requires the C numeric locale for correct number parsing.
+locale.setlocale(locale.LC_NUMERIC, 'C')
 
 
 class _SharedValue:
@@ -42,6 +49,10 @@ class Video:
     def __init__(self, app, MainWindow, VideoFile, Prefix, ImageDirectory, SkipCount):
         """
         Create video player.
+
+        mpv is not started here; it is started on the first Qt event-loop
+        tick so that the VideoFrame widget has a valid native X11 window
+        handle by the time we need it.
 
         Args:
             app            -- The Qt application
@@ -59,23 +70,35 @@ class Video:
         self.SharedWidth = _SharedValue()
         self.SharedHeight = _SharedValue()
 
-        # Ensure the widget has a native window handle before passing it to mpv.
-        self.ImageLabel.setAttribute(QtCore.Qt.WidgetAttribute.WA_NativeWindow, True)
-        self.ImageLabel.winId()  # forces handle allocation
+        self.player = None
+        self._pending_rate = 0.0   # rate requested before player exists
+        self.Rate = 0.0
 
+        # Force a native (X11) window on the label now so the handle is
+        # ready by the time _init_player fires.
+        self.ImageLabel.setAttribute(QtCore.Qt.WidgetAttribute.WA_NativeWindow, True)
+
+        # Defer actual mpv creation until the event loop is running and the
+        # window is on screen; a zero-millisecond single-shot is enough.
+        QtCore.QTimer.singleShot(0, self._init_player)
+
+    def _init_player(self):
+        """Create and start the mpv player (called from the event loop)."""
         wid = int(self.ImageLabel.winId())
 
-        # Create the mpv player embedded in the VideoFrame widget.
-        # keep_open=True keeps the player alive after the video ends so
-        # GetPosition() keeps returning 1.0 rather than None.
+        locale.setlocale(locale.LC_NUMERIC, 'C')
         self.player = mpv.MPV(
             wid=str(wid),
             keep_open='yes',
             pause='yes',
         )
 
-        self.player.play(VideoFile)
-        self.Rate = 0.0
+        self.player.play(self.VideoFile)
+
+        # Apply any rate that was set before the player existed.
+        if self._pending_rate > 0.0:
+            self.player.speed = self._pending_rate
+            self.player.pause = False
 
     # ------------------------------------------------------------------
     # Public API
@@ -84,7 +107,8 @@ class Video:
     def Reset(self):
         """Pause and seek to the beginning of the video."""
         self.SetRate(0)
-        self.player.seek(0, 'absolute')
+        if self.player is not None:
+            self.player.seek(0, 'absolute')
 
     def SetRate(self, Rate):
         """
@@ -97,6 +121,10 @@ class Video:
             Rate = 0.0
         self.Rate = Rate
 
+        if self.player is None:
+            self._pending_rate = Rate
+            return
+
         if Rate <= 0.0:
             self.player.pause = True
         else:
@@ -107,6 +135,8 @@ class Video:
         """
         Return current position as a fraction of total duration [0.0, 1.0].
         """
+        if self.player is None:
+            return 0.0
         pos = self.player.time_pos
         duration = self.player.duration
         if pos is None or duration is None or duration == 0:

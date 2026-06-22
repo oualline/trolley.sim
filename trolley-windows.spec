@@ -1,21 +1,26 @@
+# -*- mode: python ; coding: utf-8 -*-
 
 a = Analysis(
-    ['brake_ui.py', 'controller.py', 'main.py', 'mode_window.py', 'sim_ui4.py', 'sound.py', 'state.py', 'video_player.py'],
+    ['brake_ui.py', 'controller.py', 'main.py', 'mode_window.py', 'sim_ui4.py', 'sound.py', 'state.py', 'video.py', 'video_player.py'],
     pathex=[],
     binaries=[
-	('image/*.png', 'image'),
-	('image/*.svg', 'image')
+        ('image/*.png', 'image'),
+        ('image/*.svg', 'image'),
+        # libmpv-2.dll must be on PATH or placed next to the executable.
+        # Obtain it from https://sourceforge.net/projects/mpv-player-windows/
+        # Uncomment the line below once you have the DLL:
+        # ('path\\to\\libmpv-2.dll', '.'),
     ],
     datas=[
-	('image/splash.png', '.'),
-        ('mp3/*.mp3', '.'), 
-        ('video/trolley.m4v', 'video'), 
-        ('video/easy.mp4', 'video'), 
-        ('video/start-stop.mp4', 'video'), 
-        ('video/full.mp4', 'video'), 
+        ('image/splash.png', '.'),
+        ('mp3/*.mp3', '.'),
+        ('video/trolley.m4v', 'video'),
+        ('video/easy.mp4', 'video'),
+        ('video/start-stop.mp4', 'video'),
+        ('video/full.mp4', 'video'),
         ('help.pdf', '.')
     ],
-    hiddenimports=[],
+    hiddenimports=['mpv'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=["windows-setup-hook.py"],
@@ -40,7 +45,7 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=True,
+    console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,

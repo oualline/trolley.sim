@@ -1,12 +1,22 @@
 For development on windows
 
+First do a "make" on Linux to generate all the *.py files.
+
 Install:
     Install python
-       https://www.python.org/downloads
-	CHECK ADD TO PATH
+        Open "cmd" window.  
+	Type "python"
+	Install from store.
+	Open installer
 
-     Add to path:
-         C:\Users\YourUsername\AppData\Local\Programs\Python\Python313\Scripts
+	    Alternate https://www.python.org/downloads
 
-     Open command (cmd) windows AS ADMINSTRATOR.
-     Run win-setup.bat
+    Note: python3 and pip must be in your PATH
+
+    Follow the instructions in install-libmvp.md to install
+    the needed dll. 
+
+    Open command (cmd) windows AS ADMINSTRATOR.
+	Run 
+	    .\win-setup.bat
+	Close the window since we modified the path

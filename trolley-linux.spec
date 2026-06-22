@@ -1,23 +1,24 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-
 a = Analysis(
-    ['brake_ui.py', 'controller.py', 'main.py', 'mode_window.py', 'sim_ui4.py', 'sound.py', 'state.py', 'video_player.py'],
+    ['brake_ui.py', 'controller.py', 'main.py', 'mode_window.py', 'sim_ui4.py', 'sound.py', 'state.py', 'video.py', 'video_player.py'],
     pathex=[],
     binaries=[
-	('image/*.png', 'image'),
-	('image/*.svg', 'image')
+        ('image/*.png', 'image'),
+        ('image/*.svg', 'image'),
+        # libmpv is loaded at runtime via ctypes; bundle the system library so
+        # the app runs on machines that don't have mpv installed.
+        ('/usr/lib/x86_64-linux-gnu/libmpv.so.2', '.'),
     ],
     datas=[
-#	('splash.png', '.'),
-        ('mp3/*.mp3', '.'), 
-        ('video/trolley.m4v', 'video'), 
-        ('video/easy.mp4', 'video'), 
-        ('video/start-stop.mp4', 'video'), 
-        ('video/full.mp4', 'video'), 
+        ('mp3/*.mp3', '.'),
+        ('video/trolley.m4v', 'video'),
+        ('video/easy.mp4', 'video'),
+        ('video/start-stop.mp4', 'video'),
+        ('video/full.mp4', 'video'),
         ('help.pdf', '.')
     ],
-    hiddenimports=[],
+    hiddenimports=['mpv'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=["linux-setup-hook.py"],
