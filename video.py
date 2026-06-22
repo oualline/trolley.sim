@@ -79,16 +79,22 @@ class Video:
         self.ImageLabel.setAttribute(QtCore.Qt.WidgetAttribute.WA_NativeWindow, True)
 
         # Defer actual mpv creation until the event loop is running and the
-        # window is on screen; a zero-millisecond single-shot is enough.
-        QtCore.QTimer.singleShot(0, self._init_player)
+        # window is on screen.
+        QtCore.QTimer.singleShot(200, self._init_player)
 
     def _init_player(self):
         """Create and start the mpv player (called from the event loop)."""
         wid = int(self.ImageLabel.winId())
 
+        # winId() returns 0 if the widget isn't mapped yet; retry shortly.
+        if wid == 0:
+            QtCore.QTimer.singleShot(100, self._init_player)
+            return
+
         locale.setlocale(locale.LC_NUMERIC, 'C')
+        print("### WID ", wid)
         self.player = mpv.MPV(
-            wid=str(wid),
+            wid=wid,
             keep_open='yes',
             pause='yes',
         )
