@@ -32,7 +32,7 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,0">
         <item>
-         <widget class="QLabel" name="VideoFrame">
+         <widget class="QWidget" name="VideoFrame" native="true">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
             <horstretch>0</horstretch>
@@ -44,15 +44,6 @@
             <width>0</width>
             <height>0</height>
            </size>
-          </property>
-          <property name="frameShape">
-           <enum>QFrame::NoFrame</enum>
-          </property>
-          <property name="scaledContents">
-           <bool>false</bool>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignCenter</set>
           </property>
          </widget>
         </item>

@@ -74,27 +74,27 @@ class Video:
         self._pending_rate = 0.0   # rate requested before player exists
         self.Rate = 0.0
 
-        # Force a native (X11) window on the label now so the handle is
-        # ready by the time _init_player fires.
-        self.ImageLabel.setAttribute(QtCore.Qt.WidgetAttribute.WA_NativeWindow, True)
-
         # Defer actual mpv creation until the event loop is running and the
         # window is on screen.
         QtCore.QTimer.singleShot(200, self._init_player)
 
     def _init_player(self):
         """Create and start the mpv player (called from the event loop)."""
+        import os, sys
         wid = int(self.ImageLabel.winId())
 
         # winId() returns 0 if the widget isn't mapped yet; retry shortly.
         if wid == 0:
+            print("video: winId() is 0, retrying...", file=sys.stderr)
             QtCore.QTimer.singleShot(100, self._init_player)
             return
 
+        #print(f"video: wid={wid} (0x{wid:x})  QT_QPA_PLATFORM={os.environ.get('QT_QPA_PLATFORM', '(not set)')}", file=sys.stderr)
+
         locale.setlocale(locale.LC_NUMERIC, 'C')
-        print("### WID ", wid)
         self.player = mpv.MPV(
             wid=wid,
+            vo='x11',
             keep_open='yes',
             pause='yes',
         )
