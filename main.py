@@ -1910,8 +1910,9 @@ if __name__ == "__main__":
 
     sound.Init(DIR)
 
-    # mpv wid-based embedding requires X11; force xcb so it works under Wayland too.
-    os.environ['QT_QPA_PLATFORM'] = 'xcb'
+    # mpv wid-based embedding requires X11; force xcb on Linux so it works under Wayland too.
+    if IS_LINUX:
+        os.environ['QT_QPA_PLATFORM'] = 'xcb'
 
     app = QtWidgets.QApplication(sys.argv)  #pylint: disable=I1101
 

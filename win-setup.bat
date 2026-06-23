@@ -4,6 +4,7 @@ REM Run as Administrator after installing Python 3.x
 REM Add GnuWin32 and Python Scripts to system PATH
 winget install GnuWin32.Make
 setx /m PATH "%PATH%;C:\Program Files (x86)\GnuWin32\bin"
+setx /m PATH "%PATH%;C:\mpv"
 
 REM Install required Python packages
 pip install PyQt6

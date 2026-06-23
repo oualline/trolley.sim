@@ -9,7 +9,7 @@ a = Analysis(
         # libmpv-2.dll must be on PATH or placed next to the executable.
         # Obtain it from https://sourceforge.net/projects/mpv-player-windows/
         # Uncomment the line below once you have the DLL:
-        # ('path\\to\\libmpv-2.dll', '.'),
+        ('C:\\mpv\\libmpv-2.dll', '.'),
     ],
     datas=[
         ('image/splash.png', '.'),
@@ -45,7 +45,7 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=False,
+    console=True,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,

@@ -14,7 +14,8 @@ Install:
     Note: python3 and pip must be in your PATH
 
     Follow the instructions in install-libmvp.md to install
-    the needed dll. 
+    the needed dll.   Put the libmpv-2.dll in 
+    C:\mpv
 
     Open command (cmd) windows AS ADMINSTRATOR.
 	Run 
