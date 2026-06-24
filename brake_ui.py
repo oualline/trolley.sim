@@ -262,7 +262,7 @@ class BrakeUi():
         if (self.BlackPressure <= PUMP_UP_START):
             self.SetPumping(True)
 
-        if (self.BlackPressure <= MAX_BRAKE_PRESSURE):
+        if (self.BlackPressure <= MAX_BRAKE_PRESSURE) and (self.Pumping):
             self.BlackPressure += PUMP_UP_RATE
 
         if (self.BlackPressure >= MAX_BRAKE_PRESSURE):

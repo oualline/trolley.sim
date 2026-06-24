@@ -294,7 +294,7 @@ class TrackEvent():
         if (self.Done):
             return
         if (Where >= self.Where):
-            if (self.Action == None):
+            if (self.Action is None):
                 print("Internal error -- Abort", Where)
                 sys.exit(8)
             self.Action()
@@ -315,6 +315,8 @@ def ComputeAcceleration(Level):
     global MAX_SPEED
     global SPEED_TIME
 
+    if (Level == 0):
+        return (MAX_SPEED[Level] / SPEED_TIME)
     return((MAX_SPEED[Level] - MAX_SPEED[Level-1]) / SPEED_TIME)
 
 # Event list / easy mode
@@ -1117,8 +1119,8 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
             self.AttractTimer.start(ATTRACT_TIMEOUT)  # 5 minutes in milliseconds
             self.AttractMouseListener = None
             self.AttractVideoProcess = None
-            self.AttrictVideoCheckTimer = QtCore.QTimer()
-            self.AttrictVideoCheckTimer.timeout.connect(self.AttractCheckVideoStatus)
+            self.AttractVideoCheckTimer = QtCore.QTimer()
+            self.AttractVideoCheckTimer.timeout.connect(self.AttractCheckVideoStatus)
 
     def resizeEvent(self, event) -> None:
         """
@@ -1236,7 +1238,7 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
             return
             
         self.AttractIsPlayingVideo = False
-        self.AttrictVideoCheckTimer.stop()
+        self.AttractVideoCheckTimer.stop()
 
         # Release exclusive mouse grab
         # Reference: https://doc.qt.io/qt-6/qwidget.html#releaseMouse
@@ -1289,7 +1291,7 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         self.AttractVideoProcess = video_player.play_video(os.path.join("video", "attract.mp4"))
         
         # Start checking video status every 500ms to enable looping
-        self.AttrictVideoCheckTimer.start(500)
+        self.AttractVideoCheckTimer.start(500)
         
         # Grab mouse exclusively - prevents other apps from receiving mouse input
         # Reference: https://doc.qt.io/qt-6/qwidget.html#grabMouse
@@ -1299,7 +1301,7 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         """
         Periodically check if video process has ended and restart for looping.
         
-        This method is called by AttrictVideoCheckTimer every 500ms. If the video
+        This method is called by AttractVideoCheckTimer every 500ms. If the video
         player process has terminated, it restarts the video to create a loop.
         """
         if not self.AttractIsPlayingVideo:
@@ -1392,7 +1394,7 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
             self.MainReset()
             self.DisplayWarnings()
             self.GoodStop();
-            return (False)
+            return 
 
         if (self.Video.GetPosition() > END_OF_VIDEO):
             self.AddWarning("Failed to stop at store")
@@ -1482,7 +1484,7 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         if mouse_listener:
             try:
                 mouse_listener.stop()
-            except:
+            except Exception:
                 pass
         
         return result

@@ -251,8 +251,8 @@ class Video:
             gpu_dumb_mode='yes',
             keep_open='yes',
             pause='yes',
-            log_handler=print,
-            loglevel='info',   # bump to 'debug' if you need to diagnose
+            #log_handler=print,
+            #loglevel='info',   # bump to 'debug' if you need to diagnose
         )
         self._gl_widget = _MpvGLWidget(self.player, self.ImageLabel)
         self._gl_widget.show()

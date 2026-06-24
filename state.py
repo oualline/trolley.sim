@@ -34,7 +34,7 @@ class TrolleyState:
     """
     def Reset(self):
         self.RunLevel = 0       # Current run level
-        self.Reverser = DirectionEnum.FORWARD   # Reverser position
+        self.Direction = DirectionEnum.FORWARD   # Reverser position
         self.Deadman = False    # Deadman on or off
 
         self.Speed = 0.0        # Current speed

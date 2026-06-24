@@ -10,16 +10,6 @@ over the kid fusses very fast.
 3. Logs are very verbose.  The code is still being debugged
 and this will continue until the reliability gets better.
 
-4. On Windows, you must close the program from the taskbar.
-
-5. On linux, no splash screen, but get the following message:
-The environment does not allow connecting to the splash screen. Did bootloader fail to initialize it?
-Traceback (most recent call last):
-  File "pyi_splash.py", line 108, in <module>
-  File "<frozen os>", line 685, in __getitem__
-KeyError: '_PYI_SPLASH_IPC'
-Getting ready.  This may take a little time
-
 Known limitation:
 
 1. The software does not precisely the LARY 1201 on which it is 
@@ -36,14 +26,13 @@ this video game.
 5. Windows needs a better icon, same for mac?
 
 
-Enhancements:
+Enhancements (todo):
 `
 1. Click to dissmiss attract then ask "do you want video help"
 2. Find out what ddls needed and remove all others
-3. use mvp
-4. New video
+3. New video
 
-Bugs
+Misc bugs:
 
 1. Need to allow to stop at store
 2. Full mode, problem list

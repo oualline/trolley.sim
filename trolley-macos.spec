@@ -10,7 +10,7 @@ a = Analysis(
         # the app runs on machines without mpv installed.
         # Install mpv first: brew install mpv
         # Then adjust the path below if needed (arm64 uses /opt/homebrew, x86 uses /usr/local).
-        ('/opt/homebrew/lib/libmpv.dylib', '.'),
+        ('/usr/local/Cellar/mpv/0.41.0_6/lib/libmpv.2.dylib', '.'),
     ],
     datas=[
         ('mp3/*.mp3', '.'),
