@@ -1,16 +1,29 @@
 """
 Module to handle the playing of video using mpv.
 
-On Linux and Windows, mpv is embedded into the VideoFrame Qt widget via its
-window ID (X11 wid / HWND).
+Linux / Windows
+    mpv is embedded into the VideoFrame widget via its native window handle
+    (X11 wid / HWND) -- mpv owns its own GPU context inside that window.
 
-On macOS, mpv's Metal backend does not support --wid embedding, so the
-OpenGL render context API is used instead: a QOpenGLWidget is created inside
-VideoFrame and mpv renders into its framebuffer.
+macOS
+    mpv's gpu video output cannot create a GPU context inside an embedded
+    NSView ("Failed initializing any suitable GPU context"), so --wid
+    embedding is not usable.  Instead the libmpv OpenGL *render context* API is
+    used: a QOpenGLWidget supplies the GL context and mpv renders into its
+    framebuffer.
+
+    IMPORTANT: because the QOpenGLWidget is nested inside another widget,
+    main.py MUST set
+
+        QApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
+
+    *before* the QApplication is constructed.  Without it, a nested
+    QOpenGLWidget on macOS paints its first frame and then never composites
+    again -- the "one frame and freeze" symptom.
 
 Initialisation is deferred until the first Qt event-loop iteration
-(via QTimer.singleShot) so that the VideoFrame widget has a real X11
-window handle by the time it is passed to mpv.
+(via QTimer.singleShot) so that the VideoFrame widget has a real window
+handle by the time it is passed to mpv.
 
 API
 ---
@@ -38,7 +51,7 @@ import locale
 import platform
 
 import mpv
-from PyQt6 import QtCore, QtWidgets
+from PyQt6 import QtCore, QtGui, QtWidgets
 
 # mpv requires the C numeric locale for correct number parsing.
 locale.setlocale(locale.LC_NUMERIC, 'C')
@@ -52,6 +65,13 @@ _SYSTEM = platform.system()
 
 if _SYSTEM == 'Darwin':
     from PyQt6.QtOpenGLWidgets import QOpenGLWidget
+
+    _fmt = QtGui.QSurfaceFormat()
+    _fmt.setVersion(3, 3)
+    _fmt.setProfile(QtGui.QSurfaceFormat.OpenGLContextProfile.CoreProfile)
+    _fmt.setRenderableType(QtGui.QSurfaceFormat.RenderableType.OpenGL)
+    _fmt.setSwapBehavior(QtGui.QSurfaceFormat.SwapBehavior.DoubleBuffer)
+    QtGui.QSurfaceFormat.setDefaultFormat(_fmt)
 
     _opengl_lib = None
     _ProcAddrFn = ctypes.CFUNCTYPE(ctypes.c_void_p, ctypes.c_void_p, ctypes.c_char_p)
@@ -76,9 +96,10 @@ if _SYSTEM == 'Darwin':
             super().__init__(parent)
             self._player = player
             self._ctx = None
+            self._timer = None
             self.setAttribute(QtCore.Qt.WidgetAttribute.WA_OpaquePaintEvent)
+            self.setFormat(QtGui.QSurfaceFormat.defaultFormat())
 
-            # Fill the parent (VideoFrame) widget.
             layout = QtWidgets.QVBoxLayout(parent)
             layout.setContentsMargins(0, 0, 0, 0)
             layout.addWidget(self)
@@ -89,27 +110,48 @@ if _SYSTEM == 'Darwin':
                 'opengl',
                 opengl_init_params={'get_proc_address': _get_proc_address},
             )
-            # update_cb fires on the mpv render thread; use invokeMethod to
-            # safely schedule a repaint on the Qt main thread.
+            # mpv signals "new frame ready" on its render thread; bounce to the
+            # GUI thread to schedule a repaint.
             self._ctx.update_cb = self._on_mpv_update
 
-        def _on_mpv_update(self):
+            # Belt-and-suspenders: also repaint on a timer, so playback keeps
+            # advancing even if a given update callback is dropped.  render()
+            # is cheap when there is no new frame.
+            self._timer = QtCore.QTimer(self)
+            self._timer.setInterval(16)   # ~60 fps
+            self._timer.timeout.connect(self.update)
+            self._timer.start()
+
+            self.update()
+
+        @QtCore.pyqtSlot()
+        def _do_update(self):
+            self.update()
+
+        def _on_mpv_update(self, *args):
             QtCore.QMetaObject.invokeMethod(
-                self, 'update', QtCore.Qt.ConnectionType.QueuedConnection
+                self, '_do_update', QtCore.Qt.ConnectionType.QueuedConnection
             )
 
         def paintGL(self):
-            if self._ctx:
-                self._ctx.render(
-                    flip_y=True,
-                    opengl_fbo={
-                        'fbo': self.defaultFramebufferObject(),
-                        'w': self.width(),
-                        'h': self.height(),
-                    },
-                )
+            if self._ctx is None:
+                return
+            ratio = self.devicePixelRatioF()
+            w = max(1, round(self.width() * ratio))
+            h = max(1, round(self.height() * ratio))
+            self._ctx.render(
+                flip_y=True,
+                opengl_fbo={
+                    'fbo': self.defaultFramebufferObject(),
+                    'w': w,
+                    'h': h,
+                },
+            )
 
         def shutdown(self):
+            if self._timer is not None:
+                self._timer.stop()
+                self._timer = None
             if self._ctx:
                 self._ctx.free()
                 self._ctx = None
@@ -177,6 +219,7 @@ class Video:
         """Linux / Windows: embed via X11 wid or HWND."""
         wid = int(self.ImageLabel.winId())
         if wid == 0:
+            # Window handle not ready yet; try again shortly.
             QtCore.QTimer.singleShot(100, self._init_player)
             return
 
@@ -190,9 +233,27 @@ class Video:
         self.player.play(self.VideoFile)
 
     def _init_player_macos(self):
-        """macOS: use the OpenGL render context API inside a QOpenGLWidget."""
-        self.player = mpv.MPV(keep_open='yes', pause='yes',
-                              log_handler=print, loglevel='debug')
+        """macOS: render into a QOpenGLWidget via the libmpv render context."""
+        # gpu_dumb_mode forces mpv's minimal single-pass render path.  The
+        # full path glitches (a dashed black line) on macOS's software/indirect
+        # GL context, especially with 10-bit content; dumb mode is robust here.
+        #
+        # audio='no': mpv's default A/V sync uses the audio device as the
+        # master clock.  This Mac's coreaudio device fails to report its
+        # layout/sample-rate, so that clock never advances and the video --
+        # slaved to it -- freezes on frame 0.  Disabling mpv audio lets the
+        # video run on the system clock.  (The simulator plays its own sounds
+        # via the sound module, so no app audio is lost.)
+        self.player = mpv.MPV(
+            vo='libmpv',
+            audio='no',
+            hwdec='no',
+            gpu_dumb_mode='yes',
+            keep_open='yes',
+            pause='yes',
+            log_handler=print,
+            loglevel='info',   # bump to 'debug' if you need to diagnose
+        )
         self._gl_widget = _MpvGLWidget(self.player, self.ImageLabel)
         self._gl_widget.show()
         self.player.play(self.VideoFile)

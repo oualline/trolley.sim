@@ -1914,6 +1914,11 @@ if __name__ == "__main__":
     if IS_LINUX:
         os.environ['QT_QPA_PLATFORM'] = 'xcb'
 
+    # Nested QOpenGLWidget (mpv video on macOS) needs shared GL contexts,
+    # otherwise it paints one frame and then stops compositing.
+    QtWidgets.QApplication.setAttribute(
+        QtCore.Qt.ApplicationAttribute.AA_ShareOpenGLContexts, True
+    )
     app = QtWidgets.QApplication(sys.argv)  #pylint: disable=I1101
 
     state.Init()
