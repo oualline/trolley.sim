@@ -11,6 +11,7 @@ a = Analysis(
         ('/usr/lib/x86_64-linux-gnu/libmpv.so.2', '.'),
     ],
     datas=[
+	('image/splash.png', '.'),
         ('mp3/*.mp3', '.'),
         ('video/trolley.m4v', 'video'),
         ('video/easy.mp4', 'video'),
@@ -26,15 +27,17 @@ a = Analysis(
     noarchive=False,
     optimize=0,
 )
-#splash = Splash('splash.png',
-#                binaries=a.binaries,
-#                datas=a.datas)
+splash = Splash('image/splash.png',
+                binaries=a.binaries,
+                datas=a.datas)
 
 pyz = PYZ(a.pure)
 
 exe = EXE(
     pyz,
     a.scripts,
+    splash,
+    splash.binaries,
     a.binaries,
     a.datas,
     [],
