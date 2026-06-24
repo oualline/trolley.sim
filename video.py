@@ -262,6 +262,27 @@ class Video:
     # Public API
     # ------------------------------------------------------------------
 
+    def Stop(self):
+        """
+        Tear down the mpv player (and the macOS GL widget).  MUST be called
+        before the process exits: python-mpv's GC-time cleanup deadlocks
+        against the embedded direct3d/X11 window on Windows, so an explicit
+        terminate() is required.  Idempotent.
+        """
+        if _SYSTEM == 'Darwin' and self._gl_widget is not None:
+            try:
+                self._gl_widget.shutdown()
+            except Exception:
+                pass
+            self._gl_widget = None
+
+        if self.player is not None:
+            try:
+                self.player.terminate()
+            except Exception:
+                pass
+            self.player = None
+
     def Reset(self):
         """Pause and seek to the beginning of the video."""
         self.SetRate(0)

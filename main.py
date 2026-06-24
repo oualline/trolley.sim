@@ -1557,9 +1557,22 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
 
     def closeEvent(self, event):
         """
-        Closing -- clean up resources
+        Closing -- stop the tick timer, tear down mpv, and quit cleanly.
+
+        Do NOT call sys.exit() here: raising SystemExit inside a Qt event
+        handler is swallowed by PyQt on Windows, so the window never closes.
+        Accept the event and let app.exec() return instead.
         """
-        sys.exit(0)
+        try:
+            self.Timer.stop()
+        except Exception:
+            pass
+        try:
+            self.Video.Stop()
+        except Exception:
+            pass
+        event.accept()
+        QtWidgets.QApplication.quit()
 
     def AddWarning(self, Message):
         """
@@ -1948,3 +1961,4 @@ if __name__ == "__main__":
     state.Log("New run----------------------------------------------------------------")
 
     app.exec()
+    sys.exit(0)
