@@ -25,7 +25,6 @@ this video game.
 
 5. Windows needs a better icon, same for mac?
 
-
 Enhancements (todo):
 `
 1. Click to dissmiss attract then ask "do you want video help"

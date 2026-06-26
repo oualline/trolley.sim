@@ -1,4 +1,30 @@
-#${HOME}/tmp/10-minute.mp4 ${HOME}/tmp/trolley.mp4 mode_window.py
+# Detect OS once. On native Windows make, OS=Windows_NT is set by the
+# environment. On Unix, fall back to uname -s (Linux / Darwin).
+ifeq ($(OS),Windows_NT)
+    DETECTED_OS := Windows
+else
+    DETECTED_OS := $(shell uname -s)
+endif
+
+ifneq ($(filter linux,$(MAKECMDGOALS)),)
+    ifneq ($(DETECTED_OS),Linux)
+        $(error 'make linux' can only be run on Linux (detected: $(DETECTED_OS)))
+    endif
+endif
+
+ifneq ($(filter windows,$(MAKECMDGOALS)),)
+    ifneq ($(DETECTED_OS),Windows)
+        $(error 'make windows' can only be run on Windows (detected: $(DETECTED_OS)))
+    endif
+endif
+
+ifneq ($(filter macos,$(MAKECMDGOALS)),)
+    ifneq ($(DETECTED_OS),Darwin)
+        $(error 'make macos' can only be run on macOS (detected: $(DETECTED_OS)))
+    endif
+endif
+
+.PHONY: linux windows macos
 
 GENERATED=mode_window.py sim_ui4.py frames_ui.py
 HELP=quick.pdf help.pdf

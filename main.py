@@ -20,7 +20,6 @@ import threading
 import time
 import webbrowser
 import pynput
-from pynput.mouse import Listener
 
 from PyQt6 import QtWidgets, QtCore
 from PyQt6.QtWidgets import ( QApplication, QDialog, QMainWindow, QMessageBox )
@@ -80,6 +79,9 @@ class ModeEnum(enum.Enum):
 
 # Check if we're running on Linux
 IS_LINUX = platform.system().lower() == 'linux'
+
+# Check if we're running on macOS
+IS_MAC = platform.system().lower() == 'darwin'
 
 if IS_LINUX:
     class NamedPipeReader(QThread):
@@ -1039,10 +1041,53 @@ class BrakeGraphics():
         self.BrakeHandleItem.setRotation(self.BRAKE_MAP[State])
 
 
+class DismissOnClick(QtCore.QObject):
+    """
+    Application-level event filter that ends a wait on the first mouse press
+    anywhere in the application.
+
+    The error dialog is shown *modeless* (so the rest of the application window
+    keeps receiving mouse events) while ShowErrorMessage blocks on a local
+    QEventLoop instead of exec().  This filter, installed on the QApplication,
+    catches the first press -- whether it lands on the dialog, one of its child
+    widgets, or anywhere in the main window -- and quits that loop, which
+    dismisses the dialog.
+
+    An application-modal exec() would not allow this: Qt blocks mouse events to
+    the main window while a modal dialog is up, so clicks outside the dialog
+    never arrive.  Showing modeless and looping ourselves keeps ShowErrorMessage
+    blocking (caller control flow unchanged) while still letting a click
+    anywhere in the window dismiss the dialog.
+
+    The press is consumed (returns True) so the dismissing click does not also
+    activate whatever sits underneath it.
+
+    Lives on, and is installed/removed from, the GUI thread, so it never
+    touches Qt objects from a foreign thread (unlike the old pynput hook).
+    """
+    def __init__(self, loop):
+        super().__init__(loop)
+        self._loop = loop
+
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.Type.MouseButtonPress:
+            self._loop.quit()
+            return True  # consume the dismissing click
+        return super().eventFilter(obj, event)
+
+
 class Window(QMainWindow, sim_ui4.Ui_MainWindow):
     """
     Main window in which everything happens
     """
+
+    # Emitted from the pynput attract-mode listener thread; connected with a
+    # queued connection so StopAttractVideo runs on the GUI thread.  A signal
+    # is the canonical cross-thread marshal -- safer than QTimer.singleShot,
+    # which creates a timer in a thread that has no Qt event loop and may
+    # therefore never fire.
+    StopAttractRequested = pyqtSignal()
+
     def __init__(self, app, parent=None):
         """
         Create the main window
@@ -1121,6 +1166,11 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
             self.AttractVideoProcess = None
             self.AttractVideoCheckTimer = QtCore.QTimer()
             self.AttractVideoCheckTimer.timeout.connect(self.AttractCheckVideoStatus)
+            # Queued connection: signal is emitted from the pynput listener
+            # thread, slot runs on the GUI thread.
+            self.StopAttractRequested.connect(
+                self.StopAttractVideo, Qt.ConnectionType.QueuedConnection
+            )
 
     def resizeEvent(self, event) -> None:
         """
@@ -1188,10 +1238,9 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
 
     def OnMove(self, X, Y):
         if self.AttractIsPlayingVideo:
-            # Any mouse movement stops the video
-            # Use QTimer.singleShot to ensure stop_video runs in Qt's main thread
-            # Reference: https://doc.qt.io/qt-6/qtimer.html#singleShot
-            QtCore.QTimer.singleShot(0, self.StopAttractVideo)
+            # Runs on pynput's thread. Marshal to the GUI thread via a queued
+            # signal rather than calling Qt methods or creating a QTimer here.
+            self.StopAttractRequested.emit()
             return False  # Stop the listener
         return True
 
@@ -1211,10 +1260,9 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         Reference: https://pynput.readthedocs.io/en/latest/mouse.html#monitoring-the-mouse
         """
         if self.AttractIsPlayingVideo and Pressed:
-            # Any mouse click stops the video
-            # Use QTimer.singleShot to ensure stop_video runs in Qt's main thread
-            # Reference: https://doc.qt.io/qt-6/qtimer.html#singleShot
-            QtCore.QTimer.singleShot(0, self.StopAttractVideo)
+            # Runs on pynput's thread. Marshal to the GUI thread via a queued
+            # signal rather than calling Qt methods or creating a QTimer here.
+            self.StopAttractRequested.emit()
             return False  # Stop the listener
         return True
 
@@ -1435,9 +1483,23 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
 
     def ShowErrorMessage(self, icon, title, text, informative_text, button_text="OK"):
         """
-        Display an error message that automatically closes after 60 seconds.
-        Any mouse click will close the dialog (click is consumed and doesn't propagate).
-        
+        Display an error message that closes on a mouse press anywhere in the
+        application window, on the dialog button, or after ERROR_TIMEOUT.
+
+        The dialog is shown modeless and the method blocks on a local
+        QEventLoop, rather than the application-modal QMessageBox.exec().  An
+        application-modal dialog makes Qt discard mouse events sent to the main
+        window, so clicks outside the dialog cannot dismiss it.  Showing
+        modeless keeps the whole window live; the application-level
+        DismissOnClick filter ends the loop on the first press anywhere.
+
+        All objects here live on the GUI thread.  An earlier version started a
+        pynput global mouse Listener and called MessageBox.accept() from that
+        background thread, which is illegal in Qt: it produced
+        'QObject::installEventFilter(): Cannot filter events for objects in a
+        different thread' and, on Windows, ate the click on the button so
+        'Restart' did nothing.
+
         :param icon: QMessageBox icon (e.g., QMessageBox.Icon.Critical)
         :param title: Window title
         :param text: Main message text
@@ -1452,42 +1514,41 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         MessageBox.setStandardButtons(QMessageBox.StandardButton.Ok)
         ButtonOk = MessageBox.button(QMessageBox.StandardButton.Ok)
         ButtonOk.setText(button_text)
-        
-        # Create a timer to auto-close the dialog after 60 seconds (60000 milliseconds)
-        timer = QtCore.QTimer()
+
+        # Modeless: keep the rest of the application window receiving input so a
+        # click anywhere in it can dismiss the dialog.
+        MessageBox.setModal(False)
+        MessageBox.setWindowModality(Qt.WindowModality.NonModal)
+
+        # Block here on our own loop instead of exec(), so caller flow is
+        # unchanged while the dialog stays modeless.
+        loop = QtCore.QEventLoop()
+
+        # Auto-close after ERROR_TIMEOUT. Parent the timer to the dialog so it
+        # lives on the GUI thread and is cleaned up with the dialog.
+        timer = QtCore.QTimer(MessageBox)
         timer.setSingleShot(True)
-        timer.timeout.connect(MessageBox.accept)
+        timer.timeout.connect(loop.quit)
         timer.start(ERROR_TIMEOUT)  # 60 seconds
-        
-        # Create a mouse listener to close dialog on any click
-        mouse_listener = None
-        dialog_closed = [False]  # Use list to allow modification in nested function
-        
-        def on_click(x, y, button, pressed):
-            """Callback when mouse is clicked - close dialog on any click and consume the event"""
-            if pressed and not dialog_closed[0]:  # Only on press, not release
-                dialog_closed[0] = True
-                MessageBox.accept()
-                # Return False to stop the listener and consume the click
-                return False
-            return True
-        
-        # Start the mouse listener
-        mouse_listener = Listener(on_click=on_click)
-        mouse_listener.start()
-        
-        # Show the dialog and clean up when done
-        result = MessageBox.exec()
-        timer.stop()
-        
-        # Ensure mouse listener is stopped
-        if mouse_listener:
-            try:
-                mouse_listener.stop()
-            except Exception:
-                pass
-        
-        return result
+
+        # Button press / keyboard activation of the button also ends the loop.
+        ButtonOk.clicked.connect(loop.quit)
+
+        # First mouse press anywhere in the application ends the loop.
+        dismiss = DismissOnClick(loop)
+        app = QApplication.instance()
+        app.installEventFilter(dismiss)
+
+        MessageBox.show()
+        MessageBox.raise_()
+        MessageBox.activateWindow()
+        try:
+            loop.exec()
+        finally:
+            app.removeEventFilter(dismiss)
+            timer.stop()
+            MessageBox.close()
+        return QMessageBox.StandardButton.Ok
 
 
     def SetSimulatorMode(self):
@@ -1936,6 +1997,24 @@ if __name__ == "__main__":
     )
     app = QtWidgets.QApplication(sys.argv)  #pylint: disable=I1101
 
+    # PyInstaller's bootloader splash screen is NOT supported on macOS: it runs
+    # in a secondary thread, and macOS forbids UI work off the main thread, so
+    # PyInstaller refuses to build a Splash() into the .app bundle. Instead, on
+    # macOS we show a Qt-native QSplashScreen on the main thread. It stays up
+    # during the slow Window() construction below and is dismissed once the main
+    # window is ready (see mac_splash.finish() further down).
+    if (False): # Buggy code
+        mac_splash = None
+        if IS_MAC:
+            splash_path = os.path.join(DIR, 'image', 'splash.png')
+            if os.path.exists(splash_path):
+                mac_splash = QtWidgets.QSplashScreen(
+                    QPixmap(splash_path),
+                    QtCore.Qt.WindowType.WindowStaysOnTopHint,
+                )
+                mac_splash.show()
+                app.processEvents()   # force it to paint before the slow startup work
+
     state.Init()
     mainWindow = Window(app)
     if (FullScreen):
@@ -1945,12 +2024,21 @@ if __name__ == "__main__":
         mainWindow.showMaximized()
 
 
-    if '_PYI_APPLICATION_HOME_DIR' in os.environ:
-        import pyi_splash
-        # Close the splash screen. It does not matter when the call
-        # to this function is made, the splash screen remains open until
-        # this function is called or the Python program is terminated.
-        pyi_splash.close()
+    # There is no splash screen on macOS: PyInstaller can't build a bootloader
+    # splash there, so we don't import pyi_splash on macOS (doing so would emit
+    # the "environment does not allow connecting to the splash screen" warning
+    # and a KeyError traceback for the missing _PYI_SPLASH_IPC).
+    if not IS_MAC and '_PYI_APPLICATION_HOME_DIR' in os.environ:
+        # Windows/Linux frozen build: close the PyInstaller bootloader splash.
+        # Guard the import so a missing pyi_splash module can never crash startup.
+        try:
+            import pyi_splash
+            # Close the splash screen. It does not matter when the call
+            # to this function is made, the splash screen remains open until
+            # this function is called or the Python program is terminated.
+            pyi_splash.close()
+        except (ImportError, ModuleNotFoundError):
+            pass
 
     # this will remove minimized status
     # and restore window with keeping maximized/normal state

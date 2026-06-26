@@ -13,7 +13,7 @@ a = Analysis(
     ],
     datas=[
         ('image/splash.png', '.'),
-        ('mp3/*.mp3', '.'),
+        ('mp3/*.mp3', 'mp3'),
         ('video/trolley.m4v', 'video'),
         ('video/easy.mp4', 'video'),
         ('video/start-stop.mp4', 'video'),
