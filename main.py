@@ -303,8 +303,8 @@ class TrackEvent():
             self.Done = True
 
 GLOBAL_EVENTS = [
-    TrackEvent(CENTRAL_BELL_START, lambda: sound.PlaySound.Play(sound.SoundEnum.CENTRAL_BELL, True)),
-    TrackEvent(CENTRAL_BELL_STOP,  lambda: sound.PlaySound.Stop(sound.SoundEnum.CENTRAL_BELL)),
+    TrackEvent(CENTRAL_BELL_START, lambda: sound.GlobalSound.Play(sound.SoundEnum.CENTRAL_BELL, True)),
+    TrackEvent(CENTRAL_BELL_STOP,  lambda: sound.GlobalSound.Stop(sound.SoundEnum.CENTRAL_BELL, False)),
 ]
 
 def ComputeAcceleration(Level):
@@ -876,7 +876,7 @@ class FullMode(StartStopMode):
         # Check Zorching
         if (self.ZorchEnable and state.State.RunLevel != 0):
             state.Log("Zorch at position %0.2f" % MainWindow.Video.GetPosition())
-            sound.PlaySound.Play(sound.SoundEnum.ZORCH, False)
+            sound.GlobalSound.Play(sound.SoundEnum.ZORCH, False)
             MainWindow.AddWarning("Zorched %s" % self.ZorchMessage)
             self.ZorchEnable = False
 
@@ -1427,12 +1427,12 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
 
         if (Position > self.ClickClackPos):
             state.Log("ClickClackPlay Distance=%f" % self.ClickClackPos)
-            sound.PlaySound.Play(sound.SoundEnum.CLICK_CLACK, False)
+            sound.GlobalSound.Play(sound.SoundEnum.CLICK_CLACK, False)
             self.ClickClackPos += CLICK_CLACK_DISTANCE
 
-        StatusMsg = "Run %d Pos %.2f Speed %.2f Acc %.3f Brake Acc. %.3f Brake:%2.2f Res:%2.2f Extend: %.2f" % \
-             (state.State.RunLevel, self.Video.GetPosition(), state.State.Speed, 
-             state.State.Acceleration, state.State.BrakeAcceleration, self.BrakeUi.RedPressure, self.BrakeUi.BlackPressure, self.BrakeUi.Extend)
+        StatusMsg = f"Run {state.State.RunLevel:d} Pos {self.Video.GetPosition():.2f} " \
+            f"Speed {state.State.Speed:.2f} Acc {state.State.Acceleration:.3f} Brake Acc. {state.State.BrakeAcceleration:.3f} " \
+            f"Brake:{self.BrakeUi.RedPressure:2.2f} Res:{self.BrakeUi.BlackPressure:2.2f} Extend: {self.BrakeUi.Extend:.2f}"
         state.Log(StatusMsg)
         self.StatusLabel.setText(StatusMsg)
 
@@ -1454,7 +1454,7 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         """ 
         Ring the bell
         """
-        sound.PlaySound.Play(sound.SoundEnum.BELL, False)
+        sound.GlobalSound.Play(sound.SoundEnum.BELL, False)
 
         ThisDingTime = time.time()
         DingPosition = self.Video.GetPosition()

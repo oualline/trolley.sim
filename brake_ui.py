@@ -38,8 +38,8 @@ START_ANGLE=-30        # Angle of first tick
 STOP_ANGLE=220         # Angle of the last tick
 MAX_PRESSURE=120       # Max pressure
 
-MAX_BRAKE_PRESSURE=60   # How much brake pipe pressure we can have
-MAX_RED_PRESSURE=MAX_BRAKE_PRESSURE-5   # Cylinder brake pressure
+MAX_BRAKE_PRESSURE=60.0   # How much brake pipe pressure we can have
+MAX_RED_PRESSURE=MAX_BRAKE_PRESSURE-5.0   # Cylinder brake pressure
 
 TICK=10.0               # Number of ticks/second
 # Brake release behavior
@@ -51,7 +51,7 @@ APPLY_RATE=60.0/TICK    # Apply Rate in PSI/Tick
 # Pump up stuff
 #
 PUMP_UP_RATE=20.0/TICK   # Pump up at the rate of 20LBS per second
-PUMP_UP_START=MAX_BRAKE_PRESSURE-15      # After loosing 15 LBS, pump up
+PUMP_UP_START=MAX_BRAKE_PRESSURE-15.0      # After loosing 15 LBS, pump up
 APPLY_DROP=5.0/TICK     # We drop at the rate of 5 LBS/second when APPLY 
 # Apply tuning
 MAX_EXTEND=1.0          # It takes one second to extend
@@ -75,7 +75,7 @@ def ComputeBrakeAcceleration(RedPressure):
 
     # 10 LB set, slows at the rate of 0.025 speed
     Acceleration = (-((0.025 * RedPressure) / TICK))
-    state.Log("BrakeAcceleration %3.2f RedPressure %d" % (Acceleration, RedPressure))
+    state.Log("BrakeAcceleration %3.2f RedPressure %f" % (Acceleration, RedPressure))
     return(Acceleration)
 
 def PressureToAngle(Pressure):
@@ -236,7 +236,7 @@ class BrakeUi():
         self.PumpAllowed = False
         self.SetPumping(False)
         
-    def SetPumping(self,NewPumping):
+    def SetPumping(self, NewPumping):
         """
         Set the pumping state
 
@@ -245,11 +245,12 @@ class BrakeUi():
         Turns on and off the pumping sound
         """
         self.Pumping = NewPumping
+        state.Log(f"Pumping {self.Pumping}")
         if (self.Pumping):
-            sound.PlaySound.Play(sound.SoundEnum.PUMP_UP, True)
+            sound.GlobalSound.Play(sound.SoundEnum.PUMP_UP, True)
             state.Log("Pump sound on")
         else:
-            sound.PlaySound.Stop(sound.SoundEnum.PUMP_UP)
+            sound.GlobalSound.Stop(sound.SoundEnum.PUMP_UP, True)
             state.Log("Pump sound off")
 
     def PumpCheck(self):
@@ -304,8 +305,8 @@ class BrakeUi():
         """
         self.SetGauge()
         self.SetBrake(state.BrakeEnum.EMERGENCY)
-        self.BlackPressure = 0
-        self.RedPressure = 0
+        self.BlackPressure = 0.0
+        self.RedPressure = 0.0
 
     def BrakeReset(self):
         """
@@ -327,11 +328,14 @@ class BrakeUi():
 
         :param What: Valve position
         """
+        if (state.State.BrakeValvePosition == state.BrakeEnum.APPLY):
+            sound.GlobalSound.Stop(sound.SoundEnum.APPLY, False)
+
         state.State.BrakeValvePosition = What
         # Emergency sound here.  All others in the update function
         if (What == state.BrakeEnum.EMERGENCY):
-            if (self.BlackPressure > 0):
-                sound.PlaySound.Play(sound.SoundEnum.EMERGENCY, False)
+            if (self.BlackPressure > 0.0):
+                sound.GlobalSound.Play(sound.SoundEnum.EMERGENCY, False)
         BrakeIndex = state.State.BrakeValvePosition.value
         state.Log("SetBrake(%s[%d])" % (What, BrakeIndex))
 
@@ -349,15 +353,15 @@ class BrakeUi():
 
             if (self.RedPressure >= MAX_RED_PRESSURE):
                 self.RedPressure = MAX_RED_PRESSURE
-                sound.PlaySound.Stop(sound.SoundEnum.APPLY)
+                sound.GlobalSound.Stop(sound.SoundEnum.APPLY, False)
             else:
-                sound.PlaySound.Play(sound.SoundEnum.APPLY, True)
+                sound.GlobalSound.Play(sound.SoundEnum.APPLY, True)
                 # We used some air from the reservoir so drop the pressure
                 self.BlackPressure -= APPLY_DROP
 
             # Pressure can never go below 0
             if (self.BlackPressure < 0):
-                self.BlackPressure = 0
+                self.BlackPressure = 0.0
 
             self.SetGauge()
             self.PumpAllowed = True
@@ -375,21 +379,21 @@ class BrakeUi():
                 state.Log("Braking %f" % state.State.BrakeAcceleration)
 
         elif (state.State.BrakeValvePosition  == state.BrakeEnum.RELEASE):
-            if (self.RedPressure > 0):
-                sound.PlaySound.Play(sound.SoundEnum.RELEASE, True)
+            if (self.RedPressure > 0.0):
+                sound.GlobalSound.Play(sound.SoundEnum.RELEASE, True)
             # We are releasing, so drop brake pressure
             self.RedPressure -= RELEASE_RATE
             self.PumpAllowed = True
             state.State.BrakeAcceleration = 0
             state.Log("BrakeAcceleration {0}".format(state.State.BrakeAcceleration))
-            if (self.Extend > 0):
+            if (self.Extend > 0.0):
                 self.Extend -= EXTEND_RATE
-                if (self.Extend < 0):
-                    self.Extend = 0
+                if (self.Extend < 0.0):
+                    self.Extend = 0.0
 
             if (self.RedPressure <= 0):
-                self.RedPressure = 0
-                sound.PlaySound.Stop(sound.SoundEnum.RELEASE)
+                self.RedPressure = 0.0
+                sound.GlobalSound.Stop(sound.SoundEnum.RELEASE, False)
 
         elif (state.State.BrakeValvePosition  == state.BrakeEnum.LAP):
             self.PumpAllowed = True
@@ -408,6 +412,8 @@ class BrakeUi():
             self.PumpStop()
             state.State.BrakeAcceleration = ComputeBrakeAcceleration(MAX_BRAKE_PRESSURE)
             state.Log("BrakeAcceleration %f" % state.State.BrakeAcceleration)
+            self.BlackPressure = 0.0
+            self.RedPressure = MAX_BRAKE_PRESSURE
         else:
             print("Internal error: Impossible brake mode %s" % state.State.BrakeValvePosition )
             sys.exit(8)

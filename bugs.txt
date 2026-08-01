@@ -40,3 +40,5 @@ Misc bugs:
 5. Easy mode video rework
 6. Start/stop mode video rework
 7. Full mode video rework
+8. Brake after emergency should give user time to pump up
+

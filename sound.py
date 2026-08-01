@@ -8,7 +8,8 @@ import os
 import threading
 import time
 
-PlaySound = None        # The sound playing class (singleton)
+global GlobalSound
+GlobalSound = None        # The sound playing class (singleton)
 
 # List of sounds
 # Must match SoundFiles below
@@ -51,10 +52,12 @@ class PlaySoundClass:
         
         self.Players = []
         self.StopFlag = []
+        self.SoundObjects = []
         
         for Index in range(len(self.SoundFiles)):
             self.Players.append(None)
             self.StopFlag.append(False)
+            self.SoundObjects.append(None)
 
     def PlaySound(self, Sound, Repeat):
         """
@@ -65,9 +68,11 @@ class PlaySoundClass:
             Repeat -- Repeat the sound
         """
         while not self.StopFlag[Sound]:
-            playsound3.playsound(os.path.join(self.BaseDir, 'mp3', self.SoundFiles[Sound]))
+            self.SoundObjects[Sound] = playsound3.playsound(os.path.join(self.BaseDir, 'mp3', self.SoundFiles[Sound]), block=False)
+            self.SoundObjects[Sound].wait()
             if not Repeat:
                 break
+        self.SoundObjects[Sound] = None
         
     def Play(self, Sound, Repeat):
         """
@@ -93,15 +98,19 @@ class PlaySoundClass:
         self.Players[Sound] = threading.Thread(target=self.PlaySound, args=(Sound,Repeat,), daemon=True)
         self.Players[Sound].start()
 
-    def Stop(self, Sound):
+    def Stop(self, Sound, Quick):
         """
         Stop the given sound
 
         Parameters
              Sound -- Sound to stop enum
+             Quick -- Shut down sound even if playing
         """
         state.Log("Stop Sound %s" % Sound)
         self.StopFlag[Sound] = True
+        if (Quick):
+            if (self.SoundObjects[Sound] is not None):
+                self.SoundObjects[Sound].stop()
         
 def Init(BaseDir):
     """ 
@@ -110,27 +119,33 @@ def Init(BaseDir):
     Args:
         BaseDir -- Dir in which the application resides
     """
-    global PlaySound
+    global GlobalSound
 
-    PlaySound = PlaySoundClass(BaseDir)
+    GlobalSound = PlaySoundClass(BaseDir)
 
-if __name__ == "__main__":
+def Main():
+    global GlobalSound
+
     Init(os.getcwd())
     print("Bell")
-    PlaySound.Play(SoundEnum.BELL, False)
+    GlobalSound.Play(SoundEnum.BELL, False)
     time.sleep(5)
     print("Bell")
-    PlaySound.Play(SoundEnum.BELL, False)
+    GlobalSound.Play(SoundEnum.BELL, False)
     time.sleep(0.1)
     print("Bell")
-    PlaySound.Play(SoundEnum.BELL, False)
+    GlobalSound.Play(SoundEnum.BELL, False)
     time.sleep(0.1)
     print("Bell")
-    PlaySound.Play(SoundEnum.BELL, False)
+    GlobalSound.Play(SoundEnum.BELL, False)
     time.sleep(5)
     print("Bell/repeat")
-    PlaySound.Play(SoundEnum.BELL, True)
+    GlobalSound.Play(SoundEnum.BELL, True)
     time.sleep(10)
     print("Stop")
-    PlaySound.Stop(SoundEnum.BELL)
+    GlobalSound.Stop(SoundEnum.BELL)
     time.sleep(10)
+
+if __name__ == "__main__":
+    Main()
+
