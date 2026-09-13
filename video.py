@@ -27,13 +27,20 @@ handle by the time it is passed to mpv.
 
 API
 ---
-Video(app, MainWindow, VideoFile, Prefix, ImageDirectory, SkipCount)
+Video(app, VideoFile, Prefix, ImageDirectory, SkipCount)
     Create the video player.  Prefix, ImageDirectory, and SkipCount are
     accepted for interface compatibility but are ignored.
 
 Video.SetRate(rate)
     Set playback speed.  0 (or negative) pauses; positive values set the
     mpv ``speed`` property and resume playback.
+
+Video.Pause()
+    Pause playback, remembering the current rate for Resume().
+
+Video.Resume()
+    Resume playback at the rate in effect before Pause() was called
+    (defaults to 1.0 if no rate was recorded).
 
 Video.GetPosition()
     Return current playback position as a fraction in [0.0, 1.0].
@@ -52,6 +59,24 @@ import platform
 
 import mpv
 from PyQt6 import QtCore, QtGui, QtWidgets
+
+# NOTE: intentionally "import __main__ as main", NOT "import main".
+#
+# When this program is launched as "python3 main.py", the interpreter loads
+# main.py as the module __main__ -- there is no module literally named
+# "main" yet. A plain "import main" then makes Python go find main.py on
+# disk and import it a SECOND time under the name "main", creating a
+# completely separate module object that re-runs main.py's top-level code
+# but never executes its "if __name__ == '__main__':" block (its __name__
+# is "main", not "__main__"). That second copy's MainWindow attribute is
+# never set, which is why "main.MainWindow" raised
+# "AttributeError: module 'main' has no attribute 'MainWindow'" even though
+# the real, running window had already been assigned.
+#
+# "import __main__" always gives you the actual entry-point script's module
+# object, no matter what it's named or how it was launched, so there is only
+# ever one copy and MainWindow is visible here exactly as main.py set it.
+import __main__ as main
 
 # mpv requires the C numeric locale for correct number parsing.
 locale.setlocale(locale.LC_NUMERIC, 'C')
@@ -172,20 +197,19 @@ class _SharedValue:
 # ---------------------------------------------------------------------------
 
 class Video:
-    def __init__(self, app, MainWindow, VideoFile, Prefix, ImageDirectory, SkipCount):
+    def __init__(self, app, VideoFile, Prefix, ImageDirectory, SkipCount):
         """
         Create video player.
 
         Args:
             app            -- The Qt application
-            MainWindow     -- Window containing the VideoFrame widget
             VideoFile      -- Video file to play
             Prefix         -- (unused) frame-extraction prefix
             ImageDirectory -- (unused) frame image directory
             SkipCount      -- (unused) frame-skip count
         """
         self.VideoFile = VideoFile
-        self.ImageLabel = MainWindow.VideoFrame
+        self.ImageLabel = main.MainWindow.VideoFrame
 
         self.SharedWidth = _SharedValue()
         self.SharedHeight = _SharedValue()
@@ -194,6 +218,7 @@ class Video:
         self._gl_widget = None      # macOS only
         self._pending_rate = 0.0
         self.Rate = 0.0
+        self._rate_before_pause = 1.0   # rate Resume() restores after Pause()
 
         # Defer actual mpv creation until the event loop is running and the
         # window is on screen.
@@ -315,6 +340,21 @@ class Video:
                 self.player.pause = False
         except Exception:
             pass
+
+    def Pause(self):
+        """
+        Pause playback, remembering the current rate so Resume() can
+        restore it.  Equivalent to SetRate(0) except that the rate in
+        effect at the time of the call is preserved for Resume().
+        """
+        if self.Rate > 0.0:
+            self._rate_before_pause = self.Rate
+        self.SetRate(0)
+
+    def Resume(self):
+        """Resume playback at the rate in effect before Pause() was called."""
+        rate = self._rate_before_pause if self._rate_before_pause > 0.0 else 1.0
+        self.SetRate(rate)
 
     def GetPosition(self):
         """Return current position as a fraction of total duration [0.0, 1.0]."""

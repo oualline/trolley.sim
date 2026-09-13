@@ -18,6 +18,13 @@ from PyQt6.QtGui import QBrush, QPen, QFont, QPixmap, QPainter
 import state
 import sound
 
+# See the comment in video.py: this must be "import __main__ as main", not
+# "import main", or main.MainWindow will silently refer to the wrong copy
+# of the module. This file previously used main.MainWindow without
+# importing main at all, which would have raised NameError the first time
+# BrakeUi was constructed.
+import __main__ as main
+
 # Define the sizes needed to draw the gauge.
 # The gauge canvas is twice the gauge size for text and other 
 # info on the bottom
@@ -154,11 +161,11 @@ def rotate_point(point, angle, center_point=(0, 0)):
     return new_point
 
 class BrakeUi():
-    def __init__(self, MainWindow):
+    def __init__(self, Mode):
         """
         Setup brake gauge
 
-        :param MainWindow: Top level window
+        :param Mode: Mode we are using 
 
         """
         #-----------------------------------------------------------
@@ -226,8 +233,19 @@ class BrakeUi():
         self.BlackItem.setPos(ARROW_X_OFFSET, DRAW_Y_SIZE/2 - BlackArrow.height()/2)
         self.BlackItem.setTransformOriginPoint(ARROW_X_CENTER, BlackArrow.height()/2)
         self.BlackItem.setRotation(0)
-        self.BrakeList = [MainWindow.BrakeApply, MainWindow.BrakeRelease, MainWindow.BrakeLap, MainWindow.BrakeEmergency]
+        self.BrakeList = [main.MainWindow.BrakeApply, main.MainWindow.BrakeRelease, main.MainWindow.BrakeLap, main.MainWindow.BrakeEmergency]
+
+        self.Mode = Mode
         self.BrakeReset()
+
+    def SetMode(self, Mode):
+        """
+        Set the mode we are in
+
+        Arguments:
+            :Mode: Mode to set
+        """
+        self.Mode = Mode
 
     def PumpStop(self):
         """ 
@@ -342,11 +360,11 @@ class BrakeUi():
         for Button in range(len(self.BrakeList)):
             self.BrakeList[Button].setChecked(Button == BrakeIndex)
 
-    def UpdateBrake(self, MainWindow):
+        self.Mode.SetBrake(What)
+
+    def UpdateBrake(self):
         """
         Called every 1/10 seconds to update things
-
-        :param MainWindow: The top level window
         """
         if (state.State.BrakeValvePosition == state.BrakeEnum.APPLY):
             self.RedPressure += APPLY_RATE

@@ -23,6 +23,13 @@ from PyQt6.QtGui import QBrush, QPen, QFont, QPixmap, QPainter
 
 import state
 
+# See the comment in video.py: this must be "import __main__ as main", not
+# "import main", or main.MainWindow will silently refer to the wrong copy
+# of the module. This file previously used main.MainWindow without
+# importing main at all, which would have raised NameError the first time
+# either class below was constructed.
+import __main__ as main
+
 CONTROLLER_X_OFFSET = 80    # Move the controller over this amount
 
 # Try and adjust the center of the handle to the correct location
@@ -48,19 +55,14 @@ class ControllerGraphics():
         MainWindow.SetDirection -- Called to set the direction
 
     """
-    def __init__(self, MainWindow):
+    def __init__(self):
         """
         Setup controller window
-
-        :param MainWindow: Top level window
-
-
         """
-
         self.MARGIN = 15                     # Margin for top/bottom of controller
 
-        self.Height = MainWindow.ControllerGraphicsView.height()
-        Width = MainWindow.ControllerGraphicsView.width()
+        self.Height = main.MainWindow.ControllerGraphicsView.height()
+        Width = main.MainWindow.ControllerGraphicsView.width()
         # TODO: Figure out why the /4 here
         self.ControllerCenterX = (Width/2) + CONTROLLER_X_OFFSET/4
         self.ControllerCenterY = (self.Height/2)
@@ -122,10 +124,9 @@ class ControllerGraphics():
         self.ReverseHandleItem.setRotation(0)  
         self.ReverseHandleItem.setZValue(3)
 
-        self.MainWindow = MainWindow
-        MainWindow.ControllerGraphicsView.mousePressEvent = self.MouseClick
-        MainWindow.ControllerGraphicsView.setScene(self.ControllerScene)
-        MainWindow.ControllerGraphicsView.show()
+        main.MainWindow.ControllerGraphicsView.mousePressEvent = self.MouseClick
+        main.MainWindow.ControllerGraphicsView.setScene(self.ControllerScene)
+        main.MainWindow.ControllerGraphicsView.show()
 
     def ToggleDots(self):
         """ 
@@ -197,11 +198,11 @@ class ControllerGraphics():
 
         if (x <= REVERSER_X):
             if (y > (REVERSER_Y_CENTER + REVERSER_Y_WIDTH)): 
-                self.MainWindow.SetDirection(state.DirectionEnum.REVERSE)
+                main.MainWindow.SetDirection(state.DirectionEnum.REVERSE)
             elif (y < (REVERSER_Y_CENTER - REVERSER_Y_WIDTH)): 
-                self.MainWindow.SetDirection(state.DirectionEnum.FORWARD)
+                main.MainWindow.SetDirection(state.DirectionEnum.FORWARD)
             else:
-                self.MainWindow.SetDirection(state.DirectionEnum.NEUTRAL)
+                main.MainWindow.SetDirection(state.DirectionEnum.NEUTRAL)
             return
 
         Angle = math.degrees(math.atan2(y - self.ControllerCenterY, x - self.ControllerCenterX))
@@ -213,7 +214,7 @@ class ControllerGraphics():
                 RunLevel = Index
                 ClosestDelta = abs(Angle-self.RUN_TO_ANGLE[Index])
 
-        self.MainWindow.SetRun(RunLevel)
+        main.MainWindow.SetRun(RunLevel)
 
 class ControllerButtons():
     """
@@ -227,35 +228,32 @@ class ControllerButtons():
         MainWindow.SetRun -- Called to set run level
         MainWindow.SetDirection -- Called to set the direction
     """
-    def __init__(self, MainWindow):
+    def __init__(self):
         """
         Setup controller window
 
-        :param MainWindow: Top level window
-
         """
-        self.MainWindow = MainWindow
         #-----------------------------------------------------------
         # Setup the buttons
         #-----------------------------------------------------------
-        MainWindow.Run0.clicked.connect(lambda: MainWindow.SetRun(0))
-        MainWindow.Run1.clicked.connect(lambda: MainWindow.SetRun(1))
-        MainWindow.Run2.clicked.connect(lambda: MainWindow.SetRun(2))
-        MainWindow.Run3.clicked.connect(lambda: MainWindow.SetRun(3))
-        MainWindow.Run4.clicked.connect(lambda: MainWindow.SetRun(4))
-        MainWindow.Run5.clicked.connect(lambda: MainWindow.SetRun(5))
-        MainWindow.Run6.clicked.connect(lambda: MainWindow.SetRun(6))
-        MainWindow.Run7.clicked.connect(lambda: MainWindow.SetRun(7))
-        MainWindow.Run8.clicked.connect(lambda: MainWindow.SetRun(8))
+        main.MainWindow.Run0.clicked.connect(lambda: main.MainWindow.SetRun(0))
+        main.MainWindow.Run1.clicked.connect(lambda: main.MainWindow.SetRun(1))
+        main.MainWindow.Run2.clicked.connect(lambda: main.MainWindow.SetRun(2))
+        main.MainWindow.Run3.clicked.connect(lambda: main.MainWindow.SetRun(3))
+        main.MainWindow.Run4.clicked.connect(lambda: main.MainWindow.SetRun(4))
+        main.MainWindow.Run5.clicked.connect(lambda: main.MainWindow.SetRun(5))
+        main.MainWindow.Run6.clicked.connect(lambda: main.MainWindow.SetRun(6))
+        main.MainWindow.Run7.clicked.connect(lambda: main.MainWindow.SetRun(7))
+        main.MainWindow.Run8.clicked.connect(lambda: main.MainWindow.SetRun(8))
 
         # A list of all the buttons
-        self.RunList = [MainWindow.Run0, MainWindow.Run1, MainWindow.Run2, MainWindow.Run3, 
-               MainWindow.Run4, MainWindow.Run5, MainWindow.Run6, MainWindow.Run7, MainWindow.Run8]
+        self.RunList = [main.MainWindow.Run0, main.MainWindow.Run1, main.MainWindow.Run2, main.MainWindow.Run3, 
+               main.MainWindow.Run4, main.MainWindow.Run5, main.MainWindow.Run6, main.MainWindow.Run7, main.MainWindow.Run8]
 
-        MainWindow.ForwardButton.clicked.connect(lambda: MainWindow.SetDirection(state.DirectionEnum.FORWARD))
-        MainWindow.NeutralButton.clicked.connect(lambda: MainWindow.SetDirection(state.DirectionEnum.NEUTRAL))
-        MainWindow.ReverseButton.clicked.connect(lambda: MainWindow.SetDirection(state.DirectionEnum.REVERSE))
-        self.DirectionList = [MainWindow.ForwardButton, MainWindow.NeutralButton, MainWindow.ReverseButton]
+        main.MainWindow.ForwardButton.clicked.connect(lambda: main.MainWindow.SetDirection(state.DirectionEnum.FORWARD))
+        main.MainWindow.NeutralButton.clicked.connect(lambda: main.MainWindow.SetDirection(state.DirectionEnum.NEUTRAL))
+        main.MainWindow.ReverseButton.clicked.connect(lambda: main.MainWindow.SetDirection(state.DirectionEnum.REVERSE))
+        self.DirectionList = [main.MainWindow.ForwardButton, main.MainWindow.NeutralButton, main.MainWindow.ReverseButton]
 
     def SetControllerRun(self, RunLevel):
         """

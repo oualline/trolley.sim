@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>SelectWindow</class>
- <widget class="QMainWindow" name="SelectWindow">
+ <widget class="QDialog" name="SelectWindow">
   <property name="windowModality">
    <enum>Qt::ApplicationModal</enum>
   </property>
@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>546</width>
-    <height>185</height>
+    <width>805</width>
+    <height>223</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -26,6 +26,14 @@
    <string notr="true"/>
   </property>
   <widget class="QWidget" name="centralwidget">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>773</width>
+     <height>174</height>
+    </rect>
+   </property>
    <property name="sizePolicy">
     <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
      <horstretch>0</horstretch>
@@ -44,7 +52,7 @@
          </sizepolicy>
         </property>
         <property name="text">
-         <string>&lt;H1&gt;Select Simulator Mode&lt;/H1&gt;</string>
+         <string>&lt;H1&gt;Select Simulation&lt;/H1&gt;</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignHCenter|Qt::AlignTop</set>
@@ -52,66 +60,172 @@
        </widget>
       </item>
       <item>
-       <widget class="QRadioButton" name="EasyModeRadioButton">
-        <property name="text">
-         <string>Easy Mode (For children and beginners)</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
+       <layout class="QHBoxLayout" name="EasyHorizontalLayout">
+        <item>
+         <widget class="QPushButton" name="StartEasyButton">
+          <property name="styleSheet">
+           <string notr="true">QPushButton {
+    background-color: rgb(87, 227, 137);
+}</string>
+          </property>
+          <property name="text">
+           <string>Start</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="EasyTutorialButton">
+          <property name="styleSheet">
+           <string notr="true">QPushButton {
+    background-color: rgb(98, 160, 234);
+}</string>
+          </property>
+          <property name="text">
+           <string>Tutorial</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="EasyLabel">
+          <property name="text">
+           <string>Easy Mode (For children and beginners)</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_2">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="EasyHelpButton">
+          <property name="styleSheet">
+           <string notr="true"/>
+          </property>
+          <property name="text">
+           <string>Help</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
       <item>
-       <widget class="QRadioButton" name="StartStopModeRadioButton">
-        <property name="text">
-         <string>Start/Stop Mode (Controller and Air Brakes only)</string>
-        </property>
-       </widget>
+       <layout class="QHBoxLayout" name="HorizontalLayoutStartStop">
+        <item>
+         <widget class="QPushButton" name="StartStartStopButton">
+          <property name="styleSheet">
+           <string notr="true">QPushButton {
+    background-color: rgb(87, 227, 137);
+}</string>
+          </property>
+          <property name="text">
+           <string>Start</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="TutorialStartStopButton">
+          <property name="styleSheet">
+           <string notr="true">QPushButton {
+    background-color: rgb(98, 160, 234);
+}</string>
+          </property>
+          <property name="text">
+           <string>Tutorial</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_2">
+          <property name="text">
+           <string>Start/Stop Mode (Controller and Air Brakes work)</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_3">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="StartStopHelpButton">
+          <property name="text">
+           <string>Help</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
       <item>
-       <widget class="QRadioButton" name="FullModeRadioButton">
-        <property name="text">
-         <string>Full Mode</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
-    <item>
-     <layout class="QHBoxLayout" name="horizontalLayout">
-      <item>
-       <widget class="QPushButton" name="SelectApplyButton">
-        <property name="text">
-         <string>Apply</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="SelectCancelButton">
-        <property name="text">
-         <string>Cancel</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <spacer name="horizontalSpacer">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item>
-       <widget class="QPushButton" name="SelectHelpButton">
-        <property name="text">
-         <string>Help</string>
-        </property>
-       </widget>
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <widget class="QPushButton" name="StartFullButton">
+          <property name="styleSheet">
+           <string notr="true">QPushButton {
+    background-color: rgb(87, 227, 137);
+}</string>
+          </property>
+          <property name="text">
+           <string>Start</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="FullTutorialButton">
+          <property name="styleSheet">
+           <string notr="true">QPushButton {
+    background-color: rgb(98, 160, 234);
+}</string>
+          </property>
+          <property name="text">
+           <string>Tutorial</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="FullLabel">
+          <property name="text">
+           <string>Full Mode (All stops and signals expected.)</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_4">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="FullHelpButton">
+          <property name="text">
+           <string>Help</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
      </layout>
     </item>
@@ -121,25 +235,159 @@
  <resources/>
  <connections>
   <connection>
-   <sender>SelectHelpButton</sender>
+   <sender>StartEasyButton</sender>
    <signal>clicked()</signal>
    <receiver>SelectWindow</receiver>
-   <slot>SelectHelpButtonClicked()</slot>
+   <slot>EasyModeSartClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>473</x>
-     <y>159</y>
+     <x>43</x>
+     <y>112</y>
     </hint>
     <hint type="destinationlabel">
-     <x>490</x>
-     <y>171</y>
+     <x>127</x>
+     <y>452</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>EasyTutorialButton</sender>
+   <signal>clicked()</signal>
+   <receiver>SelectWindow</receiver>
+   <slot>EasyModeTutorialClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>139</x>
+     <y>117</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>186</x>
+     <y>413</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>EasyHelpButton</sender>
+   <signal>clicked()</signal>
+   <receiver>SelectWindow</receiver>
+   <slot>EasyHelpClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>724</x>
+     <y>109</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>899</x>
+     <y>233</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>StartStartStopButton</sender>
+   <signal>clicked()</signal>
+   <receiver>SelectWindow</receiver>
+   <slot>StartStopModeStartClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>57</x>
+     <y>203</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>121</x>
+     <y>446</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>TutorialStartStopButton</sender>
+   <signal>clicked()</signal>
+   <receiver>SelectWindow</receiver>
+   <slot>StartStopModeTutorialClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>111</x>
+     <y>194</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>240</x>
+     <y>519</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>StartStopHelpButton</sender>
+   <signal>clicked()</signal>
+   <receiver>SelectWindow</receiver>
+   <slot>StartStopHelpClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>761</x>
+     <y>194</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>923</x>
+     <y>173</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>StartFullButton</sender>
+   <signal>clicked()</signal>
+   <receiver>SelectWindow</receiver>
+   <slot>FullModeStartClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>67</x>
+     <y>284</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>86</x>
+     <y>419</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>FullTutorialButton</sender>
+   <signal>clicked()</signal>
+   <receiver>SelectWindow</receiver>
+   <slot>FullModeTutorialClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>154</x>
+     <y>283</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>333</x>
+     <y>501</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>FullHelpButton</sender>
+   <signal>clicked()</signal>
+   <receiver>SelectWindow</receiver>
+   <slot>FullHelpClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>744</x>
+     <y>276</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>844</x>
+     <y>497</y>
     </hint>
    </hints>
   </connection>
  </connections>
  <slots>
-  <slot>SelectApplyButtonClicked()</slot>
-  <slot>SelectCancelButtonClicked()</slot>
-  <slot>SelectHelpButtonClicked()</slot>
+  <slot>EasyModeSartClicked()</slot>
+  <slot>EasyModeTutorialClicked()</slot>
+  <slot>StartStopModeStartClicked()</slot>
+  <slot>StartStopModeTutorialClicked()</slot>
+  <slot>FullModeStartClicked()</slot>
+  <slot>FullModeTutorialClicked()</slot>
+  <slot>EasyHelpClicked()</slot>
+  <slot>FullHelpClicked()</slot>
+  <slot>StartStopHelpClicked()</slot>
  </slots>
 </ui>

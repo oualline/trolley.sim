@@ -55,7 +55,7 @@ mode_window.py: mode_window.ui
 clean: 
 	rm -f sim_ui4.py mode_window.py frames_ui.py
 	rm -rf __pycache__ build dist build.macos
-	rm -f quick.pdf help.pdf
+	rm -f quick.pdf help.pdf quick-poster.pdf
 	rm -rf frames
 	rm -rf venv
 	rm -rf .DS_Store ._.DS_Store

@@ -689,23 +689,16 @@
          </widget>
         </item>
         <item>
+         <widget class="QLabel" name="ModeTitle">
+          <property name="text">
+           <string>Mode:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QLabel" name="ModeLabel">
           <property name="text">
            <string>ModeLabel</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="ModeChangeButton">
-          <property name="text">
-           <string>Change</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="VideoButton">
-          <property name="text">
-           <string>Video Help</string>
           </property>
          </widget>
         </item>
@@ -746,22 +739,6 @@
    </hints>
   </connection>
   <connection>
-   <sender>ModeChangeButton</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>ChangeModeClicked()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>781</x>
-     <y>844</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>482</x>
-     <y>438</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>BellGraphic</sender>
    <signal>clicked()</signal>
    <receiver>MainWindow</receiver>
@@ -790,22 +767,6 @@
     <hint type="destinationlabel">
      <x>996</x>
      <y>449</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>VideoButton</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>PlayVideo()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>827</x>
-     <y>840</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>967</x>
-     <y>751</y>
     </hint>
    </hints>
   </connection>

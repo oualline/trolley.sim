@@ -1,3 +1,12 @@
+Bugs to fix
+    0. Easy tutorial 2 pops up in wrong place
+    1. In easy tutorial, mode window pops up before congradulations you stopped at the store.
+    2. Check for same on easy mode, and all other modes
+    3. Help text needs to be updated
+Todo:
+    1. Help should go to the right section
+    2. Remove video help
+
 This is alpha code.  As such it is far from perfect.
 
 Known issues:
@@ -42,3 +51,7 @@ Misc bugs:
 7. Full mode video rework
 8. Brake after emergency should give user time to pump up
 
+
+Big Changes
+1. New video
+2. Step by Step mode
