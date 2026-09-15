@@ -161,12 +161,9 @@ def rotate_point(point, angle, center_point=(0, 0)):
     return new_point
 
 class BrakeUi():
-    def __init__(self, Mode):
+    def __init__(self):
         """
         Setup brake gauge
-
-        :param Mode: Mode we are using 
-
         """
         #-----------------------------------------------------------
         # Setup the brake gauge
@@ -235,17 +232,7 @@ class BrakeUi():
         self.BlackItem.setRotation(0)
         self.BrakeList = [main.MainWindow.BrakeApply, main.MainWindow.BrakeRelease, main.MainWindow.BrakeLap, main.MainWindow.BrakeEmergency]
 
-        self.Mode = Mode
         self.BrakeReset()
-
-    def SetMode(self, Mode):
-        """
-        Set the mode we are in
-
-        Arguments:
-            :Mode: Mode to set
-        """
-        self.Mode = Mode
 
     def PumpStop(self):
         """ 
@@ -360,7 +347,7 @@ class BrakeUi():
         for Button in range(len(self.BrakeList)):
             self.BrakeList[Button].setChecked(Button == BrakeIndex)
 
-        self.Mode.SetBrake(What)
+        main.Mode.SetBrake(What)
 
     def UpdateBrake(self):
         """

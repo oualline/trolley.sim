@@ -42,8 +42,7 @@ import video
 ###########
 # Gloabsl #
 ###########
-#MainWindow = None
-Mode = None
+# MainWindow, Mode, ModeId
 
 
 ShowButtons = False     # If true, turn on the buttons
@@ -171,7 +170,6 @@ if IS_LINUX:
     class CommandPipe():
         def __init__(self):
             """ Initialize the pipe reader and start the listener thread"""
-            global MainWindow
 
             # Initialize and start the named pipe reader thread
             self.pipe_reader = NamedPipeReader()
@@ -344,7 +342,31 @@ def ComputeAcceleration(Level):
         return (MAX_SPEED[Level] / SPEED_TIME)
     return((MAX_SPEED[Level] - MAX_SPEED[Level-1]) / SPEED_TIME)
 
-def ShowModealTutorial(File):
+def CenterOnMainWindow(Widget):
+    """
+    Center a not-yet-shown top-level widget over MainWindow.
+
+    The .ui files for these popups carry whatever x/y position was last
+    saved by Designer, which is why they were popping up in the wrong
+    place -- that saved position has nothing to do with where MainWindow
+    actually ends up on screen at runtime.  This throws that position away
+    and centers the widget over MainWindow instead (or over the primary
+    screen, if MainWindow doesn't exist yet).
+
+    :param Widget: The top-level widget to position (not yet shown)
+    """
+    global MainWindow
+
+    if MainWindow is not None:
+        Geometry = MainWindow.frameGeometry()
+    else:
+        Geometry = QtWidgets.QApplication.primaryScreen().availableGeometry()
+
+    WidgetGeometry = Widget.frameGeometry()
+    WidgetGeometry.moveCenter(Geometry.center())
+    Widget.move(WidgetGeometry.topLeft())
+
+def ShowModalTutorial(File):
     """
     Display a modeal tutorial popup, loaded directly from
     File via uic.loadUi() (no compiled/generated .py needed).
@@ -362,10 +384,14 @@ def ShowModealTutorial(File):
     :param File: The file containing the tutorial
     :param MainWindow: Window to parent the popup to
     """
+    print(f"### ShowModalTutorial({File})")
+    state.Log(f"ShowModalTutorial({File})")
     global MainWindow
 
     TutorialWindow = QMainWindow(MainWindow)
     uic.loadUi(os.path.join(DIR, File), TutorialWindow)
+
+    CenterOnMainWindow(TutorialWindow)
 
     loop = QtCore.QEventLoop()
     TutorialWindow.ClickHere.clicked.connect(loop.quit)
@@ -387,7 +413,7 @@ def PauseTutorial(File):
     global MainWindow
 
     MainWindow.Video.Pause()
-    ShowModealTutorial(File)
+    ShowModalTutorial(File)
     MainWindow.Video.Resume()
 
 
@@ -420,17 +446,20 @@ def ShowTutorial(File, Window):
     Returns
        Tutorial dialog we created
     """
+    state.Log(f"ShowTutorial({File})")
+    print(f"### ShowTutorial({File})")
     Tutorial = uic.loadUi(os.path.join(DIR, File))
     Tutorial.setWindowFlags(
         Tutorial.windowFlags() | Qt.WindowType.WindowStaysOnTopHint
     )
+
+    CenterOnMainWindow(Tutorial)
 
     Tutorial.cancelButton.clicked.connect(Window.TutorialCancel)
     Tutorial.show()
     Tutorial.raise_()
 
     return (Tutorial)
-
 
 class EasyMode:
     Name = "Easy"
@@ -473,15 +502,27 @@ class EasyMode:
                 case _:
                     print("ERROR: Impossible pointer type ", PointerType)
                     sys.exit(8)
-            ShowModealTutorial(File)
+            ShowModalTutorial(File)
             self.Tutorial = ShowTutorial('easy.2.ui', self)
             self.TutorialStep = self.TutorialEnum.EASY_2
         else:
             self.TutorialStep = self.TutorialEnum.EASY_NONE
 
-    def SetBrake(self, Mode):    # Easy mode
+    def SetBrake(self, Position):    # Easy mode
         """
         Set the brake mode
+
+        Parameters
+            :arg Position: Position of the brake handle
+        """
+        pass
+
+    def ModeSetDirection(self, Direction):  # Easy Mode
+        """
+        Set the direction of the reverser
+
+        Parameters
+            :arg Direction: The direction of the reverser
         """
         pass
 
@@ -558,6 +599,10 @@ class EasyMode:
         """
         self.MaxSpeed = 0
         state.State.Reset()
+        if (self.TutorialStep != self.TutorialEnum.EASY_NONE):
+            if (self.Tutorial is not None):
+                self.Tutorial.close()
+                del self.Tutorial
 
     def ModeTick(self):                   # EasyMode
         """
@@ -622,6 +667,7 @@ class StartStopMode:
         START_NONE = 0
         START_1 = 1
         START_2 = 2
+        START_2b = 20
         START_3 = 3
         START_4 = 4
         START_5 = 5
@@ -639,24 +685,58 @@ class StartStopMode:
 
         if (Tutorial):
             self.TutorialStep = self.TutorialEnum.START_1
-            self.Tutorial = ShowModealTutorial('start.1.ui')
+            self.Tutorial = ShowModalTutorial('start.1.ui')
 
             self.TutorialStep = self.TutorialEnum.START_2
-            self.Tutorial = ShowModealTutorial('start.2.ui')
+            self.Tutorial = ShowModalTutorial('start.2.ui')
+
+            self.TutorialStep = self.TutorialEnum.START_2b
+            self.Tutorial = ShowTutorial('start.2b.ui', self)
         else:
             self.TutorialStep = self.TutorialEnum.START_NONE
 
 
-    def SetBrake(self, Mode):    # Start/Stop mode
+    def SetBrake(self, Position):    # Start/Stop mode
         """
         Set the brake mode
         """
-        if ((self.TutorialStep == self.TutorialEnum.START_3) and (Mode == state.BrakeEnum.EMERGENCY)):
+        if ((self.TutorialStep == self.TutorialEnum.START_2b) and (Position == state.BrakeEnum.EMERGENCY)):
             self.Tutorial.close()
+            del self.Tutorial
+
             self.Tutorial = ShowTutorial('start.3.ui', self)
             self.TutorialStep = self.TutorialEnum.START_3
 
-    def TutorialCancel(self):   # STart/Stop mode
+        if ((self.TutorialStep == self.TutorialEnum.START_3) and (Position == state.BrakeEnum.RELEASE)):
+            self.Tutorial.close()
+            del self.Tutorial
+
+            self.Tutorial = ShowTutorial('start.4.ui', self)
+            self.TutorialStep = self.TutorialEnum.START_4
+
+        if ((self.TutorialStep == self.TutorialEnum.START_4) and (Position == state.BrakeEnum.LAP)):
+            self.Tutorial.close()
+            del self.Tutorial
+
+            self.Tutorial = ShowTutorial('start.5.ui', self)
+            self.TutorialStep = self.TutorialEnum.START_5
+
+    def ModeSetDirection(self, Direction):  # Start/Stop Mode
+        """
+        Set the direction of the reverser
+
+        Parameters
+            :arg Direction: The direction of the reverser
+        """
+        if ((self.TutorialStep == self.TutorialEnum.START_5) and
+            (Direction == state.DirectionEnum.FORWARD)):
+            self.Tutorial.close()
+            self.Tutorial = None
+
+            self.Tutorial = ShowTutorial('start.6.ui', self)
+            self.TutorialStep = self.TutorialEnum.START_6
+
+    def TutorialCancel(self):   # Start/Stop mode
         """
         Called when tutorial's cancel button is clicked
 
@@ -664,7 +744,7 @@ class StartStopMode:
         """
         self.TutorialStep = self.TutorialEnum.START_NONE
         self.Tutorial.close()
-        del self.Tutorial
+        self.Tutorial = None
 
     def DeadmanClicked(self, Checked):
         """
@@ -682,6 +762,13 @@ class StartStopMode:
 
         :returns: True if we should contine, false if should reset
         """
+        if (self.TutorialStep == self.TutorialEnum.START_6) and (RunLevel == 0):
+            self.Tutorial.close()
+            self.Tutorial = None
+
+            ShowModalTutorial("start.7.ui")
+            self.TutorialStep = self.TutorialEnum.START_NONE
+        
         # First we check to see if the RunLevel has changed
         if (state.State.RunLevel != RunLevel):
             self.LastRunLevel = state.State.RunLevel
@@ -726,6 +813,11 @@ class StartStopMode:
         state.State.Reset()
         self.MaxSpeed = 0
         self.LastRunLevel = 0
+        if (self.TutorialStep != self.TutorialEnum.START_NONE):
+            if (self.Tutorial is not None):
+                self.Tutorial.close()
+                del self.Tutorial
+        self.TutorialStep = self.TutorialEnum.START_NONE
 
     def ModeTick(self):           # StartStopMode
         """
@@ -892,9 +984,18 @@ class FullMode(StartStopMode):
         self.ZorchEnable = False
         self.MaxSpeed = 0
 
-    def SetBrake(self, Mode):    # Full mode
+    def SetBrake(self, Position):    # Full mode
         """
         Set the brake mode
+        """
+        pass
+
+    def ModeSetDirection(self, Direction):  # Full Mode
+        """
+        Set the direction of the reverser
+
+        Parameters
+            :arg Direction: The direction of the reverser
         """
         pass
 
@@ -1097,43 +1198,52 @@ class SelectWindow(QDialog, mode_window.Ui_SelectWindow):
         :param self: This class
         :param parent: Parent of this class
         """
+        global ModeId 
         super().__init__(parent)
         self.setupUi(self)
-        self.Mode = ModeEnum.EASY
+        ModeId = ModeEnum.EASY
 
     def EasyHelpClicked(self):
         webbrowser.open("help.pdf")
 
     def EasyModeSartClicked(self):
-        self.Mode = ModeEnum.EASY
+        global ModeId 
+        ModeId = ModeEnum.EASY
         self.hide()
 
     def EasyModeTutorialClicked(self):
-        self.Mode = ModeEnum.EASY_TUTORIAL
+        global ModeId 
+        ModeId = ModeEnum.EASY_TUTORIAL
         self.hide()
 
     def FullHelpClicked(self):
         webbrowser.open("help.pdf")
 
     def FullModeStartClicked(self):
-        self.Mode = ModeEnum.FULL
+        global ModeId 
+        ModeId = ModeEnum.FULL
         self.hide()
 
     def FullModeTutorialClicked(self):
-        self.Mode = ModeEnum.FULL
+        global ModeId 
+        ModeId = ModeEnum.FULL
         self.hide()
 
     def StartStopHelpClicked(self):
         webbrowser.open("help.pdf")
 
     def StartStopModeStartClicked(self):
-        self.Mode = ModeEnum.START_STOP
+        global ModeId 
+        ModeId = ModeEnum.START_STOP
         self.hide()
 
     def StartStopModeTutorialClicked(self):
-        self.Mode = ModeEnum.START_STOP_TUTORIAL
+        """
+        Handle when we get start/stop tutorial clicked
+        """
+        global ModeId 
+        ModeId = ModeEnum.START_STOP_TUTORIAL
         self.hide()
-        MainWindow.MainReset()
 
 class BrakeGraphics():
     """
@@ -1275,6 +1385,7 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         global FullScreen 
         global LeftMargin, RightMargin, TopMargin, BottomMargin
         global MainWindow
+        global Mode
 
         super().__init__(parent)
         self.setupUi(self)
@@ -1306,11 +1417,11 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         self.MinusButton.clicked.connect(self.MinusButtonClicked)
         self.PlusButton.clicked.connect(self.PlusButtonClicked)
 
-        self.Mode = EasyMode()
+        Mode = EasyMode()
         ##@@ Make this from the Mode
         self.Video = video.Video(app, VideoFile, "scrm", IMAGE_DIR, SkipCount)
 
-        self.BrakeUi = brake_ui.BrakeUi(self.Mode)
+        self.BrakeUi = brake_ui.BrakeUi()
 
         self.BrakeView.setScene(self.BrakeUi.Scene)
         self.BrakeView.show()
@@ -1570,24 +1681,27 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
 
         :param Checked: Is it checked
         """
+        global Mode
+
         state.State.Deadman = Checked
         self.DeadmanButton.setChecked(Checked)
         self.DeadmanGraphic.setChecked(Checked)
-        self.Mode.DeadmanClicked(Checked)
+        Mode.DeadmanClicked(Checked)
 
     def Tick(self):
         """ 
         The clock has ticked.  Take action
         """
+        global Mode 
         # Update the speed and acceleration
         self.BrakeUi.UpdateBrake()
-        self.Mode.ModeTick()
-        Continue = self.Mode.RulesCheck()
+        Mode.ModeTick()
+        Continue = Mode.RulesCheck()
         if (not Continue):
             return
 
         Position = self.Video.GetPosition()
-        for Event in self.Mode.Events:
+        for Event in Mode.Events:
             Event.Check(Position)
 
         self.Video.SetRate(state.State.Speed)
@@ -1715,44 +1829,47 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         """ 
         Reset to the starting position
         """
+        global Mode
+        global ModeId
+
         if (True):
             FrameList = inspect.getouterframes(inspect.currentframe())
             for AFrame in FrameList:
                 print("DEBUG %s:%d(%s)" % (pathlib.Path(AFrame.filename).name, AFrame.lineno, AFrame.function))
 
-        state.Log(f"MainReset: Mode {self.Mode}")
+        state.Log(f"MainReset: Mode {Mode}")
         self.Video.Reset()
         self.ClickClackPos = CLICK_CLACK_DISTANCE
 
+        self.Timer.stop()
         self.SelectWindow.exec()
+        self.Timer.start()
 
-        match (self.SelectWindow.Mode):
+        match (ModeId):
             case ModeEnum.EASY:
-                self.Mode = EasyMode(False)
+                Mode = EasyMode(False)
             case ModeEnum.EASY_TUTORIAL:
-                self.Mode = EasyMode(True)
+                Mode = EasyMode(True)
             case ModeEnum.START_STOP:
-                self.Mode = StartStopMode(False)
+                Mode = StartStopMode(False)
             case ModeEnum.START_STOP_TUTORIAL:
-                self.Mode = StartStopMode(True)
+                Mode = StartStopMode(True)
             case ModeEnum.FULL:
-                self.Mode = FullMode(False)
+                Mode = FullMode(False)
             case ModeEnum.FULL:
-                self.Mode = FullMode_TUTORIAL(True)
+                Mode = FullMode_TUTORIAL(True)
             case _:
-                print("ERROR: Mode is unknown: ", self.SelectWindow.Mode)
+                print("ERROR: Mode is unknown: ", Mode)
                 sys.exit(8);
 
-        self.BrakeUi.SetMode(self.Mode)
-
-        self.ModeLabel.setText(self.Mode.Name)
+        self.ModeLabel.setText(Mode.Name)
         state.State.Reset()
         self.Video.SetRate(state.State.Speed)
 
-        self.Mode.ModeReset()
+        Mode.ModeReset()
         self.WarningList = []
         self.WarningLabel.setText("")
-        for Event in self.Mode.Events:
+        for Event in Mode.Events:
             Event.Done = False
 
         self.DeadmanButton.setChecked(False)
@@ -1875,7 +1992,12 @@ The deadman is located in the lower left corner.
     def SetDirection(self, Direction):
         """
         Change the direction we are going
+
+        Parameters:
+            :arg Direction; Direction for the reverser
         """
+        global Mode
+
         if ((state.State.RunLevel != 0) and (Direction != state.DirectionEnum.FORWARD)):
             self.ErrorReverserMoved()
             Direction = state.DirectionEnum.FORWARD
@@ -1884,6 +2006,7 @@ The deadman is located in the lower left corner.
         self.ControllerButtons.SetReverse(Direction)
 
         state.State.Direction = Direction
+        Mode.ModeSetDirection(Direction)
 
     def NoticeDone(self):
         """
@@ -2042,6 +2165,8 @@ Press OK to continue""",
 
         :returns: True if we should continue our journey
         """
+        global Mode
+
         state.Log("SetRun %d" % Level)
         if (Level > MAX_LEVEL):
             Level = MAX_LEVEL
@@ -2058,7 +2183,7 @@ Press OK to continue""",
                 self.MainReset()
                 return False
 
-        KeepGoing = self.Mode.ModeSetRun(Level)
+        KeepGoing = Mode.ModeSetRun(Level)
         
         if (not KeepGoing):
             state.State.Acceleration = 0
@@ -2128,8 +2253,10 @@ Where
     sys.exit(8)
 
 if __name__ == "__main__":
-    global MainWindow
+    global MainWindow, Mode
     MainWindow = None
+    Mode = None
+    ModeId = ModeEnum.EASY_TUTORIAL
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], "b:t:l:r:dvfas:p:")
