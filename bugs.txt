@@ -1,11 +1,13 @@
 Bugs to fix
-    0. STart/Stop tutorial
+    0. STart/Stop tutorial -- start.2b.ui does not display
+    1. Figure out how to get tutorials to center/top of display (ALWAYS?)
+    2. Add full tutorial
+    3. Full tutorial missing bell for broadway crossing #2
     1. Close button does not work when select displayed.
-    2. Select should close entire program
+    2. Closing Select should close entire program
     3. Help text needs to be updated
 Todo:
     1. Help should go to the right section
-    2. Remove video help
     3. Brand help text
 
 This is alpha code.  As such it is far from perfect.
