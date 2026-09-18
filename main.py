@@ -14,6 +14,7 @@ import math
 import os
 import platform
 import pprint   #pylint: disable=W0611
+import signal
 import subprocess
 import sys
 import threading
@@ -366,14 +367,14 @@ def CenterOnMainWindow(Widget):
     WidgetGeometry.moveCenter(Geometry.center())
     Widget.move(WidgetGeometry.topLeft())
 
-def ShowModalTutorial(File):
+def ShowModalTutorial(File, Window=None):
     """
     Display a modeal tutorial popup, loaded directly from
     File via uic.loadUi() (no compiled/generated .py needed).
 
     The popup's windowModality is ApplicationModal (set in the .ui file
     itself), so clicks outside the popup are ignored -- it stays up until
-    the user clicks the "Click Here" button.
+    the user clicks the "Click Here" button (or Cancel, if present).
 
     QMainWindow has no exec(), so this blocks the caller on a local
     QEventLoop instead, the same technique used by ShowErrorMessage()
@@ -381,8 +382,17 @@ def ShowModalTutorial(File):
     TutorialWindow.close() by the .ui file itself; it's also connected to
     loop.quit() here so our wait ends the moment the button is clicked.
 
+    If the .ui file has a "cancelButton" and a Window (the Mode object
+    that's asking for this tutorial step -- NOT the stale module-global
+    Mode, which during __init__ still points at whatever mode was active
+    *before* this one) is supplied, Cancel is wired to close this window,
+    unblock the wait, and notify Window.TutorialCancel() so it can update
+    its own state. destroyed->loop.quit() is a safety net so we can never
+    get stuck forever if the window goes away some other way.
+
     :param File: The file containing the tutorial
-    :param MainWindow: Window to parent the popup to
+    :param Window: The Mode object requesting this tutorial (for Cancel);
+                    omit for tutorials that don't need Cancel handling.
     """
     print(f"### ShowModalTutorial({File})")
     state.Log(f"ShowModalTutorial({File})")
@@ -395,17 +405,27 @@ def ShowModalTutorial(File):
 
     loop = QtCore.QEventLoop()
     TutorialWindow.ClickHere.clicked.connect(loop.quit)
+    TutorialWindow.destroyed.connect(loop.quit)
+
+    if (Window is not None) and hasattr(TutorialWindow, "cancelButton"):
+        TutorialWindow.cancelButton.clicked.connect(TutorialWindow.close)
+        TutorialWindow.cancelButton.clicked.connect(loop.quit)
+        TutorialWindow.cancelButton.clicked.connect(Window.TutorialCancel)
 
     TutorialWindow.show()
     TutorialWindow.raise_()
     TutorialWindow.activateWindow()
     loop.exec()
 
-def PauseTutorial(File):
+    return TutorialWindow
+
+def PauseTutorial(File, Window=None):
     """
     Display a tutorial that pauses the video to display it.
 
     :param File: File contining the ui
+    :param Window: The Mode object requesting this tutorial (for Cancel);
+                    omit for tutorials that don't need Cancel handling.
 
     Uses the module-global MainWindow (set in Window.__init__) rather than
     taking it as a parameter.
@@ -413,7 +433,7 @@ def PauseTutorial(File):
     global MainWindow
 
     MainWindow.Video.Pause()
-    ShowModalTutorial(File)
+    ShowModalTutorial(File, Window)
     MainWindow.Video.Resume()
 
 
@@ -502,9 +522,10 @@ class EasyMode:
                 case _:
                     print("ERROR: Impossible pointer type ", PointerType)
                     sys.exit(8)
-            ShowModalTutorial(File)
-            self.Tutorial = ShowTutorial('easy.2.ui', self)
-            self.TutorialStep = self.TutorialEnum.EASY_2
+            ShowModalTutorial(File, self)
+            if self.TutorialStep != self.TutorialEnum.EASY_NONE:
+                self.Tutorial = ShowTutorial('easy.2.ui', self)
+                self.TutorialStep = self.TutorialEnum.EASY_2
         else:
             self.TutorialStep = self.TutorialEnum.EASY_NONE
 
@@ -533,8 +554,9 @@ class EasyMode:
         Closes out the tutorial
         """
         self.TutorialStep = self.TutorialEnum.EASY_NONE
-        self.Tutorial.close()
-        del self.Tutorial
+        if hasattr(getattr(self, "Tutorial", None), "close"):
+            self.Tutorial.close()
+        self.Tutorial = None
 
     def DeadmanClicked(self, Checked):
         """
@@ -599,10 +621,6 @@ class EasyMode:
         """
         self.MaxSpeed = 0
         state.State.Reset()
-        if (self.TutorialStep != self.TutorialEnum.EASY_NONE):
-            if (self.Tutorial is not None):
-                self.Tutorial.close()
-                del self.Tutorial
 
     def ModeTick(self):                   # EasyMode
         """
@@ -611,7 +629,7 @@ class EasyMode:
         global MainWindow
 
         if (MainWindow.Video.GetPosition() > STORE_HELP) and (self.TutorialStep == self.TutorialEnum.EASY_STORE):
-            PauseTutorial('easy.store.ui')
+            PauseTutorial('easy.store.ui', self)
             self.TutorialStep = self.TutorialEnum.EASY_NONE
 
         if (not state.State.Deadman) and ((state.State.Speed != 0) or (state.State.RunLevel != 0)):
@@ -672,9 +690,8 @@ class StartStopMode:
         START_4 = 4
         START_5 = 5
         START_6 = 6
+        START_6B = 6
         START_7 = 7
-        START_8 = 8
-        START_9 = 9
 
     def __init__(self, Tutorial=False):     # Start/stop mode
         """
@@ -682,16 +699,19 @@ class StartStopMode:
         """
         self.Events = GLOBAL_EVENTS
         self.MaxSpeed = 0
+        self.Tutorial = None
 
         if (Tutorial):
             self.TutorialStep = self.TutorialEnum.START_1
-            self.Tutorial = ShowModalTutorial('start.1.ui')
+            ShowModalTutorial('start.1.ui', self)
 
-            self.TutorialStep = self.TutorialEnum.START_2
-            self.Tutorial = ShowModalTutorial('start.2.ui')
+            if self.TutorialStep != self.TutorialEnum.START_NONE:
+                self.TutorialStep = self.TutorialEnum.START_2
+                ShowModalTutorial('start.2.ui', self)
 
-            self.TutorialStep = self.TutorialEnum.START_2b
-            self.Tutorial = ShowTutorial('start.2b.ui', self)
+            if self.TutorialStep != self.TutorialEnum.START_NONE:
+                self.TutorialStep = self.TutorialEnum.START_2b
+                self.Tutorial = ShowTutorial('start.2b.ui', self)
         else:
             self.TutorialStep = self.TutorialEnum.START_NONE
 
@@ -743,7 +763,8 @@ class StartStopMode:
         Closes out the tutorial
         """
         self.TutorialStep = self.TutorialEnum.START_NONE
-        self.Tutorial.close()
+        if hasattr(getattr(self, "Tutorial", None), "close"):
+            self.Tutorial.close()
         self.Tutorial = None
 
     def DeadmanClicked(self, Checked):
@@ -762,11 +783,13 @@ class StartStopMode:
 
         :returns: True if we should contine, false if should reset
         """
-        if (self.TutorialStep == self.TutorialEnum.START_6) and (RunLevel == 0):
+        if (self.TutorialStep == self.TutorialEnum.START_6) and (RunLevel > 0):
             self.Tutorial.close()
             self.Tutorial = None
+            self.TutorialStep = self.TutorialEnum.START_6B
 
-            ShowModalTutorial("start.7.ui")
+        if (self.TutorialStep == self.TutorialEnum.START_6B) and (RunLevel <= 0):
+            ShowModalTutorial("start.7.ui", self)
             self.TutorialStep = self.TutorialEnum.START_NONE
         
         # First we check to see if the RunLevel has changed
@@ -813,11 +836,6 @@ class StartStopMode:
         state.State.Reset()
         self.MaxSpeed = 0
         self.LastRunLevel = 0
-        if (self.TutorialStep != self.TutorialEnum.START_NONE):
-            if (self.Tutorial is not None):
-                self.Tutorial.close()
-                del self.Tutorial
-        self.TutorialStep = self.TutorialEnum.START_NONE
 
     def ModeTick(self):           # StartStopMode
         """
@@ -1837,12 +1855,30 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
             for AFrame in FrameList:
                 print("DEBUG %s:%d(%s)" % (pathlib.Path(AFrame.filename).name, AFrame.lineno, AFrame.function))
 
-        state.Log(f"MainReset: Mode {Mode}")
+        state.Log(f"MainReset: Mode {Mode.Name}")
         self.Video.Reset()
         self.ClickClackPos = CLICK_CLACK_DISTANCE
 
         self.Timer.stop()
         self.SelectWindow.exec()
+
+        self.WarningList = []
+        self.WarningLabel.setText("")
+        for Event in Mode.Events:
+            Event.Done = False
+
+        self.DeadmanButton.setChecked(False)
+        self.DeadmanGraphic.setChecked(False)
+
+        self.SetRun(0)
+        self.SetDirection(state.DirectionEnum.NEUTRAL)
+
+        self.BrakeGraphics.MoveBrakeLever(state.BrakeEnum.APPLY)
+        self.BrakeUi.SetBrake(state.BrakeEnum.APPLY)
+        self.BrakeUi.BrakeReset()
+
+        self.DingTime = []
+        self.DingPosition = []
         self.Timer.start()
 
         match (ModeId):
@@ -1867,23 +1903,6 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         self.Video.SetRate(state.State.Speed)
 
         Mode.ModeReset()
-        self.WarningList = []
-        self.WarningLabel.setText("")
-        for Event in Mode.Events:
-            Event.Done = False
-
-        self.DeadmanButton.setChecked(False)
-        self.DeadmanGraphic.setChecked(False)
-
-        self.SetRun(0)
-        self.SetDirection(state.DirectionEnum.NEUTRAL)
-
-        self.BrakeGraphics.MoveBrakeLever(state.BrakeEnum.APPLY)
-        self.BrakeUi.SetBrake(state.BrakeEnum.APPLY)
-        self.BrakeUi.BrakeReset()
-
-        self.DingTime = []
-        self.DingPosition = []
 
     def BrakeApplyClicked(self): 
         """
@@ -2252,6 +2271,41 @@ Where
     """)
     sys.exit(8)
 
+def HandleSigInt(signum, frame):
+    """
+    Let Ctrl-C in the terminal shut the program down.
+
+    Qt's C++ event loop doesn't reliably let Python's default SIGINT
+    handling (raising KeyboardInterrupt) interrupt app.exec(); even when
+    it does fire on a timer tick, PyQt6 just reports the exception via
+    sys.excepthook and keeps running, so Ctrl-C would otherwise appear to
+    do nothing. Route it through MainWindow.close() for its normal
+    cleanup (timer stop, mpv teardown) -- then force the process to
+    actually end, rather than trusting QApplication.quit() alone.
+
+    QApplication.quit() only asks the *currently running* Qt event loop
+    to stop. If Ctrl-C lands while a nested modal dialog is running --
+    e.g. MainReset()'s self.SelectWindow.exec() -- quit() ends that
+    dialog's loop instead of the outer app.exec(). MainReset() then just
+    carries on as if a mode had been picked (reconstructing a fresh Mode
+    from the stale ModeId), while the timer and video are already stopped
+    from closeEvent(): the app is left half-alive instead of exiting.
+    os._exit() sidesteps this entirely by ending the process outright
+    once cleanup has had its chance to run.
+
+    :param signum: Signal number (unused, required by signal.signal())
+    :param frame: Current stack frame (unused, required by signal.signal())
+    """
+    global MainWindow
+    print("### Caught SIGINT (Ctrl-C), shutting down")
+    state.Log("Caught SIGINT (Ctrl-C), shutting down")
+    if MainWindow is not None:
+        try:
+            MainWindow.close()
+        except Exception:
+            pass
+    os._exit(0)
+
 if __name__ == "__main__":
     global MainWindow, Mode
     MainWindow = None
@@ -2312,6 +2366,11 @@ if __name__ == "__main__":
         QtCore.Qt.ApplicationAttribute.AA_ShareOpenGLContexts, True
     )
     app = QtWidgets.QApplication(sys.argv)  #pylint: disable=I1101
+
+    # Must be installed after QApplication() exists (it can reset signal
+    # handling during construction on some platforms), and before app.exec()
+    # so Ctrl-C in the terminal actually shuts the program down cleanly.
+    signal.signal(signal.SIGINT, HandleSigInt)
 
     # PyInstaller's bootloader splash screen is NOT supported on macOS: it runs
     # in a secondary thread, and macOS forbids UI work off the main thread, so
