@@ -710,51 +710,51 @@ class StartStopMode:
         self.Tutorial = None
 
         if (Tutorial):
-            self.TutorialStep = self.TutorialEnum.START_1
+            self.TutorialStep = StartStopMode.TutorialEnum.START_1
             ShowModalTutorial('start.1.ui', self)
 
-            if self.TutorialStep != self.TutorialEnum.START_NONE:
-                self.TutorialStep = self.TutorialEnum.START_2
+            if self.TutorialStep != StartStopMode.TutorialEnum.START_NONE:
+                self.TutorialStep = StartStopMode.TutorialEnum.START_2
                 ShowModalTutorial('start.2.ui', self)
 
-            if self.TutorialStep != self.TutorialEnum.START_NONE:
-                self.TutorialStep = self.TutorialEnum.START_2b
+            if self.TutorialStep != StartStopMode.TutorialEnum.START_NONE:
+                self.TutorialStep = StartStopMode.TutorialEnum.START_2b
                 self.Tutorial = ShowTutorial('start.2b.ui', self)
         else:
-            self.TutorialStep = self.TutorialEnum.START_NONE
+            self.TutorialStep = StartStopMode.TutorialEnum.START_NONE
 
 
     def SetBrake(self, Position):    # Start/Stop mode
         """
         Set the brake mode
         """
-        if ((self.TutorialStep == self.TutorialEnum.START_2b) and (Position == state.BrakeEnum.EMERGENCY)):
+        if ((self.TutorialStep == StartStopMode.TutorialEnum.START_2b) and (Position == state.BrakeEnum.EMERGENCY)):
             self.Tutorial.close()
             del self.Tutorial
 
             self.Tutorial = ShowTutorial('start.3.ui', self)
-            self.TutorialStep = self.TutorialEnum.START_3
+            self.TutorialStep = StartStopMode.TutorialEnum.START_3
 
-        if ((self.TutorialStep == self.TutorialEnum.START_3) and (Position == state.BrakeEnum.RELEASE)):
+        if ((self.TutorialStep == StartStopMode.TutorialEnum.START_3) and (Position == state.BrakeEnum.RELEASE)):
             self.Tutorial.close()
             del self.Tutorial
 
             self.Tutorial = ShowTutorial('start.4.ui', self)
-            self.TutorialStep = self.TutorialEnum.START_4
+            self.TutorialStep = StartStopMode.TutorialEnum.START_4
 
-        if ((self.TutorialStep == self.TutorialEnum.START_5C) and (Position == state.BrakeEnum.RELEASE)):
+        if ((self.TutorialStep == StartStopMode.TutorialEnum.START_5C) and (Position == state.BrakeEnum.RELEASE)):
             self.Tutorial.close()
             del self.Tutorial
 
             self.Tutorial = ShowTutorial('start.6.ui', self)
-            self.TutorialStep = self.TutorialEnum.START_6
+            self.TutorialStep = StartStopMode.TutorialEnum.START_6
 
-        if ((self.TutorialStep == self.TutorialEnum.START_4) and (Position == state.BrakeEnum.LAP)):
+        if ((self.TutorialStep == StartStopMode.TutorialEnum.START_4) and (Position == state.BrakeEnum.LAP)):
             self.Tutorial.close()
             del self.Tutorial
 
             self.Tutorial = ShowTutorial('start.5.ui', self)
-            self.TutorialStep = self.TutorialEnum.START_5
+            self.TutorialStep = StartStopMode.TutorialEnum.START_5
 
     def ModeSetDirection(self, Direction):  # Start/Stop Mode
         """
@@ -763,13 +763,13 @@ class StartStopMode:
         Parameters
             :arg Direction: The direction of the reverser
         """
-        if ((self.TutorialStep == self.TutorialEnum.START_5) and
+        if ((self.TutorialStep == StartStopMode.TutorialEnum.START_5) and
             (Direction == state.DirectionEnum.FORWARD)):
             self.Tutorial.close()
             self.Tutorial = None
 
             self.Tutorial = ShowTutorial('start.5b.ui', self)
-            self.TutorialStep = self.TutorialEnum.START_5B
+            self.TutorialStep = StartStopMode.TutorialEnum.START_5B
 
     def TutorialCancel(self):   # Start/Stop mode
         """
@@ -777,7 +777,7 @@ class StartStopMode:
 
         Closes out the tutorial
         """
-        self.TutorialStep = self.TutorialEnum.START_NONE
+        self.TutorialStep = StartStopMode.TutorialEnum.START_NONE
         if hasattr(getattr(self, "Tutorial", None), "close"):
             self.Tutorial.close()
         self.Tutorial = None
@@ -788,12 +788,12 @@ class StartStopMode:
 
         :param Checked: Is it checked
         """
-        if (self.TutorialStep == self.TutorialEnum.START_5B):
+        if (self.TutorialStep == StartStopMode.TutorialEnum.START_5B):
             self.Tutorial.close()
             del self.Tutorial
 
             self.Tutorial = ShowTutorial('start.5c.ui', self)
-            self.TutorialStep = self.TutorialEnum.START_5C
+            self.TutorialStep = StartStopMode.TutorialEnum.START_5C
 
     def ModeSetRun(self, RunLevel):         # StartStopMode
         """
@@ -803,13 +803,13 @@ class StartStopMode:
 
         :returns: True if we should contine, false if should reset
         """
-        if (self.TutorialStep == self.TutorialEnum.START_6) and (RunLevel > 0):
+        if (self.TutorialStep == StartStopMode.TutorialEnum.START_6) and (RunLevel > 0):
             self.Tutorial.close()
             self.Tutorial = None
 
-            self.TutorialStep = self.TutorialEnum.START_6W  # Waiting after to turn off resistors
+            self.TutorialStep = StartStopMode.TutorialEnum.START_6W  # Waiting after to turn off resistors
 
-        if (self.TutorialStep == self.TutorialEnum.START_7) and (RunLevel <= 0):
+        if (self.TutorialStep == StartStopMode.TutorialEnum.START_7) and (RunLevel <= 0):
             self.Tutorial.close()
             self.Tutorial = None
 
@@ -827,7 +827,7 @@ class StartStopMode:
             # waits until this call (and SetRun()'s commit of RunLevel) has
             # fully unwound before showing the popup.
             QtCore.QTimer.singleShot(0, lambda: ShowModalTutorial("start.8.ui", self))
-            self.TutorialStep = self.TutorialEnum.START_NONE
+            self.TutorialStep = StartStopMode.TutorialEnum.START_NONE
         
         # First we check to see if the RunLevel has changed
         if (state.State.RunLevel != RunLevel):
@@ -945,14 +945,12 @@ class StartStopMode:
 
             if (state.State.RunLevel > 0):
                 if (TimeDiff > self.TUTORIAL_RUN_TIME):
-                    if (self.TutorialStep == self.TutorialEnum.START_6W) and (state.State.RunLevel > 0):
+                    if (self.TutorialStep == StartStopMode.TutorialEnum.START_6W) and (state.State.RunLevel > 0):
                         self.Tutorial = ShowTutorial("start.7.ui", self)
-                        self.TutorialStep = self.TutorialEnum.START_7
+                        self.TutorialStep = StartStopMode.TutorialEnum.START_7
 
             if (state.State.RunLevel > self.LastRunLevel):
-                print("### Resistor check ", TimeDiff, state.State.RunLevel, self.LastRunLevel)
                 if (TimeDiff > MAX_RUN_TIME):
-                    print("### Resistor error")
                     MainWindow.ErrorRunTooLong()
                     MainWindow.MainReset()
                     return (False)
@@ -988,6 +986,7 @@ class FullMode(StartStopMode):
     BROADWAY_STOP_BEGIN=0.09        # Position of the start of where can do a Broadway stop
     BROADWAY_STOP_END=0.12          # Position of the end of where can do a Broadway stop
     BROADWAY_STOP_CHECK=0.15        # Position of where we check to see if Broadway stop done
+    TUTORIAL_BROADWAY = 0.085       # Position of where we display the Broadway tutorial
 
     CB2_STOP_BEGIN=0.58             # Position of the start of where can do a CB2 stop
     CB2_STOP_END=0.61               # Position of the end of where can do a CB2 stop
@@ -1019,12 +1018,29 @@ class FullMode(StartStopMode):
 
     Name = "Full Mode"
 
-    def __init__(self):
+    class TutorialEnum(enum.Enum):
+        FULL_NONE = 0
+        FULL_1 = 1
+        FULL_2 = 2
+        FULL_3 = 3
+        FULL_4 = 4
+        FULL_5 = 5
+        FULL_6 = 6
+        FULL_7 = 7
+        FULL_8 = 8
+        FULL_9 = 9
+        FULL_10 = 10
+
+    N_TUTORIAL = 11     # Number of tutorials
+
+    def __init__(self, Tutorial = False):
         """
         Args:
             Main Window -- The main window
         """
-        super().__init__()
+        super().__init__(False)
+        print("### Full tutorial = ", Tutorial)
+        self.DoTutorial = Tutorial
 
         self.LOCAL_EVENTS = [
             TrackEvent(self.BROADWAY_NORTH_END, lambda: self.DingCheck(self.BROADWAY_NORTH_BEGIN, self.BROADWAY_NORTH_END, "Broadway North")),
@@ -1042,10 +1058,34 @@ class FullMode(StartStopMode):
             TrackEvent(self.ZORCH2_POS_END,   lambda: self.ZorchStop())
 
         ]
-        self.Events = GLOBAL_EVENTS + self.LOCAL_EVENTS
+        self.TUTORIAL_EVENTS = []
+        if (self.DoTutorial):
+            print("### EVENTS")
+            self.TUTORIAL_EVENTS = [
+                    TrackEvent(self.TUTORIAL_BROADWAY, lambda: self.FullTutorial('full.2.ui', self.TutorialEnum.FULL_2)),
+            ]
+
+        self.Events = GLOBAL_EVENTS + self.LOCAL_EVENTS + self.TUTORIAL_EVENTS
         self.LastStop = -1
         self.ZorchEnable = False
         self.MaxSpeed = 0
+
+        if (Tutorial):
+            self.TutorialStep = self.TutorialEnum.FULL_1
+            ShowModalTutorial('full.1.ui', self)
+            self.TutorialDone = [False] * self.N_TUTORIAL
+            self.TutorialDone[self.TutorialEnum.FULL_1.value] = True
+
+    def FullTutorial(self, FileName, StepName):
+        """
+        Display a full mode tutorial
+
+        :arg FileName: File to display
+        :arg StepName: The name of the step
+        """
+        if (not self.TutorialDone[StepName.value]):
+            PauseTutorial(FileName, self)
+            self.TutorialDone[StepName.value] = True
 
     def SetBrake(self, Position):    # Full mode
         """
@@ -1145,6 +1185,12 @@ class FullMode(StartStopMode):
         super().ModeTick()
         self.LastSpeed = self.CurrentSpeed
         self.CurrentSpeed = state.State.Speed
+        if (not self.TutorialDone[FullMode.TutorialEnum.FULL_3.value]):
+            if ((state.State.Speed <= 0) and 
+                (MainWindow.Video.GetPosition() >= self.BROADWAY_STOP_BEGIN) and
+                (MainWindow.Video.GetPosition() <= self.BROADWAY_STOP_END)):
+                ShowModalTutorial('full.2.ui', self)
+                self.TutorialDone[FullMode.TutorialEnum.FULL_3.value] = True
 
     def DingCount(self, DingPosition, Start, End):      # Full mode
         """
@@ -1267,29 +1313,47 @@ class SelectWindow(QDialog, mode_window.Ui_SelectWindow):
         ModeId = ModeEnum.EASY
 
     def EasyHelpClicked(self):
+        """
+        The easy mode help button has been clicked
+        """
         webbrowser.open("help.pdf")
 
     def EasyModeSartClicked(self):
+        """
+        The easy mode start button has been clicked
+        """
         global ModeId 
         ModeId = ModeEnum.EASY
         self.hide()
 
     def EasyModeTutorialClicked(self):
+        """
+        The easy mode tutorial button has been clicked
+        """
         global ModeId 
         ModeId = ModeEnum.EASY_TUTORIAL
         self.hide()
 
     def FullHelpClicked(self):
+        """
+        The full mode help button has been clicked
+        """
         webbrowser.open("help.pdf")
 
     def FullModeStartClicked(self):
+        """
+        The full mode start button has been clicked
+        """
         global ModeId 
         ModeId = ModeEnum.FULL
         self.hide()
 
     def FullModeTutorialClicked(self):
+        """
+        The full mode tutorial button has been clicked
+        """
         global ModeId 
-        ModeId = ModeEnum.FULL
+        ModeId = ModeEnum.FULL_TUTORIAL
         self.hide()
 
     def closeEvent(self, event):
@@ -1971,11 +2035,13 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
                 Mode = StartStopMode(True)
             case ModeEnum.FULL:
                 Mode = FullMode(False)
-            case ModeEnum.FULL:
-                Mode = FullMode_TUTORIAL(True)
+            case ModeEnum.FULL_TUTORIAL:
+                Mode = FullMode(True)
             case _:
                 print("ERROR: Mode is unknown: ", Mode)
                 sys.exit(8);
+
+        print("## Mode ", Mode.Name)
 
         self.ModeLabel.setText(Mode.Name)
         state.State.Reset()

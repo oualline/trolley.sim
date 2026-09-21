@@ -62,7 +62,7 @@
       <item>
        <layout class="QHBoxLayout" name="EasyHorizontalLayout">
         <item>
-         <widget class="QPushButton" name="StartEasyButton">
+         <widget class="QPushButton" name="EasyModeStartButton">
           <property name="styleSheet">
            <string notr="true">QPushButton {
     background-color: rgb(87, 227, 137);
@@ -175,7 +175,7 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_2">
         <item>
-         <widget class="QPushButton" name="StartFullButton">
+         <widget class="QPushButton" name="FullModeStartButton">
           <property name="styleSheet">
            <string notr="true">QPushButton {
     background-color: rgb(87, 227, 137);
@@ -235,7 +235,7 @@
  <resources/>
  <connections>
   <connection>
-   <sender>StartEasyButton</sender>
+   <sender>EasyModeStartButton</sender>
    <signal>clicked()</signal>
    <receiver>SelectWindow</receiver>
    <slot>EasyModeSartClicked()</slot>
@@ -331,7 +331,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>StartFullButton</sender>
+   <sender>FullModeStartButton</sender>
    <signal>clicked()</signal>
    <receiver>SelectWindow</receiver>
    <slot>FullModeStartClicked()</slot>
