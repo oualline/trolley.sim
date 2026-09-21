@@ -26,7 +26,7 @@ endif
 
 .PHONY: linux windows macos
 
-GENERATED=mode_window.py sim_ui4.py frames_ui.py
+GENERATED=mode_window.py sim_ui4.py 
 HELP=quick.pdf help.pdf
 all: $(HELP) $(GENERATED)
 
@@ -46,14 +46,11 @@ help.pdf: help.odt
 sim_ui4.py: sim_ui4.ui
 	pyuic6 -o sim_ui4.py sim_ui4.ui
 
-frames_ui.py: frames_ui.ui
-	pyuic6 -o frames_ui.py frames_ui.ui
-
 mode_window.py: mode_window.ui
 	pyuic6 -o mode_window.py mode_window.ui
 
 clean: 
-	rm -f sim_ui4.py mode_window.py frames_ui.py
+	rm -f sim_ui4.py mode_window.py 
 	rm -rf __pycache__ build dist build.macos
 	rm -f quick.pdf help.pdf quick-poster.pdf
 	rm -rf frames

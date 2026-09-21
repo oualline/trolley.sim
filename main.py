@@ -345,14 +345,17 @@ def ComputeAcceleration(Level):
 
 def CenterOnMainWindow(Widget):
     """
-    Center a not-yet-shown top-level widget over MainWindow.
+    Position a not-yet-shown top-level widget over MainWindow: centered
+    left-to-right, top-aligned vertically.
 
     The .ui files for these popups carry whatever x/y position was last
     saved by Designer, which is why they were popping up in the wrong
     place -- that saved position has nothing to do with where MainWindow
     actually ends up on screen at runtime.  This throws that position away
-    and centers the widget over MainWindow instead (or over the primary
-    screen, if MainWindow doesn't exist yet).
+    and repositions the widget relative to MainWindow instead (or the
+    primary screen, if MainWindow doesn't exist yet): horizontally
+    centered over it, but flush with its top edge rather than vertically
+    centered.
 
     :param Widget: The top-level widget to position (not yet shown)
     """
@@ -364,8 +367,9 @@ def CenterOnMainWindow(Widget):
         Geometry = QtWidgets.QApplication.primaryScreen().availableGeometry()
 
     WidgetGeometry = Widget.frameGeometry()
-    WidgetGeometry.moveCenter(Geometry.center())
-    Widget.move(WidgetGeometry.topLeft())
+    NewX = Geometry.center().x() - WidgetGeometry.width() // 2
+    NewY = Geometry.top()
+    Widget.move(NewX, NewY)
 
 def ShowModalTutorial(File, Window=None):
     """
@@ -680,6 +684,7 @@ class StartStopMode:
     Brakes work.
     """
     Name = "Start/Stop Mode"
+    TUTORIAL_RUN_TIME = 5   # Run it for 5 seconds before turn off
 
     class TutorialEnum(enum.Enum):
         START_NONE = 0
@@ -689,9 +694,12 @@ class StartStopMode:
         START_3 = 3
         START_4 = 4
         START_5 = 5
+        START_5B = 50
+        START_5C = 51
         START_6 = 6
-        START_6B = 6
+        START_6W = 61
         START_7 = 7
+        START_8 = 8
 
     def __init__(self, Tutorial=False):     # Start/stop mode
         """
@@ -734,6 +742,13 @@ class StartStopMode:
             self.Tutorial = ShowTutorial('start.4.ui', self)
             self.TutorialStep = self.TutorialEnum.START_4
 
+        if ((self.TutorialStep == self.TutorialEnum.START_5C) and (Position == state.BrakeEnum.RELEASE)):
+            self.Tutorial.close()
+            del self.Tutorial
+
+            self.Tutorial = ShowTutorial('start.6.ui', self)
+            self.TutorialStep = self.TutorialEnum.START_6
+
         if ((self.TutorialStep == self.TutorialEnum.START_4) and (Position == state.BrakeEnum.LAP)):
             self.Tutorial.close()
             del self.Tutorial
@@ -753,8 +768,8 @@ class StartStopMode:
             self.Tutorial.close()
             self.Tutorial = None
 
-            self.Tutorial = ShowTutorial('start.6.ui', self)
-            self.TutorialStep = self.TutorialEnum.START_6
+            self.Tutorial = ShowTutorial('start.5b.ui', self)
+            self.TutorialStep = self.TutorialEnum.START_5B
 
     def TutorialCancel(self):   # Start/Stop mode
         """
@@ -773,7 +788,12 @@ class StartStopMode:
 
         :param Checked: Is it checked
         """
-        pass
+        if (self.TutorialStep == self.TutorialEnum.START_5B):
+            self.Tutorial.close()
+            del self.Tutorial
+
+            self.Tutorial = ShowTutorial('start.5c.ui', self)
+            self.TutorialStep = self.TutorialEnum.START_5C
 
     def ModeSetRun(self, RunLevel):         # StartStopMode
         """
@@ -786,10 +806,27 @@ class StartStopMode:
         if (self.TutorialStep == self.TutorialEnum.START_6) and (RunLevel > 0):
             self.Tutorial.close()
             self.Tutorial = None
-            self.TutorialStep = self.TutorialEnum.START_6B
 
-        if (self.TutorialStep == self.TutorialEnum.START_6B) and (RunLevel <= 0):
-            ShowModalTutorial("start.7.ui", self)
+            self.TutorialStep = self.TutorialEnum.START_6W  # Waiting after to turn off resistors
+
+        if (self.TutorialStep == self.TutorialEnum.START_7) and (RunLevel <= 0):
+            self.Tutorial.close()
+            self.Tutorial = None
+
+            # Defer this instead of calling it directly: ShowModalTutorial()
+            # blocks on its own nested event loop, and we're still in the
+            # middle of ModeSetRun() here -- state.State.RunLevel hasn't
+            # been committed to 0 yet (that happens back in SetRun(), once
+            # ModeSetRun() returns), and neither has self.RunLevelTime/
+            # self.LastRunLevel below.  Tick() keeps firing while the modal
+            # is up, so RulesCheck() would keep seeing "RunLevel is still 1,
+            # unchanged since the original + press" the whole time start.8.ui
+            # is on screen, and just keep accumulating run time against the
+            # resistor-overheat check -- which is exactly why it fired even
+            # though "-" had already been pressed.  QTimer.singleShot(0, ...)
+            # waits until this call (and SetRun()'s commit of RunLevel) has
+            # fully unwound before showing the popup.
+            QtCore.QTimer.singleShot(0, lambda: ShowModalTutorial("start.8.ui", self))
             self.TutorialStep = self.TutorialEnum.START_NONE
         
         # First we check to see if the RunLevel has changed
@@ -906,8 +943,16 @@ class StartStopMode:
             # Get the time of the last element of the run info file
             TimeDiff = time.time() - self.RunLevelTime
 
+            if (state.State.RunLevel > 0):
+                if (TimeDiff > self.TUTORIAL_RUN_TIME):
+                    if (self.TutorialStep == self.TutorialEnum.START_6W) and (state.State.RunLevel > 0):
+                        self.Tutorial = ShowTutorial("start.7.ui", self)
+                        self.TutorialStep = self.TutorialEnum.START_7
+
             if (state.State.RunLevel > self.LastRunLevel):
+                print("### Resistor check ", TimeDiff, state.State.RunLevel, self.LastRunLevel)
                 if (TimeDiff > MAX_RUN_TIME):
+                    print("### Resistor error")
                     MainWindow.ErrorRunTooLong()
                     MainWindow.MainReset()
                     return (False)
@@ -1017,14 +1062,14 @@ class FullMode(StartStopMode):
         """
         pass
 
-    def DeadmanClicked(self, Checked):
+    def DeadmanClicked(self, Checked):      # Full mode
         """
         Called when the deadman is changed
 
         :param Checked: Is it checked
         """
 
-    def ZorchStart(self, What):
+    def ZorchStart(self, What):     # Full mode
         """
         Start zorch checking
 
@@ -1034,13 +1079,13 @@ class FullMode(StartStopMode):
         self.ZorchEnable = True
         self.ZorchMessage = What
 
-    def ZorchStop(self):
+    def ZorchStop(self):        # Full mode
         """
         Stop zorch checking
         """
         self.ZorchEnable = False
 
-    def StopCheck(self, Start, Stop, What):
+    def StopCheck(self, Start, Stop, What):     # Full mode
         """
         Check to see if we stopped at the right place
 
@@ -1055,7 +1100,7 @@ class FullMode(StartStopMode):
             return
         MainWindow.AddWarning("Failed to stop at %s" % What)
 
-    def DingCheck(self, Start, Stop, What):
+    def DingCheck(self, Start, Stop, What):     # Full mode
         """
         Check to see if enough dings occurred during an interval
 
@@ -1101,7 +1146,7 @@ class FullMode(StartStopMode):
         self.LastSpeed = self.CurrentSpeed
         self.CurrentSpeed = state.State.Speed
 
-    def DingCount(self, DingPosition, Start, End):
+    def DingCount(self, DingPosition, Start, End):      # Full mode
         """
         Return the number of dings in the interval
 
@@ -1117,7 +1162,7 @@ class FullMode(StartStopMode):
                 Result += 1
         return (Result)
 
-    def CheckStartStopDing(self):
+    def CheckStartStopDing(self):       # Full mode
         """
         Checks to see if we started or stopped and did 
         the dings correctly
@@ -1246,6 +1291,37 @@ class SelectWindow(QDialog, mode_window.Ui_SelectWindow):
         global ModeId 
         ModeId = ModeEnum.FULL
         self.hide()
+
+    def closeEvent(self, event):
+        """
+        Called only when this dialog is closed via the window manager's
+        close decoration (the "X" in the title bar) -- every Start/
+        Tutorial button handler above calls self.hide() instead of
+        self.close(), and hide() does not trigger closeEvent(), so this
+        never fires for a normal mode selection.
+
+        self.exec() (called from MainReset()) runs its own *nested* Qt
+        event loop, separate from the outer app.exec().  Simply accepting
+        this event and letting the dialog close would only end that
+        nested loop -- MainReset() would then carry right on past
+        self.SelectWindow.exec() and build a Mode from whatever ModeId
+        happens to already be set, exactly the same hazard documented on
+        HandleSigInt() below for Ctrl-C.  Route this through
+        MainWindow.close() (for its normal timer/mpv cleanup) followed by
+        os._exit(0) (to guarantee the process actually ends), rather than
+        letting the app limp on half-alive with no window visible.
+
+        :param event: The close event
+        """
+        global MainWindow
+        event.accept()
+        state.Log("SelectWindow closed via window decoration, shutting down")
+        if MainWindow is not None:
+            try:
+                MainWindow.close()
+            except Exception:
+                pass
+        os._exit(0)
 
     def StartStopHelpClicked(self):
         webbrowser.open("help.pdf")
@@ -1850,17 +1926,17 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         global Mode
         global ModeId
 
-        if (True):
+        if (False):
             FrameList = inspect.getouterframes(inspect.currentframe())
             for AFrame in FrameList:
                 print("DEBUG %s:%d(%s)" % (pathlib.Path(AFrame.filename).name, AFrame.lineno, AFrame.function))
 
         state.Log(f"MainReset: Mode {Mode.Name}")
+        Mode.TutorialCancel()   # Cancel any ongoing tutorial
         self.Video.Reset()
         self.ClickClackPos = CLICK_CLACK_DISTANCE
 
         self.Timer.stop()
-        self.SelectWindow.exec()
 
         self.WarningList = []
         self.WarningLabel.setText("")
@@ -1880,6 +1956,9 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         self.DingTime = []
         self.DingPosition = []
         self.Timer.start()
+
+        self.SelectWindow.exec()
+        state.Log(f"Mode Selected {ModeId}")
 
         match (ModeId):
             case ModeEnum.EASY:
@@ -2176,7 +2255,7 @@ Press OK to continue""",
             "OK"
         )
 
-    def SetRun(self, Level):
+    def SetRun(self, Level):        # Window
         """
         Used to change the run level.
 
@@ -2232,14 +2311,12 @@ Press OK to continue""",
             self.BrakeUi.RedPressure += 10.0
             if (self.BrakeUi.RedPressure > brake_ui.MAX_RED_PRESSURE):
                 self.BrakeUi.RedPressure = brake_ui.MAX_RED_PRESSURE
-            print("DEBUG: 10 pound set %f" % self.BrakeUi.RedPressure)
             state.Log("DEBUG: 10 pound set %f" % self.BrakeUi.RedPressure)
         elif (event.key() == ord('M')):
             print("Mark Position %.2f" % self.Video.GetPosition())
             state.Log("Mark Position: %.2f" % self.Video.GetPosition())
         elif ((event.key() >= ord('0')) and (event.key() <= ord('8'))):
             RunLevel = event.key() - ord('0')
-            print("DEBUG: Run level %d" % RunLevel)
             self.ControllerGraphics.SetControllerRun(RunLevel)
         elif (event.key() == ord('F')):
             FullScreen = not FullScreen
@@ -2297,7 +2374,6 @@ def HandleSigInt(signum, frame):
     :param frame: Current stack frame (unused, required by signal.signal())
     """
     global MainWindow
-    print("### Caught SIGINT (Ctrl-C), shutting down")
     state.Log("Caught SIGINT (Ctrl-C), shutting down")
     if MainWindow is not None:
         try:

@@ -9,12 +9,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1082</width>
-    <height>663</height>
+    <width>678</width>
+    <height>458</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Start / Stop Mode Tutorial Step 7</string>
+   <string>Easy Mode Tutorial Step 6</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -23,7 +23,7 @@
       <item>
        <widget class="QLabel" name="label">
         <property name="text">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:20pt; font-weight:600;&quot;&gt;Start / Stop Mode Tutorial&lt;/span&gt;&lt;/p&gt;&lt;h1 style=&quot; margin-top:18px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:xx-large; font-weight:600;&quot;&gt;Click &amp;quot;-&amp;quot; to put the trolley in Run0&lt;/span&gt;&lt;/h1&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;Within 5 seconds, click &amp;quot;-&amp;quot; to go to Run0.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Failure to do so will burn out the resistors and end the simulation.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;Quickly!&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;Fix image ##&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;img src=&quot;image/run1-5-0&quot;/&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:20pt; font-weight:600;&quot;&gt;Start / Stop Mode Tutorial&lt;/span&gt;&lt;/p&gt;&lt;h1 style=&quot; margin-top:18px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:xx-large; font-weight:600;&quot;&gt;Release the brakes&lt;/span&gt;&lt;/h1&gt;&lt;p&gt;&lt;img src=&quot;image/brake-release.png&quot; height=&quot;150&quot;/&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="wordWrap">
          <bool>true</bool>
