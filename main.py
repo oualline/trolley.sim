@@ -8,6 +8,7 @@ Main GUI for the trolley simulator
 TODO:
         Add replay/playback mode
 """
+import contextlib
 import enum
 import getopt
 import math
@@ -419,7 +420,15 @@ def ShowModalTutorial(File, Window=None):
     TutorialWindow.show()
     TutorialWindow.raise_()
     TutorialWindow.activateWindow()
-    loop.exec()
+    # Freeze the simulation while this modal tutorial blocks.  See
+    # Window.SimSuspended() -- otherwise Tick() keeps running inside our
+    # nested loop and can resume the video PauseTutorial() just paused.
+    if MainWindow is not None:
+        Suspend = MainWindow.SimSuspended()
+    else:
+        Suspend = contextlib.nullcontext()
+    with Suspend:
+        loop.exec()
 
     return TutorialWindow
 
@@ -1574,6 +1583,18 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         super().__init__(parent)
         self.setupUi(self)
 
+        # Tick() reentrancy / suspension state.  Must exist before anything
+        # below can open a dialog (EasyMode() may show a modal tutorial) or
+        # start self.Timer.
+        #   _InTick           -- True while Tick() is executing
+        #   _SuspendCount     -- >0 while a blocking dialog is up; Tick()
+        #                        does nothing (see SimSuspended())
+        #   _ResetGeneration  -- bumped by MainReset() so a Tick() that
+        #                        triggered a reset can tell and bail out
+        self._InTick = False
+        self._SuspendCount = 0
+        self._ResetGeneration = 0
+
         # Publish ourselves as the module-global MainWindow *immediately*,
         # before any of the helper objects below (video.Video,
         # controller.ControllerGraphics/ControllerButtons, brake_ui.BrakeUi,
@@ -1658,6 +1679,37 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
             self.StopAttractRequested.connect(
                 self.StopAttractVideo, Qt.ConnectionType.QueuedConnection
             )
+
+    @contextlib.contextmanager
+    def SimSuspended(self):
+        """
+        Context manager: freeze the simulation while a blocking dialog is up.
+
+        Every blocking popup in this program (error messages, warnings,
+        the mode picker, modal tutorials) runs a *nested* Qt event loop.
+        Qt will not re-fire a timer whose own timeout slot is still on the
+        stack, so a dialog opened from inside Tick() is safe by accident.
+        But a dialog opened from anywhere else -- the plus/minus buttons,
+        the keyboard, the brake buttons, the named pipe, startup -- has
+        self.Timer ticking right behind it, running the physics and rules
+        checks.  A rule that is also being violated (e.g. the deadman) then
+        opens a second dialog on top of the first.  The same happens behind
+        the mode picker: MainReset() stops and restarts self.Timer, which
+        registers a fresh timer that Qt's protection doesn't cover, so the
+        old Mode keeps being ticked while the user picks the new one.
+
+        The timer is deliberately left running rather than stopped: Python
+        only runs signal handlers when it executes bytecode, and the
+        (now nearly empty) Tick() calls are what let Ctrl-C (HandleSigInt)
+        get through while a nested loop is blocking.
+
+        Nestable: a counter, not a flag.
+        """
+        self._SuspendCount += 1
+        try:
+            yield
+        finally:
+            self._SuspendCount -= 1
 
     def resizeEvent(self, event) -> None:
         """
@@ -1875,18 +1927,44 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
     def Tick(self):
         """ 
         The clock has ticked.  Take action
+
+        Does nothing while a blocking dialog is up (see SimSuspended()), and
+        is guarded against reentrancy as a backstop in case a dialog is ever
+        opened without SimSuspended().
+        """
+        if self._InTick or self._SuspendCount > 0:
+            return
+        self._InTick = True
+        try:
+            self._TickBody()
+        finally:
+            self._InTick = False
+
+    def _TickBody(self):
+        """
+        The real work of Tick().  Only called from Tick(), never reentered.
         """
         global Mode 
+
+        # If anything in here calls MainReset(), a new Mode has been built
+        # and the video rewound; the rest of this (stale) tick must not run
+        # against that new state.
+        Generation = self._ResetGeneration
+
         # Update the speed and acceleration
         self.BrakeUi.UpdateBrake()
         Mode.ModeTick()
+        if (self._ResetGeneration != Generation):
+            return
         Continue = Mode.RulesCheck()
-        if (not Continue):
+        if (not Continue) or (self._ResetGeneration != Generation):
             return
 
         Position = self.Video.GetPosition()
         for Event in Mode.Events:
             Event.Check(Position)
+            if (self._ResetGeneration != Generation):
+                return
 
         self.Video.SetRate(state.State.Speed)
 
@@ -2001,7 +2079,8 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         MessageBox.raise_()
         MessageBox.activateWindow()
         try:
-            loop.exec()
+            with self.SimSuspended():
+                loop.exec()
         finally:
             app.removeEventFilter(dismiss)
             timer.stop()
@@ -2022,6 +2101,8 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
                 print("DEBUG %s:%d(%s)" % (pathlib.Path(AFrame.filename).name, AFrame.lineno, AFrame.function))
 
         state.Log(f"MainReset: Mode {Mode.Name}")
+        # Tell any Tick() further up the call stack that the world changed.
+        self._ResetGeneration += 1
         Mode.TutorialCancel()   # Cancel any ongoing tutorial
         self.Video.Reset()
         self.ClickClackPos = CLICK_CLACK_DISTANCE
@@ -2047,7 +2128,10 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         self.DingPosition = []
         self.Timer.start()
 
-        self.SelectWindow.exec()
+        # Suspended: the old Mode must not be ticked while the user is
+        # choosing the new one.
+        with self.SimSuspended():
+            self.SelectWindow.exec()
         state.Log(f"Mode Selected {ModeId}")
 
         match (ModeId):
@@ -2150,7 +2234,8 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         MessageBox.setStandardButtons(QMessageBox.StandardButton.Ok)
         ButtonOk = MessageBox.button(QMessageBox.StandardButton.Ok)
         ButtonOk.setText("Continue")
-        ReturnValue = MessageBox.exec()
+        with self.SimSuspended():
+            MessageBox.exec()
 
     def ErrorDeadman(self):
         """
@@ -2212,7 +2297,8 @@ Press "Restart" to start another run""")
         MessageBox.setStandardButtons(QMessageBox.StandardButton.Ok)
         ButtonOk = MessageBox.button(QMessageBox.StandardButton.Ok)
         ButtonOk.setText("Restart")
-        ReturnValue = MessageBox.exec()
+        with self.SimSuspended():
+            MessageBox.exec()
 
     def GoodStop(self):
         """
@@ -2229,7 +2315,8 @@ Press "Restart" to start another run""")
         MessageBox.setStandardButtons(QMessageBox.StandardButton.Ok)
         ButtonOk = MessageBox.button(QMessageBox.StandardButton.Ok)
         ButtonOk.setText("Restart")
-        ReturnValue = MessageBox.exec()
+        with self.SimSuspended():
+            MessageBox.exec()
 
     def ErrorStart(self):
         """ 
