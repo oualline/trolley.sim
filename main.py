@@ -14,6 +14,7 @@ import getopt
 import math
 import os
 import platform
+import select
 import pprint   #pylint: disable=W0611
 import signal
 import sys
@@ -111,8 +112,10 @@ if IS_LINUX:
         and emits a signal when valid coordinates are received.
         """
         
-        # Signal emitted when coordinates are read from the pipe
+        # Signal emitted when a command is read from the pipe
         CommandReceived = pyqtSignal(str)
+
+        POLL_SECONDS = 0.2      # How often run() re-checks self.running
         
         def __init__(self, pipe_path="/tmp/command_pipe"):
             """
@@ -128,45 +131,79 @@ if IS_LINUX:
         def run(self):
             """
             Main thread execution method.
-            
-            Creates the named pipe if it doesn't exist and continuously reads from it.
-            Parses input in the format "command" and emits CommandReceived signal.
+
+            Creates the named pipe and reads newline-separated commands from
+            it, emitting CommandReceived for each one.
+
+            The FIFO is opened non-blocking and polled with select() on a
+            short timeout, so the loop re-checks self.running at least every
+            POLL_SECONDS.  The old version sat in a blocking open() (no
+            writer yet) or readline() (writer connected but idle) and never
+            looked at self.running again, so stop() -> wait() hung forever.
             """
             if os.path.exists(self.pipe_path):
                 os.unlink(self.pipe_path)
                 state.Log(f"Cleaned up named pipe: {self.pipe_path}")
             try:
-                # Create named pipe if it doesn't exist
-                if not os.path.exists(self.pipe_path):
-                    os.mkfifo(self.pipe_path)
-                    state.Log(f"Created named pipe: {self.pipe_path}")
-                
-                state.Log(f"Listening on named pipe: {self.pipe_path}")
-                state.Log(f"Send coordinates with: echo 'Command' > {self.pipe_path}")
-                
+                os.mkfifo(self.pipe_path)
+            except OSError as e:
+                state.Log(f"Named pipe error: cannot create {self.pipe_path}: {e}")
+                return
+            state.Log(f"Listening on named pipe: {self.pipe_path}")
+            state.Log(f"Send commands with: echo 'Command' > {self.pipe_path}")
+
+            Fd = None
+            Buffer = b""
+            try:
                 while self.running:
-                    try:
-                        # Open pipe for reading (this blocks until data is available)
-                        with open(self.pipe_path, 'r') as pipe:
-                            while self.running:
-                                line = pipe.readline().strip()
-                                if not line:
-                                    break  # Pipe was closed, reopen it
-                                self.CommandReceived.emit(line)
-                                    
-                    except (OSError, IOError) as e:
-                        if self.running:
-                            state.Log(f"Pipe error: {e}")
-                            time.sleep(1)  # Wait before retrying
-                            
-            except Exception as e:
-                state.Log(f"Named pipe error: {str(e)}")
-                
+                    if Fd is None:
+                        # Non-blocking open of a FIFO's read end succeeds
+                        # immediately, even with no writer.
+                        Fd = os.open(self.pipe_path, os.O_RDONLY | os.O_NONBLOCK)
+
+                    Ready, _, _ = select.select([Fd], [], [], self.POLL_SECONDS)
+                    if not Ready:
+                        continue
+
+                    Data = os.read(Fd, 4096)
+                    if Data:
+                        Buffer += Data
+                        while b"\n" in Buffer:
+                            Line, Buffer = Buffer.split(b"\n", 1)
+                            self._emit(Line)
+                        continue
+
+                    # EOF: the last writer closed.  Deliver any final line
+                    # that had no newline (as readline() used to), then
+                    # reopen -- a FIFO whose writers have all gone away
+                    # stays "readable" (EOF) forever and would spin select().
+                    if Buffer:
+                        self._emit(Buffer)
+                        Buffer = b""
+                    os.close(Fd)
+                    Fd = None
+            except OSError as e:
+                state.Log(f"Named pipe error: {e}")
+            finally:
+                if Fd is not None:
+                    os.close(Fd)
+
+        def _emit(self, RawLine):
+            """Decode one line and emit it if it isn't blank."""
+            Line = RawLine.decode("utf-8", errors="replace").strip()
+            if Line:
+                self.CommandReceived.emit(Line)
+
         def stop(self):
-            """Stop the thread gracefully."""
+            """
+            Stop the thread and wait for it to finish.
+
+            run() notices self.running within POLL_SECONDS.  The wait is
+            bounded anyway, so a surprise can never hang shutdown.
+            """
             self.running = False
-            self.quit()
-            self.wait()
+            if not self.wait(int(self.POLL_SECONDS * 1000) + 2000):
+                state.Log("Named pipe reader did not stop in time")
 
     class CommandPipe():
         def __init__(self):
@@ -174,7 +211,9 @@ if IS_LINUX:
 
             # Initialize and start the named pipe reader thread
             self.pipe_reader = NamedPipeReader()
-            self.pipe_reader.CommandReceived.connect(self.HandlePipeCommand)
+            # Emitted on the reader thread; handled on the GUI thread.
+            self.pipe_reader.CommandReceived.connect(
+                self.HandlePipeCommand, Qt.ConnectionType.QueuedConnection)
             self.pipe_reader.start()
 
         def HandlePipeCommand(self, Command):
@@ -189,6 +228,10 @@ if IS_LINUX:
             global MainWindow
 
             state.Log(f"Processing pipe command: {Command}")
+
+            # The hardware panel is a person at the controls too: restart
+            # the attract-mode idle timer, or end the attract video.
+            MainWindow.NoteUserActivity()
 
             if (Command == "Run0"):
                 MainWindow.SetRun(0)
@@ -217,17 +260,28 @@ if IS_LINUX:
             elif (Command == "Deadman"):
                 MainWindow.DeadmanClicked(not state.State.Deadman)
             elif (Command == "Apply"):
-                MainWindow.BrakeUI.SetBrake(state.BrakeEnum.APPLY)
+                self.SetBrake(state.BrakeEnum.APPLY)
             elif (Command == "Lap"):
-                MainWindow.BrakeUI.SetBrake(state.BrakeEnum.LAP)
+                self.SetBrake(state.BrakeEnum.LAP)
             elif (Command == "Release"):
-                MainWindow.BrakeUI.SetBrake(state.BrakeEnum.RELEASE)
+                self.SetBrake(state.BrakeEnum.RELEASE)
             elif (Command == "Emergency"):
-                MainWindow.BrakeUI.SetBrake(state.BrakeEnum.EMERGENCY)
+                self.SetBrake(state.BrakeEnum.EMERGENCY)
             elif (Command == "Bell"):
                 MainWindow.Ding()
             else:
                 print("Unknown pipe command %s" % Command)
+
+        def SetBrake(self, Position):
+            """
+            Brake valve command from the panel.  Does the same as clicking
+            the on-screen brake handle (BrakeGraphics.MouseClick): move the
+            drawn handle to match, then set the valve.
+
+            :param Position: state.BrakeEnum valve position
+            """
+            MainWindow.BrakeGraphics.MoveBrakeLever(Position)
+            MainWindow.BrakeUi.SetBrake(Position)
 
         def shutDown(self):
             """
@@ -1555,15 +1609,56 @@ class DismissOnClick(QtCore.QObject):
     Lives on, and is installed/removed from, the GUI thread, so it never
     touches Qt objects from a foreign thread (unlike the old pynput hook).
     """
-    def __init__(self, loop):
+    def __init__(self, loop, OnPress=None):
+        """
+        :param loop: The QEventLoop to quit on the first press
+        :param OnPress: Optional callable run on that press.  Because this
+            filter consumes the press, application filters installed before
+            it (ActivityFilter) never see it; this lets the caller still
+            count it as user activity.
+        """
         super().__init__(loop)
         self._loop = loop
+        self._on_press = OnPress
 
     def eventFilter(self, obj, event):
         if event.type() == QEvent.Type.MouseButtonPress:
             self._loop.quit()
+            if self._on_press is not None:
+                self._on_press()
             return True  # consume the dismissing click
         return super().eventFilter(obj, event)
+
+
+class ActivityFilter(QtCore.QObject):
+    """
+    Application-level event filter that reports any user input.
+
+    Installed on the QApplication, so it sees presses and keys no matter
+    which widget receives them -- buttons, graphics views, tutorial
+    popups, dialogs.  The old attract-mode reset lived in
+    Window.mousePressEvent(), which only runs for clicks that land on
+    bare main-window background; clicks on the controls themselves are
+    consumed by those widgets and never got there, so attract mode could
+    start in the middle of a run.
+
+    Never consumes anything (always returns False).
+    """
+    ACTIVITY_EVENTS = (
+        QEvent.Type.MouseButtonPress,
+        QEvent.Type.KeyPress,
+        QEvent.Type.TouchBegin,
+        QEvent.Type.Wheel,
+    )
+
+    def __init__(self, Callback, parent=None):
+        super().__init__(parent)
+        self._callback = Callback
+
+    def eventFilter(self, obj, event):
+        if event.type() in self.ACTIVITY_EVENTS:
+            self._callback()
+        return False
 
 
 class Window(QMainWindow, sim_ui4.Ui_MainWindow):
@@ -1692,6 +1787,9 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
             self.StopAttractRequested.connect(
                 self.StopAttractVideo, Qt.ConnectionType.QueuedConnection
             )
+            # Any input anywhere in the application counts as activity.
+            self.ActivityFilter = ActivityFilter(self.NoteUserActivity, self)
+            app.installEventFilter(self.ActivityFilter)
 
     @contextlib.contextmanager
     def SimSuspended(self):
@@ -1761,15 +1859,17 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         self.Video.SharedWidth.value = VideoSize.width()
         self.Video.SharedHeight.value = VideoSize.height()
 
-    def mousePressEvent(self, event):
+    def NoteUserActivity(self):
         """
-        Called when a mouse event occurs
-
-        Args:
-            event -- Mouse event
+        Someone is using the simulator (any click, key, touch, or panel
+        command).  Restart the attract-mode idle timer, or, if the attract
+        video is showing, stop it (which also restarts the timer).
         """
-        if (AttractEnable):
-            self.AttractTimer.stop()
+        if not AttractEnable:
+            return
+        if self.AttractIsPlayingVideo:
+            self.StopAttractVideo()
+        else:
             self.AttractTimer.start(ATTRACT_TIMEOUT)  # Restart 5-minute timer
 
     def AttractStartMouseListener(self):
@@ -2041,7 +2141,7 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         ButtonOk.clicked.connect(loop.quit)
 
         # First mouse press anywhere in the application ends the loop.
-        dismiss = DismissOnClick(loop)
+        dismiss = DismissOnClick(loop, self.NoteUserActivity)
         app = QApplication.instance()
         app.installEventFilter(dismiss)
 
@@ -2191,6 +2291,12 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
                 self.AttractPlayer.Shutdown()
             except Exception:
                 pass
+        if getattr(self, "CommandPipe", None) is not None:
+            try:
+                self.CommandPipe.shutDown()
+            except Exception:
+                pass
+            self.CommandPipe = None     # closeEvent can run twice (Ctrl-C)
         event.accept()
         QtWidgets.QApplication.quit()
 
