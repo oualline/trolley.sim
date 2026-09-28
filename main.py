@@ -18,8 +18,6 @@ import select
 import pprint   #pylint: disable=W0611
 import signal
 import sys
-import threading
-import time
 import webbrowser
 import pynput
 import inspect
@@ -27,10 +25,9 @@ import pathlib
 
 from PyQt6 import QtWidgets, QtCore, uic
 from PyQt6.QtWidgets import ( QApplication, QDialog, QMainWindow, QMessageBox )
-from PyQt6.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsEllipseItem, QGraphicsRectItem, QGraphicsLineItem, QGraphicsTextItem
-from PyQt6.QtCore import Qt, pyqtSignal, QThread, QPointF, QEvent, QUrl, QRect
-from PyQt6.QtGui import QMouseEvent
-from PyQt6.QtGui import QBrush, QPen, QFont, QPixmap, QPainter
+from PyQt6.QtWidgets import QGraphicsScene
+from PyQt6.QtCore import Qt, pyqtSignal, QThread, QEvent
+from PyQt6.QtGui import QPixmap
 
 import mode_window
 import sim_ui4
@@ -894,7 +891,7 @@ class StartStopMode:
         # First we check to see if the RunLevel has changed
         if (state.State.RunLevel != RunLevel):
             self.LastRunLevel = state.State.RunLevel
-            self.RunLevelTime = time.time()
+            self.RunLevelTime = state.SimTime()
             # Now we need to check if we've exceeded the limits on run level
             # If so, we will error out and stop the simulation
             if (MAX_SPEED[RunLevel] < 0):
@@ -1003,7 +1000,7 @@ class StartStopMode:
 
         if (state.State.RunLevel != 0):
             # Get the time of the last element of the run info file
-            TimeDiff = time.time() - self.RunLevelTime
+            TimeDiff = state.SimTime() - self.RunLevelTime
 
             if (state.State.RunLevel > 0):
                 if (TimeDiff > self.TUTORIAL_RUN_TIME):
@@ -1077,7 +1074,7 @@ class FullMode(StartStopMode):
     ########
     ######## Zorch information
     ########
-    ZORCH_HELP=0.65                       # Display Zorch help here
+    ZORCH_HELP=0.60                       # Display Zorch help here
     ZORCH1_POS_START=0.70                 # Zorch position 1 start
     ZORCH2_POS_START=0.77                 # Zorch position 2 start
     ZORCH1_POS_END=0.73                   # Zorch position 1 ending
@@ -1322,7 +1319,7 @@ class FullMode(StartStopMode):
                 # Current time 1000 Ding time 900 Good=false
 
                 # Did we signal within the last 10 seconds
-                if (time.time() - MainWindow.DingTime[-2] > MAX_SIGNAL_START):
+                if (state.SimTime() - MainWindow.DingTime[-2] > MAX_SIGNAL_START):
                     MainWindow.AddWarning("Started moving without sounding start signal")
                 # Are the ding ding more than 2 seconds apart
                 elif ((MainWindow.DingTime[-1] - MainWindow.DingTime[-2]) > MAX_START_BETWEEN):
@@ -1338,7 +1335,7 @@ class FullMode(StartStopMode):
             LastDing = 0
 
         if (self.StopTime != 0) and \
-            ((time.time() - self.StopTime >= STOP_TIME_CHECK) or (LastDing > self.StopTime)):
+            ((state.SimTime() - self.StopTime >= STOP_TIME_CHECK) or (LastDing > self.StopTime)):
             # There should be one ding in the last second
 
             DingLen = len(MainWindow.DingTime)
@@ -1347,7 +1344,7 @@ class FullMode(StartStopMode):
                 MainWindow.AddWarning("No stop signal")
             else:
                 # Check to see if single ding.  (Occurs when start signal missed)
-                if ((time.time() - MainWindow.DingTime[-1]) > STOP_SIGNAL_TIME):
+                if ((state.SimTime() - MainWindow.DingTime[-1]) > STOP_SIGNAL_TIME):
                     MainWindow.AddWarning("Stop Signal too slow or missing")
                 elif (DingLen > 1):
                     if ((MainWindow.DingTime[-1] -  \
@@ -1357,7 +1354,7 @@ class FullMode(StartStopMode):
             self.StopTime = 0   # We've looked at this so clear it
 
         if (self.LastSpeed != 0) and (self.CurrentSpeed == 0):
-            self.StopTime = time.time()
+            self.StopTime = state.SimTime()
 
     def RulesCheck(self):   # Full mode
         """
@@ -1815,12 +1812,18 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         (now nearly empty) Tick() calls are what let Ctrl-C (HandleSigInt)
         get through while a nested loop is blocking.
 
+        The simulation clock (state.SimTime(), used for all rule timing)
+        is paused for the same span, so time spent reading a dialog doesn't
+        count against the run-time and signal-timing rules.
+
         Nestable: a counter, not a flag.
         """
         self._SuspendCount += 1
+        state.Clock.Pause()
         try:
             yield
         finally:
+            state.Clock.Resume()
             self._SuspendCount -= 1
 
     def resizeEvent(self, event) -> None:
@@ -2070,7 +2073,7 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         """
         sound.GlobalSound.Play(sound.SoundEnum.BELL, False)
 
-        ThisDingTime = time.time()
+        ThisDingTime = state.SimTime()
         DingPosition = self.Video.GetPosition()
         self.DingTime.append(ThisDingTime)
         self.DingPosition.append(DingPosition)

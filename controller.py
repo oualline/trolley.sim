@@ -5,21 +5,13 @@
 """
 Provides the controller and controller GUI class
 """
-import sys
 import pprint   #pylint: disable=W0611
-import platform
-import time
-import enum
-import subprocess
 import math
 import os
 
 
-from PyQt6 import QtWidgets, QtCore
-from PyQt6.QtWidgets import ( QApplication, QDialog, QMainWindow, QMessageBox )
-from PyQt6.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsEllipseItem, QGraphicsRectItem, QGraphicsLineItem, QGraphicsTextItem
-from PyQt6.QtCore import Qt, QUrl, QRect
-from PyQt6.QtGui import QBrush, QPen, QFont, QPixmap, QPainter
+from PyQt6.QtWidgets import QGraphicsScene
+from PyQt6.QtGui import QPixmap
 
 import state
 

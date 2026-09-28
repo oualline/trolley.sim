@@ -3,17 +3,12 @@
 # Licensed under the GNU Public License (GPL)
 #
 import math
-import enum
-import subprocess
 import os
 import sys
-import signal
 
-from PyQt6 import QtWidgets, QtCore
-from PyQt6.QtWidgets import ( QApplication, QDialog, QMainWindow, QMessageBox )
-from PyQt6.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsEllipseItem, QGraphicsRectItem, QGraphicsLineItem, QGraphicsTextItem
-from PyQt6.QtCore import Qt, QUrl, QRect
-from PyQt6.QtGui import QBrush, QPen, QFont, QPixmap, QPainter
+from PyQt6.QtWidgets import QGraphicsScene, QGraphicsEllipseItem, QGraphicsRectItem, QGraphicsLineItem, QGraphicsTextItem
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QPen, QFont, QPixmap
 
 import state
 import sound
