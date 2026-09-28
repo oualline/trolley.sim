@@ -988,11 +988,13 @@ class FullMode(StartStopMode):
     BROADWAY_STOP_CHECK=0.15        # Position of where we check to see if Broadway stop done
     TUTORIAL_BROADWAY = 0.085       # Position of where we display the Broadway tutorial
 
+    CB2_HELP=0.52                   # Position of the CB2 help display
     CB2_STOP_BEGIN=0.58             # Position of the start of where can do a CB2 stop
     CB2_STOP_END=0.61               # Position of the end of where can do a CB2 stop
 
-    THOMAS_STOP_BEGIN=0.87           # Position of the start of the Thomas stop
-    THOMAS_STOP_END=0.93             # Position of the end of the Thomas stop
+    THOMAS_HELP=0.85                # Display Thomas help here
+    THOMAS_STOP_BEGIN=0.87          # Position of the start of the Thomas stop
+    THOMAS_STOP_END=0.93            # Position of the end of the Thomas stop
 
     ########
     ######## Crossing information
@@ -1000,6 +1002,7 @@ class FullMode(StartStopMode):
     BROADWAY_NORTH_BEGIN=0.12       # Position where we start crossing Broadway
     BROADWAY_NORTH_END=0.15         # Position where we stop crossing Broadway
     
+    CENTRAL_HELP=0.37               # Where to display help for central
     CENTRAL_BEGIN=0.39              # Where we start crossing Central Ave.
     CENTRAL_END=0.42                # Where we start crossing Central Ave.
 
@@ -1011,6 +1014,7 @@ class FullMode(StartStopMode):
     ########
     ######## Zorch information
     ########
+    ZORCH_HELP=0.65                       # Display Zorch help here
     ZORCH1_POS_START=0.70                 # Zorch position 1 start
     ZORCH2_POS_START=0.77                 # Zorch position 2 start
     ZORCH1_POS_END=0.73                   # Zorch position 1 ending
@@ -1030,8 +1034,10 @@ class FullMode(StartStopMode):
         FULL_8 = 8
         FULL_9 = 9
         FULL_10 = 10
+        FULL_11 = 11
+        FULL_12 = 12
 
-    N_TUTORIAL = 11     # Number of tutorials
+    N_TUTORIAL = TutorialEnum.FULL_12.value+1     # Number of tutorials
 
     def __init__(self, Tutorial = False):
         """
@@ -1063,6 +1069,12 @@ class FullMode(StartStopMode):
             print("### EVENTS")
             self.TUTORIAL_EVENTS = [
                     TrackEvent(self.TUTORIAL_BROADWAY, lambda: self.FullTutorial('full.2.ui', self.TutorialEnum.FULL_2)),
+                    TrackEvent(self.CENTRAL_HELP,      lambda: self.FullTutorial('full.4.ui', self.TutorialEnum.FULL_4)),
+                    TrackEvent(self.CB2_HELP,          lambda: self.FullTutorial('full.5.ui', self.TutorialEnum.FULL_5)),
+                    TrackEvent(self.ZORCH_HELP,        lambda: self.FullTutorial('full.8.ui', self.TutorialEnum.FULL_8)),
+                    TrackEvent(self.BROADWAY_SOUTH_HELP,lambda: self.FullTutorial('full.9.ui', self.TutorialEnum.FULL_9)),
+                    TrackEvent(self.THOMAS_HELP,       lambda: self.FullTutorial('full.10.ui', self.TutorialEnum.FULL_10)),
+                    TrackEvent(self.STORE_HELP,        lambda: self.FullTutorial('full.12.ui', self.TutorialEnum.FULL_12)),
             ]
 
         self.Events = GLOBAL_EVENTS + self.LOCAL_EVENTS + self.TUTORIAL_EVENTS
@@ -1189,8 +1201,22 @@ class FullMode(StartStopMode):
             if ((state.State.Speed <= 0) and 
                 (MainWindow.Video.GetPosition() >= self.BROADWAY_STOP_BEGIN) and
                 (MainWindow.Video.GetPosition() <= self.BROADWAY_STOP_END)):
-                ShowModalTutorial('full.2.ui', self)
+                ShowModalTutorial('full.3.ui', self)
                 self.TutorialDone[FullMode.TutorialEnum.FULL_3.value] = True
+
+        if (not self.TutorialDone[FullMode.TutorialEnum.FULL_6.value]):
+            if ((state.State.Speed <= 0) and 
+                (MainWindow.Video.GetPosition() >= self.CB2_STOP_BEGIN) and
+                (MainWindow.Video.GetPosition() <= self.CB2_STOP_END)):
+                ShowModalTutorial('full.6.ui', self)
+                self.TutorialDone[FullMode.TutorialEnum.FULL_6.value] = True
+
+        if (not self.TutorialDone[FullMode.TutorialEnum.FULL_11.value]):
+            if ((state.State.Speed <= 0) and 
+                (MainWindow.Video.GetPosition() >= self.THOMAS_STOP_BEGIN) and
+                (MainWindow.Video.GetPosition() <= self.THOMAS_STOP_END)):
+                ShowModalTutorial('full.11.ui', self)
+                self.TutorialDone[FullMode.TutorialEnum.FULL_11.value] = True
 
     def DingCount(self, DingPosition, Start, End):      # Full mode
         """
