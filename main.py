@@ -1068,6 +1068,7 @@ class FullMode(StartStopMode):
     CENTRAL_BEGIN=0.39              # Where we start crossing Central Ave.
     CENTRAL_END=0.42                # Where we start crossing Central Ave.
 
+    BROADWAY_SOUTH_HELP=0.65        # Where we popup help for Broadway (South)
     BROADWAY_SOUTH_BEGIN=0.70       # Position where we start crossing Broadway (South)
     BROADWAY_SOUTH_END=0.75         # Position where we stop crossing Broadway (South)
 

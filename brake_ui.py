@@ -336,6 +336,16 @@ class BrakeUi():
         if (state.State.BrakeValvePosition == state.BrakeEnum.APPLY):
             sound.GlobalSound.Stop(sound.SoundEnum.APPLY, False)
 
+        # UpdateBrake() starts the release hiss on repeat and only stops it
+        # once the pressure reaches zero *while still in Release*.  Leaving
+        # Release earlier (to Lap, Apply, or Emergency) must stop it here,
+        # or it loops forever.  Quick=True: moving the handle closes the
+        # exhaust at once, so cut the 2.9 s clip off rather than letting it
+        # play out.
+        if ((state.State.BrakeValvePosition == state.BrakeEnum.RELEASE) and
+                (What != state.BrakeEnum.RELEASE)):
+            sound.GlobalSound.Stop(sound.SoundEnum.RELEASE, True)
+
         state.State.BrakeValvePosition = What
         # Emergency sound here.  All others in the update function
         if (What == state.BrakeEnum.EMERGENCY):

@@ -12,11 +12,12 @@ a = Analysis(
     ],
     datas=[
 	('image/splash.png', '.'),
-        ('mp3/*.mp3', '.'),
+        ('mp3/*.mp3', 'mp3'),        # sound.py looks in <app dir>/mp3
         ('video/trolley.m4v', 'video'),
-        ('video/easy.mp4', 'video'),
-        ('video/start-stop.mp4', 'video'),
-        ('video/full.mp4', 'video'),
+        ('video/attract.mp4', 'video'),
+        # Tutorial popups are loaded at run time with uic.loadUi(); they are
+        # not compiled into Python, so they must ship as data files.
+        ('*.ui', '.'),
         ('help.pdf', '.')
     ],
     hiddenimports=['mpv'],
