@@ -16,7 +16,6 @@ import os
 import platform
 import pprint   #pylint: disable=W0611
 import signal
-import subprocess
 import sys
 import threading
 import time
@@ -38,7 +37,6 @@ import brake_ui
 import state
 import controller
 import sound
-import video_player
 import video
 
 ###########
@@ -74,6 +72,7 @@ else:
         DIR="."
 
 VideoFile = os.path.join(DIR, VideoFile)
+AttractVideoFile = os.path.join(DIR, "video", "attract.mp4")
 if 'TEMP' in os.environ:
     IMAGE_DIR = os.path.join(os.environ['TEMP'], "trolley.sim.temp.frames")
 else:
@@ -1422,6 +1421,18 @@ class SelectWindow(QDialog, mode_window.Ui_SelectWindow):
                 pass
         os._exit(0)
 
+    def reject(self):
+        """
+        Esc key (and anything else that calls reject()).
+
+        QDialog maps Esc to reject(), which ends the nested exec() in
+        MainReset() without going through closeEvent() -- so MainReset()
+        would carry on and build a Mode from whatever ModeId was left over
+        from the previous run.  There is no "cancel" for the mode picker:
+        the user has to choose a mode, so Esc is simply ignored.
+        """
+        state.Log("SelectWindow: reject() (Esc) ignored")
+
     def StartStopHelpClicked(self):
         webbrowser.open("help.pdf")
 
@@ -1671,9 +1682,11 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
             self.AttractTimer.setSingleShot(True)  # Timer fires only once
             self.AttractTimer.start(ATTRACT_TIMEOUT)  # 5 minutes in milliseconds
             self.AttractMouseListener = None
-            self.AttractVideoProcess = None
-            self.AttractVideoCheckTimer = QtCore.QTimer()
-            self.AttractVideoCheckTimer.timeout.connect(self.AttractCheckVideoStatus)
+            self.AttractIsPlayingVideo = False
+            # In-process, self-looping player in its own full-screen window
+            # (replaces launching an external player; see video.AttractPlayer).
+            self.AttractPlayer = video.AttractPlayer(
+                AttractVideoFile, self.StopAttractVideo, self)
             # Queued connection: signal is emitted from the pynput listener
             # thread, slot runs on the GUI thread.
             self.StopAttractRequested.connect(
@@ -1807,97 +1820,54 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
 
     def StopAttractVideo(self):
         """
-        Stop video playback and restore normal state.
-        
+        Stop the attract video and restore normal state.
+
+        Called on the GUI thread, either through the queued
+        StopAttractRequested signal (pynput listener) or directly by the
+        AttractPlayer window when it gets a click, key, or touch.
+
         This method:
-        1. Releases the mouse grab
-        2. Stops the global mouse listener
-        3. Terminates the video player process
-        4. Restores the cursor position
-        5. Restarts the 5-minute timer
-        
-        Uses graceful termination (SIGTERM) followed by forceful kill (SIGKILL)
-        if the process doesn't respond within 2 seconds.
-        
-        Reference: https://docs.python.org/3/library/subprocess.html#subprocess.Popen.terminate
+        1. Stops the global mouse listener
+        2. Stops the attract player and hides its window
+        3. Restarts the 5-minute timer
         """
         if not self.AttractIsPlayingVideo:
             return
-            
-        self.AttractIsPlayingVideo = False
-        self.AttractVideoCheckTimer.stop()
 
-        # Release exclusive mouse grab
-        # Reference: https://doc.qt.io/qt-6/qwidget.html#releaseMouse
-        self.releaseMouse()
-        
+        self.AttractIsPlayingVideo = False
+
         # Stop global mouse listener
         if self.AttractMouseListener:
             self.AttractMouseListener.stop()
             self.AttractMouseListener = None
-        
-        # Terminate video player process
-        # Works consistently across Linux, Windows, and macOS
-        if self.AttractVideoProcess:
-            try:
-                # Step 1: Try graceful termination
-                # Sends SIGTERM on Unix/Linux/macOS, close request on Windows
-                # Reference: https://docs.python.org/3/library/subprocess.html#subprocess.Popen.terminate
-                self.AttractVideoProcess.terminate()
-                
-                try:
-                    # Wait up to 2 seconds for process to terminate gracefully
-                    # Reference: https://docs.python.org/3/library/subprocess.html#subprocess.Popen.wait
-                    self.AttractVideoProcess.wait(timeout=2)
-                except subprocess.TimeoutExpired:
-                    # Step 2: Force kill if still running after timeout
-                    # Sends SIGKILL on Unix/Linux/macOS, TerminateProcess on Windows
-                    # Reference: https://docs.python.org/3/library/subprocess.html#subprocess.Popen.kill
-                    self.AttractVideoProcess.kill()
-                    self.AttractVideoProcess.wait()  # Wait indefinitely for kill to complete
-            except Exception as e:
-                print(f"Error stopping video: {e}")
-            self.AttractVideoProcess = None
-            
+
+        self.AttractPlayer.Stop()
+        self.activateWindow()
+        self.raise_()
+
         # Restart the 5-minute countdown timer
         self.AttractTimer.start(ATTRACT_TIMEOUT)
 
     def OnTimeout(self):
         """
         Handle timer timeout event.
-        
-        Called when 5 minutes elapse without button press. Initiates mouse
-        grab and video playback sequence.
+
+        Called when 5 minutes elapse without button press.  Shows the
+        attract video full screen, looping, until the user touches
+        something.
         """
         self.AttractIsPlayingVideo = True
-        
-        # Start global mouse event listener using pynput
-        self.AttractStartMouseListener()
-        
-        # Launch external video player
-        self.AttractVideoProcess = video_player.play_video(os.path.join("video", "attract.mp4"))
-        
-        # Start checking video status every 500ms to enable looping
-        self.AttractVideoCheckTimer.start(500)
-        
-        # Grab mouse exclusively - prevents other apps from receiving mouse input
-        # Reference: https://doc.qt.io/qt-6/qwidget.html#grabMouse
-        self.grabMouse()
 
-    def AttractCheckVideoStatus(self):
-        """
-        Periodically check if video process has ended and restart for looping.
-        
-        This method is called by AttractVideoCheckTimer every 500ms. If the video
-        player process has terminated, it restarts the video to create a loop.
-        """
-        if not self.AttractIsPlayingVideo:
+        if not self.AttractPlayer.Start():
+            # Video missing: don't sit in "playing" state with nothing on
+            # screen.  Try again after the next idle period.
+            self.AttractIsPlayingVideo = False
+            self.AttractTimer.start(ATTRACT_TIMEOUT)
             return
-            
-        # poll() returns None if process is still running, otherwise returns exit code
-        if self.AttractVideoProcess and self.AttractVideoProcess.poll() is not None:
-            # Video process ended, restart it (loop)
-            self.AttractVideoProcess = video_player.play_video(os.path.join("video", "attract.mp4"))
+
+        # Global mouse listener: stops the video on any mouse movement or
+        # click, even if mpv's native child window swallows the event.
+        self.AttractStartMouseListener()
 
     def ToggleTargets(self, Checked):
         """
@@ -2130,8 +2100,25 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
 
         # Suspended: the old Mode must not be ticked while the user is
         # choosing the new one.
-        with self.SimSuspended():
-            self.SelectWindow.exec()
+        #
+        # ModeId is cleared first and only a Start/Tutorial button sets it,
+        # so if exec() ever ends without a choice (Esc is blocked in
+        # SelectWindow.reject(), but hide() from elsewhere, a window-manager
+        # quirk, etc.) we show the picker again instead of silently reusing
+        # the previous run's mode.
+        ModeId = None
+        while ModeId is None:
+            with self.SimSuspended():
+                self.SelectWindow.exec()
+            if ModeId is None:
+                if not self.isVisible():
+                    # The main window was closed underneath us (closeEvent
+                    # calls QApplication.quit(), after which every new
+                    # exec() returns at once).  Don't spin; finish exiting
+                    # the same way SelectWindow.closeEvent() does.
+                    state.Log("Main window closed during mode selection, exiting")
+                    os._exit(0)
+                state.Log("SelectWindow ended without a mode; showing it again")
         state.Log(f"Mode Selected {ModeId}")
 
         match (ModeId):
@@ -2199,6 +2186,11 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
             self.Video.Stop()
         except Exception:
             pass
+        if getattr(self, "AttractPlayer", None) is not None:
+            try:
+                self.AttractPlayer.Shutdown()
+            except Exception:
+                pass
         event.accept()
         QtWidgets.QApplication.quit()
 

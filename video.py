@@ -54,6 +54,7 @@ Video.SharedWidth / Video.SharedHeight
 """
 import ctypes
 import ctypes.util
+import os
 import locale
 import platform
 
@@ -368,3 +369,229 @@ class Video:
         if pos is None or duration is None or duration == 0:
             return 0.0
         return min(1.0, pos / duration)
+
+
+# ---------------------------------------------------------------------------
+# Attract-mode player
+# ---------------------------------------------------------------------------
+
+class AttractPlayer(QtWidgets.QWidget):
+    """
+    Full-screen, always-on-top window that loops the attract video with an
+    in-process libmpv player.
+
+    This replaces launching an external player (video_player.play_video()).
+    On Windows ("powershell Start-Process") and macOS ("open -a") the process
+    that launched returned immediately after handing the file to the real
+    player, so the "has the player exited?" poll restarted the video every
+    500 ms, and terminate() killed the launcher instead of the player, leaving
+    the player window up.  Here mpv loops the file itself (loop-file=inf) and
+    Stop() tears down the one player we actually own.
+
+    The embedding is the same as Video uses -- X11 wid / HWND on Linux and
+    Windows, a libmpv render context in a QOpenGLWidget on macOS -- so it
+    works wherever the main simulator video already works.
+
+    Dismissal: any mouse press, key press, or touch that reaches this window
+    calls OnDismiss.  main.py also keeps its global pynput mouse listener, so
+    the video stops even if the native mpv child window swallows a click.
+
+    API
+    ---
+    AttractPlayer(VideoFile, OnDismiss, parent=None)
+    AttractPlayer.Start()      -- show full screen and start looping
+    AttractPlayer.Stop()       -- stop playback and hide.  Idempotent.
+    AttractPlayer.Shutdown()   -- free mpv; call before exit.  Idempotent.
+    AttractPlayer.IsPlaying()
+
+    The mpv player is created on the first Start() and reused afterwards
+    (Stop() just unloads the file), so the macOS GL widget is built once.
+    """
+    def __init__(self, VideoFile, OnDismiss, parent=None):
+        """
+        Args:
+            VideoFile -- Absolute path of the video to loop
+            OnDismiss -- Callable (no args) invoked on user input
+            parent    -- Parent widget (usually the main window).  The
+                         window is still top-level; the parent just ties
+                         its lifetime and screen to the main window.
+        """
+        super().__init__(
+            parent,
+            QtCore.Qt.WindowType.Window
+            | QtCore.Qt.WindowType.FramelessWindowHint
+            | QtCore.Qt.WindowType.WindowStaysOnTopHint,
+        )
+        self.VideoFile = VideoFile
+        self.OnDismiss = OnDismiss
+        self.player = None
+        self._gl_widget = None      # macOS only
+        self._playing = False
+
+        self.setWindowTitle("SCRM Trolley")
+        self.setStyleSheet("background-color: black;")
+        self.setCursor(QtCore.Qt.CursorShape.BlankCursor)
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents)
+
+        # The video surface.  Deliberately has no layout of its own:
+        # _MpvGLWidget installs one on it on macOS.
+        self._surface = QtWidgets.QWidget(self)
+        self._surface.setCursor(QtCore.Qt.CursorShape.BlankCursor)
+        if _SYSTEM != 'Darwin':
+            # mpv needs a real native window handle to draw into.
+            self._surface.setAttribute(QtCore.Qt.WidgetAttribute.WA_NativeWindow)
+            self._surface.setAttribute(
+                QtCore.Qt.WidgetAttribute.WA_DontCreateNativeAncestors)
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._surface)
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+
+    def IsPlaying(self):
+        """True between Start() and Stop()."""
+        return self._playing
+
+    def Start(self):
+        """
+        Show the window full screen and start looping the video.
+
+        Returns False (and shows nothing) if the video file is missing.
+        """
+        if self._playing:
+            return True
+        if not os.path.isfile(self.VideoFile):
+            print(f"Attract video not found: {self.VideoFile}")
+            return False
+
+        self._playing = True
+        # Cover the screen the main window is on, not necessarily screen 0.
+        if self.parentWidget() is not None:
+            Screen = self.parentWidget().screen()
+            if Screen is not None:
+                self.setGeometry(Screen.geometry())
+        self.showFullScreen()
+        self.raise_()
+        self.activateWindow()
+        # Create mpv once the window is actually mapped, so the native
+        # handle exists (same reason Video defers its init).
+        QtCore.QTimer.singleShot(0, self._init_player)
+        return True
+
+    def Stop(self):
+        """
+        Stop playback and hide the window.  The player is kept for the
+        next Start().  Safe to call at any time, any number of times.
+        """
+        self._playing = False
+        if self.player is not None:
+            try:
+                self.player.command('stop')     # unload the file
+            except Exception:
+                pass
+        self.hide()
+
+    def Shutdown(self):
+        """
+        Free the mpv player.  MUST be called before the process exits:
+        python-mpv's GC-time cleanup deadlocks against an embedded window
+        on Windows (see Video.Stop()).  Idempotent.
+        """
+        self.Stop()
+        if self._gl_widget is not None:
+            try:
+                self._gl_widget.shutdown()
+            except Exception:
+                pass
+            self._gl_widget = None
+        if self.player is not None:
+            try:
+                self.player.terminate()
+            except Exception:
+                pass
+            self.player = None
+
+    # ------------------------------------------------------------------
+    # Player creation
+    # ------------------------------------------------------------------
+
+    def _init_player(self):
+        """Create mpv if needed and start looping (called from the event loop)."""
+        if not self._playing:
+            return      # Stopped before we got here
+        locale.setlocale(locale.LC_NUMERIC, 'C')
+
+        try:
+            if self.player is None:
+                self._create_player()
+                if self.player is None:
+                    return      # Native handle not ready; retry scheduled
+            self.player.play(self.VideoFile)
+            self.player.pause = False
+        except Exception as Error:
+            print(f"Attract video failed to start: {Error}")
+            self.Stop()
+            # Give the main window its normal state back.
+            self.OnDismiss()
+
+    def _create_player(self):
+        """Build the mpv player, embedded the same way Video does it."""
+        if _SYSTEM == 'Darwin':
+            # Same options as Video._init_player_macos(); see the comments
+            # there for why audio/hwdec/gpu_dumb_mode are set.
+            self.player = mpv.MPV(
+                vo='libmpv',
+                audio='no',
+                hwdec='no',
+                gpu_dumb_mode='yes',
+                loop_file='inf',
+            )
+            self._gl_widget = _MpvGLWidget(self.player, self._surface)
+            self._gl_widget.setCursor(QtCore.Qt.CursorShape.BlankCursor)
+            self._gl_widget.show()
+        else:
+            wid = int(self._surface.winId())
+            if wid == 0:
+                QtCore.QTimer.singleShot(100, self._init_player)
+                return
+            vo = 'x11' if _SYSTEM == 'Linux' else 'direct3d'
+            self.player = mpv.MPV(
+                wid=wid,
+                vo=vo,
+                loop_file='inf',
+                # Don't let mpv's native child window consume pointer
+                # input; let it fall through to this Qt window.
+                input_cursor='no',
+                cursor_autohide='always',
+            )
+
+    # ------------------------------------------------------------------
+    # Input: any interaction dismisses the attract video
+    # ------------------------------------------------------------------
+
+    def _dismiss(self, event):
+        event.accept()
+        if self._playing:
+            self.OnDismiss()
+
+    def mousePressEvent(self, event):
+        self._dismiss(event)
+
+    def keyPressEvent(self, event):
+        self._dismiss(event)
+
+    def event(self, event):
+        if event.type() == QtCore.QEvent.Type.TouchBegin:
+            self._dismiss(event)
+            return True
+        return super().event(event)
+
+    def closeEvent(self, event):
+        # Alt-F4 or similar on the attract window: treat as a dismissal
+        # rather than letting the window vanish with mpv still running.
+        event.ignore()
+        if self._playing:
+            self.OnDismiss()
