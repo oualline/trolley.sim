@@ -329,8 +329,8 @@ MAX_DOWN_TIME=1 # Longest we can stay in a run level going down
 # Signal section
 MAX_SIGNAL_START=10     # You must move within 10 seconds of issuing start signal
 MAX_START_BETWEEN=2     # The ding ding that starts must occur within 2 seconds
-STOP_TIME_CHECK=10      # Check stop signal 10 seconds after stop
-STOP_SIGNAL_TIME=2      # Must have two seconds before stop to avoid confusion
+STOP_TIME_CHECK=10      # Stop bell must come within 10 seconds of stopping
+STOP_SIGNAL_TIME=2      # Stop bell must be 2+ seconds from any other bell
 
 STORE_POSITION=0.95     # Beginning of the store
 STORE_HELP=0.92         # Position at which we display help for the easy mode store
@@ -1072,10 +1072,12 @@ class FullMode(StartStopMode):
     ########
     ######## Zorch information
     ########
-    ZORCH_HELP=0.60                       # Display Zorch help here
+    ZORCH_HELP=0.66                       # Display Zorch help here
+
     ZORCH1_POS_START=0.70                 # Zorch position 1 start
-    ZORCH2_POS_START=0.77                 # Zorch position 2 start
     ZORCH1_POS_END=0.73                   # Zorch position 1 ending
+
+    ZORCH2_POS_START=0.77                 # Zorch position 2 start
     ZORCH2_POS_END=0.79                   # Zorch position 2 ending
 
     Name = "Full Mode"
@@ -1129,7 +1131,7 @@ class FullMode(StartStopMode):
                     TrackEvent(self.TUTORIAL_BROADWAY, lambda: self.FullTutorial('full.2.ui', self.TutorialEnum.FULL_2)),
                     TrackEvent(self.CENTRAL_HELP,      lambda: self.FullTutorial('full.4.ui', self.TutorialEnum.FULL_4)),
                     TrackEvent(self.CB2_HELP,          lambda: self.FullTutorial('full.5.ui', self.TutorialEnum.FULL_5)),
-                    TrackEvent(self.ZORCH_HELP,        lambda: self.FullTutorial('full.8.ui', self.TutorialEnum.FULL_8)),
+                    TrackEvent(self.ZORCH_HELP,        lambda: self.FullTutorial('full.7.ui', self.TutorialEnum.FULL_8)),
                     TrackEvent(self.BROADWAY_SOUTH_HELP,lambda: self.FullTutorial('full.9.ui', self.TutorialEnum.FULL_9)),
                     TrackEvent(self.THOMAS_HELP,       lambda: self.FullTutorial('full.10.ui', self.TutorialEnum.FULL_10)),
                     TrackEvent(STORE_HELP,             lambda: self.FullTutorial('full.12.ui', self.TutorialEnum.FULL_12)),
@@ -1264,7 +1266,9 @@ class FullMode(StartStopMode):
         self.LastSpeed = 0              # The speed before this one
         self.CurrentSpeed = 0           # The speed we have now
 
-        self.StopTime = 0               # Time of last stop 
+        self.StopTime = 0               # Time of last stop (0 = no stop to judge)
+        self.StopBellTime = None        # Time of first bell after that stop
+        self.StoppedAt = 0              # When the trolley last came to a stop
 
     def ModeTick(self):           # FullMode
         """
@@ -1327,50 +1331,98 @@ class FullMode(StartStopMode):
             # There must be two dings in the last 10 seconds
             # and they must be less than 2 seconds apart
 
+            #
+            # Only bells since the trolley stopped count, and not the stop
+            # bell itself (when it was a proper single bell).  Otherwise a
+            # stop bell followed by nothing was reported as a
+            # "ding-wait-ding" start signal, and a ding-ding given before
+            # the stop could count as the start signal after it.
+            StartDings = self.StartSignalDings()
+
             # Do we have two dings
-            if (len(MainWindow.DingTime) < 2):
+            if (len(StartDings) < 2):
                 MainWindow.AddWarning("Started moving without sounding start signal")
             else:
                 # Current time 1000 Ding time 999 Good=true
                 # Current time 1000 Ding time 900 Good=false
 
                 # Did we signal within the last 10 seconds
-                if (state.SimTime() - MainWindow.DingTime[-2] > MAX_SIGNAL_START):
+                if (state.SimTime() - StartDings[-2] > MAX_SIGNAL_START):
                     MainWindow.AddWarning("Started moving without sounding start signal")
                 # Are the ding ding more than 2 seconds apart
-                elif ((MainWindow.DingTime[-1] - MainWindow.DingTime[-2]) > MAX_START_BETWEEN):
+                elif ((StartDings[-1] - StartDings[-2]) > MAX_START_BETWEEN):
                     MainWindow.AddWarning("Start signal is ding-ding not ding-wait-ding")
 
-        # Did we ding after stopping
-        if (len(MainWindow.DingTime) > 0):
-            if (MainWindow.DingTime[-1] >= self.StopTime):
-                LastDing = MainWindow.DingTime[-1]
-            else:
-                LastDing = 0
-        else:
-            LastDing = 0
+        # Stop signal: a single bell *after* the trolley has stopped, to say
+        # it really has stopped.  Judged once per stop (self.StopTime != 0):
+        #
+        #   - No bell after stopping, and the trolley moves off
+        #         -> "No stop signal"
+        #   - No bell within STOP_TIME_CHECK seconds while still stopped
+        #         -> "Stop Signal too slow or missing"
+        #   - The first bell after stopping has another bell within
+        #     STOP_SIGNAL_TIME of it (before or after), so it isn't a single
+        #     bell -- typically the student skipped the stop bell and went
+        #     straight to the ding-ding start signal
+        #         -> "Stop Signal confused with other signals"
+        #
+        # The first bell after the stop isn't judged until STOP_SIGNAL_TIME
+        # has passed (or the trolley moves), so that a second bell right
+        # behind it is seen.  Judging it on the very next tick used to let
+        # the first ding of the start signal pass as the stop signal.
+        if (self.StopTime != 0):
+            Now = state.SimTime()
+            Moving = (self.CurrentSpeed != 0)
 
-        if (self.StopTime != 0) and \
-            ((state.SimTime() - self.StopTime >= STOP_TIME_CHECK) or (LastDing > self.StopTime)):
-            # There should be one ding in the last second
+            if (self.StopBellTime is None):
+                for ADing in MainWindow.DingTime:
+                    if (ADing >= self.StopTime):
+                        self.StopBellTime = ADing
+                        break
 
-            DingLen = len(MainWindow.DingTime)
-            # Check to see if signal missed
-            if (DingLen == 0):
-                MainWindow.AddWarning("No stop signal")
-            else:
-                # Check to see if single ding.  (Occurs when start signal missed)
-                if ((state.SimTime() - MainWindow.DingTime[-1]) > STOP_SIGNAL_TIME):
+            if (self.StopBellTime is None):
+                if Moving:
+                    MainWindow.AddWarning("No stop signal")
+                    self.StopTime = 0
+                elif (Now - self.StopTime >= STOP_TIME_CHECK):
                     MainWindow.AddWarning("Stop Signal too slow or missing")
-                elif (DingLen > 1):
-                    if ((MainWindow.DingTime[-1] -  \
-                                MainWindow.DingTime[-2]) < STOP_SIGNAL_TIME):
-                        MainWindow.AddWarning("Stop Signal confused with other signals")
-
-            self.StopTime = 0   # We've looked at this so clear it
+                    self.StopTime = 0
+            elif Moving or (Now - self.StopBellTime >= STOP_SIGNAL_TIME):
+                if (not self.IsSingleBell(self.StopBellTime)):
+                    MainWindow.AddWarning("Stop Signal confused with other signals")
+                self.StopTime = 0       # This stop has been judged
 
         if (self.LastSpeed != 0) and (self.CurrentSpeed == 0):
             self.StopTime = state.SimTime()
+            self.StoppedAt = self.StopTime
+            self.StopBellTime = None    # First bell after this stop
+
+    def IsSingleBell(self, DingTime):   # Full mode
+        """
+        :param DingTime: Time of one bell (an entry in MainWindow.DingTime)
+        :returns: True if no other bell is within STOP_SIGNAL_TIME of it
+        """
+        for ADing in MainWindow.DingTime:
+            if (ADing != DingTime) and (abs(ADing - DingTime) < STOP_SIGNAL_TIME):
+                return False
+        return True
+
+    def StartSignalDings(self):         # Full mode
+        """
+        The bells that can make up a start signal: those rung since the
+        trolley last stopped (since the run began, for the first start),
+        minus the stop bell if it was a proper single bell.
+
+        :returns: List of bell times, oldest first
+        """
+        Result = []
+        for ADing in MainWindow.DingTime:
+            if (ADing < self.StoppedAt):
+                continue
+            if ((ADing == self.StopBellTime) and self.IsSingleBell(ADing)):
+                continue
+            Result.append(ADing)
+        return Result
 
     def RulesCheck(self):   # Full mode
         """
@@ -2194,6 +2246,9 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         # Tell any Tick() further up the call stack that the world changed.
         self._ResetGeneration += 1
         Mode.TutorialCancel()   # Cancel any ongoing tutorial
+        # Repeating sounds (the Central crossing bell, the pump, the brake
+        # hiss) would otherwise carry on into the next run.
+        sound.GlobalSound.StopAll()
         self.Video.Reset()
         self.ClickClackPos = CLICK_CLACK_DISTANCE
 
