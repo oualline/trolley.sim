@@ -289,7 +289,6 @@ if IS_LINUX:
             Args:
                 event: QCloseEvent
             """
-            print("Shutting down pipe...")
             
             # Stop the pipe reader thread
             self.pipe_reader.stop()
@@ -298,7 +297,6 @@ if IS_LINUX:
             try:
                 if os.path.exists(self.pipe_reader.pipe_path):
                     os.unlink(self.pipe_reader.pipe_path)
-                    print(f"Cleaned up named pipe: {self.pipe_reader.pipe_path}")
             except OSError as e:
                 print(f"Warning: Could not remove pipe file: {e}")
             
@@ -1134,7 +1132,7 @@ class FullMode(StartStopMode):
                     TrackEvent(self.ZORCH_HELP,        lambda: self.FullTutorial('full.8.ui', self.TutorialEnum.FULL_8)),
                     TrackEvent(self.BROADWAY_SOUTH_HELP,lambda: self.FullTutorial('full.9.ui', self.TutorialEnum.FULL_9)),
                     TrackEvent(self.THOMAS_HELP,       lambda: self.FullTutorial('full.10.ui', self.TutorialEnum.FULL_10)),
-                    TrackEvent(self.STORE_HELP,        lambda: self.FullTutorial('full.12.ui', self.TutorialEnum.FULL_12)),
+                    TrackEvent(STORE_HELP,             lambda: self.FullTutorial('full.12.ui', self.TutorialEnum.FULL_12)),
             ]
 
         self.Events = GLOBAL_EVENTS + self.LOCAL_EVENTS + self.TUTORIAL_EVENTS
@@ -1142,11 +1140,29 @@ class FullMode(StartStopMode):
         self.ZorchEnable = False
         self.MaxSpeed = 0
 
+        # Which tutorial popups have already been shown.  Must exist in
+        # every Full mode, not just the tutorial: ModeTick() consults it on
+        # every tick.  Without the tutorial, everything counts as "done", so
+        # no popups appear.  Created before full.1.ui is shown so that
+        # pressing Cancel on that very first popup (TutorialCancel()) sticks.
+        self.TutorialDone = [not Tutorial] * self.N_TUTORIAL
+
         if (Tutorial):
             self.TutorialStep = self.TutorialEnum.FULL_1
-            ShowModalTutorial('full.1.ui', self)
-            self.TutorialDone = [False] * self.N_TUTORIAL
             self.TutorialDone[self.TutorialEnum.FULL_1.value] = True
+            ShowModalTutorial('full.1.ui', self)
+
+    def TutorialCancel(self):   # Full mode
+        """
+        Called when a tutorial's Cancel button is clicked (and by
+        MainReset()).
+
+        The Full mode popups are driven by TutorialDone, not TutorialStep,
+        so marking every step done is what actually stops them for the rest
+        of the run.
+        """
+        super().TutorialCancel()
+        self.TutorialDone = [True] * self.N_TUTORIAL
 
     def FullTutorial(self, FileName, StepName):
         """
