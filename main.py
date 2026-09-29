@@ -1466,6 +1466,59 @@ class SelectWindow(QDialog, mode_window.Ui_SelectWindow):
         self.setupUi(self)
         ModeId = ModeEnum.EASY
 
+    def CenterOnParent(self):
+        """
+        Center this window over the main window, horizontally and
+        vertically, title bars included.
+
+        Works as a correction: measure where our frame's center is now and
+        shift the window by the difference.  A pure shift behaves the same
+        whether the window manager takes positions as frame or client
+        coordinates (they differ between window managers), and repeating it
+        once the window manager has added the title bar and reported the
+        real frame size makes it exact.
+        """
+        Parent = self.parentWidget()
+        if (Parent is None) or (not self.isVisible()):
+            return
+        if Parent.isFullScreen():
+            # No frame; don't trust frameGeometry(), which can still include
+            # the title bar the window had before it went full screen.
+            Target = Parent.geometry().center()
+        else:
+            Target = Parent.frameGeometry().center()
+        Delta = Target - self.frameGeometry().center()
+        if (abs(Delta.x()) > 1) or (abs(Delta.y()) > 1):
+            self.move(self.pos() + Delta)
+
+    def showEvent(self, event):
+        """
+        Center over the main window every time the window is shown.
+
+        Qt only centers a dialog over its parent the first time it is
+        shown, and the window manager adds the title bar (changing our
+        frame size) only after the window appears.  So center now, and
+        re-check on the next few moves/resizes the window manager makes
+        while placing and framing the window (_AutoCenter).  After that,
+        the user can drag it wherever they like.
+        """
+        super().showEvent(event)
+        self._AutoCenter = 4
+        self.CenterOnParent()
+        QtCore.QTimer.singleShot(0, self.CenterOnParent)
+
+    def moveEvent(self, event):
+        super().moveEvent(event)
+        if getattr(self, "_AutoCenter", 0) > 0:
+            self._AutoCenter -= 1
+            self.CenterOnParent()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if getattr(self, "_AutoCenter", 0) > 0:
+            self._AutoCenter -= 1
+            self.CenterOnParent()
+
     def EasyHelpClicked(self):
         """
         The easy mode help button has been clicked
@@ -1894,6 +1947,17 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
             state.Clock.Resume()
             self._SuspendCount -= 1
 
+    def moveEvent(self, event) -> None:
+        """
+        Keep the mode picker centered if the main window moves.
+        """
+        super().moveEvent(event)
+        Picker = getattr(self, "SelectWindow", None)   # Not made yet early in __init__
+        if (Picker is not None) and Picker.isVisible():
+            Picker.CenterOnParent()
+            # And again once the window manager has settled our frame.
+            QtCore.QTimer.singleShot(0, Picker.CenterOnParent)
+
     def resizeEvent(self, event) -> None:
         """
         Notify the worker process of the label's new pixel dimensions by
@@ -1927,6 +1991,14 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         # own resize bookkeeping before we read the new label size.
         # https://doc.qt.io/qt-5/qwidget.html#resizeEvent
         super().resizeEvent(event)
+        # At startup the mode picker opens while the window manager is
+        # still making this window full screen / maximized; keep it
+        # centered as we change size (also for the 'F' key toggle).
+        Picker = getattr(self, "SelectWindow", None)   # Not made yet early in __init__
+        if (Picker is not None) and Picker.isVisible():
+            Picker.CenterOnParent()
+            # And again once the window manager has settled our frame.
+            QtCore.QTimer.singleShot(0, Picker.CenterOnParent)
         VideoSize = self.VideoFrame.size()
         self.Video.SharedWidth.value = VideoSize.width()
         self.Video.SharedHeight.value = VideoSize.height()
