@@ -45,7 +45,7 @@ import video
 
 ShowButtons = False     # If true, turn on the buttons
 FullScreen = False      # Start in full screen mode
-Verbose = False         # Output extra debug information
+
 TopMargin = None        # Margins
 BottomMargin = None
 LeftMargin = None
@@ -447,7 +447,6 @@ def ShowModalTutorial(File, Window=None):
     :param Window: The Mode object requesting this tutorial (for Cancel);
                     omit for tutorials that don't need Cancel handling.
     """
-    print(f"### ShowModalTutorial({File})")
     state.Log(f"ShowModalTutorial({File})")
     global MainWindow
 
@@ -528,7 +527,6 @@ def ShowTutorial(File, Window):
        Tutorial dialog we created
     """
     state.Log(f"ShowTutorial({File})")
-    print(f"### ShowTutorial({File})")
     Tutorial = uic.loadUi(os.path.join(DIR, File))
     Tutorial.setWindowFlags(
         Tutorial.windowFlags() | Qt.WindowType.WindowStaysOnTopHint
@@ -1105,7 +1103,6 @@ class FullMode(StartStopMode):
             Main Window -- The main window
         """
         super().__init__(False)
-        print("### Full tutorial = ", Tutorial)
         self.DoTutorial = Tutorial
 
         self.LOCAL_EVENTS = [
@@ -1126,7 +1123,6 @@ class FullMode(StartStopMode):
         ]
         self.TUTORIAL_EVENTS = []
         if (self.DoTutorial):
-            print("### EVENTS")
             self.TUTORIAL_EVENTS = [
                     TrackEvent(self.TUTORIAL_BROADWAY, lambda: self.FullTutorial('full.2.ui', self.TutorialEnum.FULL_2)),
                     TrackEvent(self.CENTRAL_HELP,      lambda: self.FullTutorial('full.4.ui', self.TutorialEnum.FULL_4)),
@@ -1865,7 +1861,7 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         self.Timer.setInterval(100)
         self.Timer.timeout.connect(self.Tick)
         self.Timer.start()
-        self.setWindowTitle("SCRM Trolley")
+        self.setWindowTitle("Trolley Simulator")
         Margins = self.centralwidget.contentsMargins()
 
         if (TopMargin is None):
@@ -2190,7 +2186,8 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         StatusMsg = f"Run {state.State.RunLevel:d} Pos {self.Video.GetPosition():.2f} " \
             f"Speed {state.State.Speed:.2f} Acc {state.State.Acceleration:.3f} Brake Acc. {state.State.BrakeAcceleration:.3f} " \
             f"Brake:{self.BrakeUi.RedPressure:2.2f} Res:{self.BrakeUi.BlackPressure:2.2f} Extend: {self.BrakeUi.Extend:.2f}"
-        state.Log(StatusMsg)
+        if (Verbose):
+            state.Log(StatusMsg)
         self.StatusLabel.setText(StatusMsg)
 
         if (self.Video.GetPosition() > STORE_POSITION) and \
@@ -2384,8 +2381,6 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
             case _:
                 print("ERROR: Mode is unknown: ", Mode)
                 sys.exit(8);
-
-        print("## Mode ", Mode.Name)
 
         self.ModeLabel.setText(Mode.Name)
         state.State.Reset()

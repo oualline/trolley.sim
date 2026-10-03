@@ -428,7 +428,7 @@ class AttractPlayer(QtWidgets.QWidget):
         self._gl_widget = None      # macOS only
         self._playing = False
 
-        self.setWindowTitle("SCRM Trolley")
+        self.setWindowTitle("Trolley Simulator")
         self.setStyleSheet("background-color: black;")
         self.setCursor(QtCore.Qt.CursorShape.BlankCursor)
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents)
