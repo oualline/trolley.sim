@@ -53,6 +53,9 @@ RightMargin = None
 AttractEnable = False   # Enable attract mode
 SkipCount=1             # How many frames to skip to speed video
 
+global Verbose
+Verbose = False
+
 ATTRACT_TIMEOUT = 300000 # 5 minutes = 300,000 milliseconds
 ERROR_TIMEOUT = 60*1000 # Number of seconds for timeout
 
@@ -2155,6 +2158,7 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         The real work of Tick().  Only called from Tick(), never reentered.
         """
         global Mode 
+        global Verbose
 
         # If anything in here calls MainReset(), a new Mode has been built
         # and the video rewound; the rest of this (stale) tick must not run
