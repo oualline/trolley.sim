@@ -36,6 +36,7 @@ import state
 import controller
 import sound
 import video
+import help_viewer
 
 ###########
 # Gloabsl #
@@ -1522,7 +1523,9 @@ class SelectWindow(QDialog, mode_window.Ui_SelectWindow):
         """
         The easy mode help button has been clicked
         """
-        webbrowser.open("help.pdf")
+        Viewer = help_viewer.HelpViewer("help.pdf")
+        Viewer.show()
+        QtCore.QTimer.singleShot(0, lambda: Viewer.show_section("Easy Mode"))
 
     def EasyModeSartClicked(self):
         """
@@ -1544,7 +1547,9 @@ class SelectWindow(QDialog, mode_window.Ui_SelectWindow):
         """
         The full mode help button has been clicked
         """
-        webbrowser.open("help.pdf")
+        Viewer = help_viewer.HelpViewer("help.pdf")
+        Viewer.show()
+        QtCore.QTimer.singleShot(0, lambda: Viewer.show_section("Full Mode"))
 
     def FullModeStartClicked(self):
         """
@@ -1606,7 +1611,9 @@ class SelectWindow(QDialog, mode_window.Ui_SelectWindow):
         state.Log("SelectWindow: reject() (Esc) ignored")
 
     def StartStopHelpClicked(self):
-        webbrowser.open("help.pdf")
+        Viewer = help_viewer.HelpViewer("help.pdf")
+        Viewer.show()
+        QtCore.QTimer.singleShot(0, lambda: Viewer.show_section("Start/Stop Mode"))
 
     def StartStopModeStartClicked(self):
         global ModeId 
@@ -2122,7 +2129,8 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         """
         Help button pressed
         """
-        webbrowser.open("help.pdf")
+        Viewer = help_viewer.HelpViewer("help.pdf")
+        Viewer.show()
 
     def DeadmanClicked(self, Checked):
         """

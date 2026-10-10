@@ -9,6 +9,7 @@ sudo apt install python3-mpv
 sudo apt install pyqt6-dev-tools python3-pyqt6
 sudo apt install designer-qt6
 sudo apt install qmake6
+sudo apt install python3-pyqt6.qtpdf
 
 
 # For mpv video playback

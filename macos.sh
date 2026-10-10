@@ -122,7 +122,7 @@ install_python_deps() {
     pip install --only-binary :all: PyQt6 || pip install PyQt6
 
     echo "Installing other dependencies..."
-    pip install playsound3 pynput pyinstaller python-mpv
+    pip install playsound3 pynput pyinstaller PySide6-Addons
 
     echo "Python dependencies installed"
 }
