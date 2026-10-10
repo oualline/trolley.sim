@@ -23,7 +23,7 @@ import pynput
 import inspect
 import pathlib
 
-from PyQt6 import QtWidgets, QtCore, uic
+from PyQt6 import QtWidgets, QtCore, uic, sip
 from PyQt6.QtWidgets import ( QApplication, QDialog, QMainWindow, QMessageBox )
 from PyQt6.QtWidgets import QGraphicsScene
 from PyQt6.QtCore import Qt, pyqtSignal, QThread, QEvent
@@ -74,6 +74,7 @@ else:
         DIR="."
 
 VideoFile = os.path.join(DIR, VideoFile)
+HelpWindow = None       # The help viewer (created on first use, see ShowHelp)
 AttractVideoFile = os.path.join(DIR, "video", "attract.mp4")
 if 'TEMP' in os.environ:
     IMAGE_DIR = os.path.join(os.environ['TEMP'], "trolley.sim.temp.frames")
@@ -381,6 +382,46 @@ GLOBAL_EVENTS = [
     TrackEvent(CENTRAL_BELL_START, lambda: sound.GlobalSound.Play(sound.SoundEnum.CENTRAL_BELL, True)),
     TrackEvent(CENTRAL_BELL_STOP,  lambda: sound.GlobalSound.Stop(sound.SoundEnum.CENTRAL_BELL, False)),
 ]
+
+def ShowHelp(Section=None):
+    """
+    Show the help viewer, optionally scrolled to a section.
+
+    The viewer is created once and kept in the module-level HelpWindow
+    variable.  It must be kept alive somewhere: if it were only a local
+    variable in a button handler, Python would garbage-collect it (and Qt
+    would destroy the window) as soon as the handler returned, so the window
+    would never appear, or would flash and vanish.
+
+    :param Section: Heading in help.pdf to jump to, or None for the top.
+    """
+    global HelpWindow
+
+    # Parent the help window to whatever is in front: the modal mode-select
+    # dialog if one is running (otherwise Qt blocks all input to the help
+    # window while that dialog is up), else the main window.  A window with a
+    # parent stays above that parent, and WindowStaysOnTopHint keeps it above
+    # the full-screen main window as well.
+    Parent = QApplication.activeModalWidget() or MainWindow
+    Flags = Qt.WindowType.Window | Qt.WindowType.WindowStaysOnTopHint
+
+    # The parent (e.g. a tutorial dialog) may have been destroyed, taking the
+    # help window with it.  If so, start over with a new one.
+    if HelpWindow is not None and sip.isdeleted(HelpWindow):
+        HelpWindow = None
+
+    if HelpWindow is None:
+        HelpWindow = help_viewer.HelpViewer(os.path.join(DIR, "help.pdf"), Parent)
+        HelpWindow.setWindowFlags(HelpWindow.windowFlags() | Flags)
+    elif HelpWindow.parentWidget() is not Parent:
+        HelpWindow.setParent(Parent, HelpWindow.windowFlags() | Flags)
+
+    HelpWindow.show()
+    HelpWindow.raise_()
+    HelpWindow.activateWindow()
+    if Section is not None:
+        # Jump after the window has been laid out, otherwise the jump is lost
+        QtCore.QTimer.singleShot(0, lambda: HelpWindow.show_section(Section))
 
 def ComputeAcceleration(Level):
     """
@@ -1523,9 +1564,7 @@ class SelectWindow(QDialog, mode_window.Ui_SelectWindow):
         """
         The easy mode help button has been clicked
         """
-        Viewer = help_viewer.HelpViewer("help.pdf")
-        Viewer.show()
-        QtCore.QTimer.singleShot(0, lambda: Viewer.show_section("Easy Mode"))
+        ShowHelp("Easy Mode")
 
     def EasyModeSartClicked(self):
         """
@@ -1547,9 +1586,7 @@ class SelectWindow(QDialog, mode_window.Ui_SelectWindow):
         """
         The full mode help button has been clicked
         """
-        Viewer = help_viewer.HelpViewer("help.pdf")
-        Viewer.show()
-        QtCore.QTimer.singleShot(0, lambda: Viewer.show_section("Full Mode"))
+        ShowHelp("Full Mode")
 
     def FullModeStartClicked(self):
         """
@@ -1611,9 +1648,7 @@ class SelectWindow(QDialog, mode_window.Ui_SelectWindow):
         state.Log("SelectWindow: reject() (Esc) ignored")
 
     def StartStopHelpClicked(self):
-        Viewer = help_viewer.HelpViewer("help.pdf")
-        Viewer.show()
-        QtCore.QTimer.singleShot(0, lambda: Viewer.show_section("Start/Stop Mode"))
+        ShowHelp("Start / Stop Mode")
 
     def StartStopModeStartClicked(self):
         global ModeId 
@@ -2129,8 +2164,7 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
         """
         Help button pressed
         """
-        Viewer = help_viewer.HelpViewer("help.pdf")
-        Viewer.show()
+        ShowHelp()
 
     def DeadmanClicked(self, Checked):
         """

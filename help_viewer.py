@@ -133,7 +133,7 @@ class HelpViewer(QMainWindow):
         # also the order used for the toolbar drop-down below.
         #     https://docs.python.org/3/library/stdtypes.html#dict
         self.sections: dict[str, tuple[int, QPointF]] = {}
-        self._collect_bookmarks(QModelIndex())  # QModelIndex() = tree root
+        self._collect_bookmarks(QModelIndex())  # QModelIndex() = tree root (Heading 1)
 
         # ------------------------------------------------------------------
         # The page display
@@ -171,13 +171,13 @@ class HelpViewer(QMainWindow):
 
     def _collect_bookmarks(self, parent: QModelIndex) -> None:
         """
-        Recursively walk the bookmark tree, recording each entry's title,
-        page and on-page position in self.sections.
+        Record the title, page and on-page position of each top-level
+        (Heading 1) bookmark in self.sections.
 
         The outline is a tree: top-level headings (Heading 1) are children
         of the root, and lower-level headings (Heading 2, 3, ...) are
-        children of the heading above them.  We visit every level so that a
-        sub-heading can also be used as a section name if you want.
+        children of the heading above them.  Only the top level is used, so
+        the section list stays short; sub-headings are not visited.
 
         Each item in QPdfBookmarkModel carries its data under several
         "roles" (named data fields):
@@ -191,7 +191,8 @@ class HelpViewer(QMainWindow):
             https://doc.qt.io/qt-6/model-view-programming.html
 
         :param parent: The tree node whose children should be visited.
-                       Pass QModelIndex() (an "invalid" index) for the root.
+                       Pass QModelIndex() (an "invalid" index) for the root,
+                       which gives the Heading 1 entries.
         """
         model = self.bookmarks
 
@@ -217,13 +218,16 @@ class HelpViewer(QMainWindow):
             page = model.data(index, page_role) or 0
             location = model.data(index, loc_role) or QPointF()
 
+            # An empty heading paragraph in the document still produces a
+            # bookmark, with a blank title.  Skip it so the drop-down has no
+            # blank entries.
+            if not title:
+                continue
+
             # If two headings share a title, the first one in the document
             # wins.  setdefault() only stores the value if the key is new.
             #     https://docs.python.org/3/library/stdtypes.html#dict.setdefault
             self.sections.setdefault(title, (page, location))
-
-            # Descend into this entry's sub-headings.
-            self._collect_bookmarks(index)
 
     def show_section(self, name: str) -> None:
         """

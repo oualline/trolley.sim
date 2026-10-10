@@ -50,7 +50,7 @@ REM ------------------------------------------------------------------
 REM Python packages.  "python -m pip" works even when pip's Scripts
 REM directory is not on PATH (common with the Microsoft Store Python).
 REM ------------------------------------------------------------------
-python -m pip install PyQt6 playsound3 pyinstaller pynput A=
+python -m pip install PyQt6 python-mpv playsound3 pynput pyinstaller
 if errorlevel 1 (
     echo ERROR: pip install failed.  Is Python installed and on PATH?
     pause
