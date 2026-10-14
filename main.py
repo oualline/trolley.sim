@@ -1491,7 +1491,179 @@ class FullMode(StartStopMode):
 
         return True
 
-class SelectWindow(QDialog, mode_window.Ui_SelectWindow):
+class ModePickerButtons:
+    """
+    Button handlers shared by the two forms of the mode picker:
+    SelectWindow (a separate dialog) and SelectPanel (drawn inside the
+    full-screen main window on Linux).  Both are built from the same
+    mode_window.ui, whose setupUi() connects the buttons to these names.
+    A Start/Tutorial button records the mode and hides the picker, which
+    ends the picker's event loop.
+    """
+    def EasyHelpClicked(self):
+        """
+        The easy mode help button has been clicked
+        """
+        ShowHelp("Easy Mode")
+
+    def EasyModeSartClicked(self):
+        """
+        The easy mode start button has been clicked
+        """
+        global ModeId 
+        ModeId = ModeEnum.EASY
+        self.hide()
+
+    def EasyModeTutorialClicked(self):
+        """
+        The easy mode tutorial button has been clicked
+        """
+        global ModeId 
+        ModeId = ModeEnum.EASY_TUTORIAL
+        self.hide()
+
+    def FullHelpClicked(self):
+        """
+        The full mode help button has been clicked
+        """
+        ShowHelp("Full Mode")
+
+    def FullModeStartClicked(self):
+        """
+        The full mode start button has been clicked
+        """
+        global ModeId 
+        ModeId = ModeEnum.FULL
+        self.hide()
+
+    def FullModeTutorialClicked(self):
+        """
+        The full mode tutorial button has been clicked
+        """
+        global ModeId 
+        ModeId = ModeEnum.FULL_TUTORIAL
+        self.hide()
+
+    def StartStopHelpClicked(self):
+        ShowHelp("Start / Stop Mode")
+
+    def StartStopModeStartClicked(self):
+        global ModeId 
+        ModeId = ModeEnum.START_STOP
+        self.hide()
+
+    def StartStopModeTutorialClicked(self):
+        """
+        Handle when we get start/stop tutorial clicked
+        """
+        global ModeId 
+        ModeId = ModeEnum.START_STOP_TUTORIAL
+        self.hide()
+
+
+class SelectPanel(QtWidgets.QFrame, ModePickerButtons, mode_window.Ui_SelectWindow):
+    """
+    The mode picker drawn *inside* the main window, used when the main
+    window is full screen on Linux (see SelectWindow.UseEmbedded()).
+
+    Why: xfwm4 (XFCE) only keeps a full-screen window above the panel
+    while that window has the focus.  A separate dialog takes the focus,
+    and the taskbar shows through.  This panel is an ordinary child
+    widget, so the focus stays on the full-screen window.
+
+    It is a plain widget, not a QDialog: a modal dialog moved inside its
+    own parent makes Qt treat the main window as blocked, which kills the
+    keyboard and mouse.  Instead, Run() runs a local event loop and an
+    application event filter ignores input aimed at the main window's
+    controls while the panel is up (no dimming).
+    """
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.setupUi(self)
+        # setupUi() makes the form application-modal (it was designed as
+        # a dialog).  On a child widget that would block the main window
+        # it lives in.
+        self.setWindowModality(Qt.WindowModality.NonModal)
+        self.setFrameShape(QtWidgets.QFrame.Shape.Box)
+        self.setLineWidth(2)
+        self.setAutoFillBackground(True)
+        self.setFixedSize(self.size())
+        self._Loop = None
+        self.hide()
+
+    def CenterOnParent(self):
+        """
+        Center in the main window (child-widget coordinates).
+        """
+        Parent = self.parentWidget()
+        self.move(max(0, (Parent.width() - self.width()) // 2),
+                  max(0, (Parent.height() - self.height()) // 2))
+
+    def Run(self):
+        """
+        Show the panel and wait until a mode is picked (or the panel is
+        hidden for some other reason, e.g. the 'F' key).
+        """
+        App = QApplication.instance()
+        self.CenterOnParent()
+        self.show()
+        # The video is a native (mpv) window; native windows stack above
+        # ordinary widgets, so this panel needs its own native window,
+        # raised to the top, to be seen and clicked.
+        self.winId()
+        self.raise_()
+        self.parentWidget().activateWindow()
+        self.EasyModeStartButton.setFocus()
+        App.installEventFilter(self)
+        try:
+            self._Loop = QtCore.QEventLoop()
+            if self.isVisible():
+                self._Loop.exec()
+        finally:
+            self._Loop = None
+            App.removeEventFilter(self)
+            self.hide()
+
+    def hideEvent(self, event):
+        super().hideEvent(event)
+        if self._Loop is not None:
+            self._Loop.quit()
+
+    BLOCKED_EVENTS = (
+        QEvent.Type.MouseButtonPress,
+        QEvent.Type.MouseButtonRelease,
+        QEvent.Type.MouseButtonDblClick,
+        QEvent.Type.KeyPress,
+        QEvent.Type.KeyRelease,
+        QEvent.Type.Wheel,
+        QEvent.Type.TouchBegin,
+        QEvent.Type.TouchUpdate,
+        QEvent.Type.TouchEnd,
+    )
+
+    def eventFilter(self, obj, event):
+        """
+        While the panel is up:
+          'F'                    -- toggle full screen (from anywhere in
+                                    the main window)
+          other input aimed at the main window's controls -- ignored
+        Input to the panel itself, and to other windows (Help), passes.
+        """
+        Main = self.parentWidget()
+        Type = event.type()
+        if (Type == QEvent.Type.KeyPress) and (event.key() == Qt.Key.Key_F) \
+                and (not event.isAutoRepeat()) \
+                and (QApplication.activeWindow() is Main):
+            Main.ToggleFullScreen()
+            return True
+        if (Type in self.BLOCKED_EVENTS) and isinstance(obj, QtWidgets.QWidget) \
+                and (obj.window() is Main) \
+                and (obj is not self) and (not self.isAncestorOf(obj)):
+            return True
+        return False
+
+
+class SelectWindow(QDialog, ModePickerButtons, mode_window.Ui_SelectWindow):
     """
     This class controls the select mode window
     """
@@ -1506,6 +1678,61 @@ class SelectWindow(QDialog, mode_window.Ui_SelectWindow):
         super().__init__(parent)
         self.setupUi(self)
         ModeId = ModeEnum.EASY
+        self._Panel = None      # SelectPanel, made when first needed
+
+    def UseEmbedded(self):
+        """
+        Show the picker inside the main window (SelectPanel) instead of as
+        this dialog?  Only on Linux with the main window full screen; see
+        SelectPanel for why.
+        """
+        Parent = self.parentWidget()
+        return IS_LINUX and (Parent is not None) and Parent.isFullScreen()
+
+    def exec(self):
+        """
+        Show the picker, in whichever form suits the main window, and
+        wait for it to be hidden.
+        """
+        if self.UseEmbedded():
+            if self._Panel is None:
+                self._Panel = SelectPanel(self.parentWidget())
+            self._Panel.Run()
+            return 0
+        return super().exec()
+
+    def IsShowing(self):
+        """
+        Is the picker up, in either form?
+        """
+        return self.isVisible() or \
+            ((self._Panel is not None) and self._Panel.isVisible())
+
+    def MatchScreenMode(self):
+        """
+        Called after the main window enters or leaves full screen.  If the
+        picker is up in the wrong form, hide it; MainReset() sees that no
+        mode was chosen and calls exec() again, which shows the right form.
+        """
+        if self.isVisible() and self.UseEmbedded():
+            self.hide()
+        elif (self._Panel is not None) and self._Panel.isVisible() \
+                and (not self.UseEmbedded()):
+            self._Panel.hide()
+        elif (self._Panel is not None) and self._Panel.isVisible():
+            self._Panel.CenterOnParent()
+
+    def keyPressEvent(self, event):
+        """
+        While this dialog is up it has the keyboard, so the main window
+        never sees the 'F' (toggle full screen) key.  Handle it here.
+        """
+        Parent = self.parentWidget()
+        if (event.key() == Qt.Key.Key_F) and (Parent is not None) \
+                and (not event.isAutoRepeat()):
+            Parent.ToggleFullScreen()
+            return
+        super().keyPressEvent(event)
 
     def CenterOnParent(self):
         """
@@ -1560,50 +1787,6 @@ class SelectWindow(QDialog, mode_window.Ui_SelectWindow):
             self._AutoCenter -= 1
             self.CenterOnParent()
 
-    def EasyHelpClicked(self):
-        """
-        The easy mode help button has been clicked
-        """
-        ShowHelp("Easy Mode")
-
-    def EasyModeSartClicked(self):
-        """
-        The easy mode start button has been clicked
-        """
-        global ModeId 
-        ModeId = ModeEnum.EASY
-        self.hide()
-
-    def EasyModeTutorialClicked(self):
-        """
-        The easy mode tutorial button has been clicked
-        """
-        global ModeId 
-        ModeId = ModeEnum.EASY_TUTORIAL
-        self.hide()
-
-    def FullHelpClicked(self):
-        """
-        The full mode help button has been clicked
-        """
-        ShowHelp("Full Mode")
-
-    def FullModeStartClicked(self):
-        """
-        The full mode start button has been clicked
-        """
-        global ModeId 
-        ModeId = ModeEnum.FULL
-        self.hide()
-
-    def FullModeTutorialClicked(self):
-        """
-        The full mode tutorial button has been clicked
-        """
-        global ModeId 
-        ModeId = ModeEnum.FULL_TUTORIAL
-        self.hide()
-
     def closeEvent(self, event):
         """
         Called only when this dialog is closed via the window manager's
@@ -1646,22 +1829,6 @@ class SelectWindow(QDialog, mode_window.Ui_SelectWindow):
         the user has to choose a mode, so Esc is simply ignored.
         """
         state.Log("SelectWindow: reject() (Esc) ignored")
-
-    def StartStopHelpClicked(self):
-        ShowHelp("Start / Stop Mode")
-
-    def StartStopModeStartClicked(self):
-        global ModeId 
-        ModeId = ModeEnum.START_STOP
-        self.hide()
-
-    def StartStopModeTutorialClicked(self):
-        """
-        Handle when we get start/stop tutorial clicked
-        """
-        global ModeId 
-        ModeId = ModeEnum.START_STOP_TUTORIAL
-        self.hide()
 
 class BrakeGraphics():
     """
@@ -2040,6 +2207,9 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
             Picker.CenterOnParent()
             # And again once the window manager has settled our frame.
             QtCore.QTimer.singleShot(0, Picker.CenterOnParent)
+        if (Picker is not None) and (Picker._Panel is not None) \
+                and Picker._Panel.isVisible():
+            Picker._Panel.CenterOnParent()
         VideoSize = self.VideoFrame.size()
         self.Video.SharedWidth.value = VideoSize.width()
         self.Video.SharedHeight.value = VideoSize.height()
@@ -2784,12 +2954,25 @@ Press OK to continue""",
             RunLevel = event.key() - ord('0')
             self.ControllerGraphics.SetControllerRun(RunLevel)
         elif (event.key() == ord('F')):
-            FullScreen = not FullScreen
-            if (FullScreen):
-                self.showFullScreen()
-            else:
-                self.showNormal()
-                self.showMaximized()
+            self.ToggleFullScreen()
+
+    def ToggleFullScreen(self):
+        """
+        Switch between full screen and maximized.  Used by the 'F' key
+        here and in the mode picker.
+        """
+        global FullScreen
+
+        FullScreen = not FullScreen
+        if (FullScreen):
+            self.showFullScreen()
+        else:
+            self.showNormal()
+            self.showMaximized()
+
+        Picker = getattr(self, "SelectWindow", None)
+        if Picker is not None:
+            Picker.MatchScreenMode()
 
 
 def Usage():
