@@ -53,7 +53,6 @@ clean:
 	rm -f sim_ui4.py mode_window.py 
 	rm -rf __pycache__ build dist build.macos
 	rm -f quick.pdf help.pdf quick-poster.pdf
-	rm -rf frames
 	rm -rf venv
 	rm -rf .DS_Store ._.DS_Store
 	rm -f trolley.zip

@@ -1318,26 +1318,42 @@ class FullMode(StartStopMode):
         super().ModeTick()
         self.LastSpeed = self.CurrentSpeed
         self.CurrentSpeed = state.State.Speed
-        if (not self.TutorialDone[FullMode.TutorialEnum.FULL_3.value]):
-            if ((state.State.Speed <= 0) and 
-                (MainWindow.Video.GetPosition() >= self.BROADWAY_STOP_BEGIN) and
-                (MainWindow.Video.GetPosition() <= self.BROADWAY_STOP_END)):
-                ShowModalTutorial('full.3.ui', self)
-                self.TutorialDone[FullMode.TutorialEnum.FULL_3.value] = True
 
-        if (not self.TutorialDone[FullMode.TutorialEnum.FULL_6.value]):
-            if ((state.State.Speed <= 0) and 
-                (MainWindow.Video.GetPosition() >= self.CB2_STOP_BEGIN) and
-                (MainWindow.Video.GetPosition() <= self.CB2_STOP_END)):
-                ShowModalTutorial('full.6.ui', self)
-                self.TutorialDone[FullMode.TutorialEnum.FULL_6.value] = True
+    def CheckStopTutorials(self):   # Full mode
+        """
+        Tutorial: show the "continue your journey" popup for a stop.
+        Called from RulesCheck() right after CheckStartStopDing(), which
+        notices the stop and judges its stop bell.
+        """
+        # Shown only once the stop bell for that stop has been judged, not
+        # the moment the trolley stops -- the student is meant to ring the
+        # single stop bell first.
+        for (Step, UiFile, Begin, End) in (
+                (FullMode.TutorialEnum.FULL_3,  'full.3.ui',  self.BROADWAY_STOP_BEGIN, self.BROADWAY_STOP_END),
+                (FullMode.TutorialEnum.FULL_6,  'full.6.ui',  self.CB2_STOP_BEGIN,      self.CB2_STOP_END),
+                (FullMode.TutorialEnum.FULL_11, 'full.11.ui', self.THOMAS_STOP_BEGIN,   self.THOMAS_STOP_END)):
+            if (not self.TutorialDone[Step.value]) and self.StopJudged(Begin, End):
+                self.TutorialDone[Step.value] = True
+                ShowModalTutorial(UiFile, self)
 
-        if (not self.TutorialDone[FullMode.TutorialEnum.FULL_11.value]):
-            if ((state.State.Speed <= 0) and 
-                (MainWindow.Video.GetPosition() >= self.THOMAS_STOP_BEGIN) and
-                (MainWindow.Video.GetPosition() <= self.THOMAS_STOP_END)):
-                ShowModalTutorial('full.11.ui', self)
-                self.TutorialDone[FullMode.TutorialEnum.FULL_11.value] = True
+    def StopJudged(self, Begin, End):   # Full mode
+        """
+        Has the trolley stopped between Begin and End, and has the stop
+        bell check for that stop finished?
+
+        CheckStartStopDing() sets self.StopTime when the
+        trolley stops and clears it once the stop is judged: STOP_SIGNAL_TIME
+        after the first bell (so a following bell is seen), or after
+        STOP_TIME_CHECK with no bell.
+
+        :param Begin: Start of the stop zone (video position)
+        :param End: End of the stop zone (video position)
+        :returns: True if stopped in the zone and judged
+        """
+        Position = MainWindow.Video.GetPosition()
+        return ((state.State.Speed <= 0) and
+                (Position >= Begin) and (Position <= End) and
+                (self.StoppedAt != 0) and (self.StopTime == 0))
 
     def DingCount(self, DingPosition, Start, End):      # Full mode
         """
@@ -1478,6 +1494,7 @@ class FullMode(StartStopMode):
             return (Continue)
 
         self.CheckStartStopDing()
+        self.CheckStopTutorials()
 
         if (self.CurrentSpeed == 0):
             self.LastStop = MainWindow.Video.GetPosition()

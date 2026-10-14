@@ -1,14 +1,9 @@
 Bugs to fix
-    0. STart/Stop tutorial -- start.2b.ui does not display
-    1. Figure out how to get tutorials to center/top of display (ALWAYS?)
-    2. Add full tutorial
+    0.2 Start/Stop tutorial -- when broadway stop, no time to ding before tutorial displays.
+	full.3.ui should be after user does stop bell
+    0.3 STart/Stop tutorial -- start.2b.ui does not display
     3. Full tutorial missing bell for broadway crossing #2
-    1. Close button does not work when select displayed.
-    2. Closing Select should close entire program
-    3. Help text needs to be updated
-Todo:
-    1. Help should go to the right section
-    3. Brand help text
+    1. Close button does not work when select mode displayed.
 
 This is alpha code.  As such it is far from perfect.
 
@@ -18,9 +13,6 @@ Known issues:
 
 2. When you enter the store at high speed, the mother fussing
 over the kid fusses very fast.
-
-3. Logs are very verbose.  The code is still being debugged
-and this will continue until the reliability gets better.
 
 Known limitation:
 
@@ -39,21 +31,15 @@ this video game.
 
 Enhancements (todo):
 `
-1. Click to dissmiss attract then ask "do you want video help"
-2. Find out what ddls needed and remove all others
-3. New video
+1. Find out what dlls needed and remove all others
+2. New video
 
 Misc bugs:
 
 1. Full mode, problem list
 2. Full mode, congradulations when complete
-3. Help rework
-4. Easy mode video rework
-5. Start/stop mode video rework
-6. Full mode video rework
-7. Brake after emergency should give user time to pump up
+3. Brake after emergency should give user time to pump up
 
 
 Big Changes
 1. New video
-2. Step by Step mode
