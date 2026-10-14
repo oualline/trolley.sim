@@ -1571,11 +1571,8 @@ class SelectPanel(QtWidgets.QFrame, ModePickerButtons, mode_window.Ui_SelectWind
     and the taskbar shows through.  This panel is an ordinary child
     widget, so the focus stays on the full-screen window.
 
-    It is a plain widget, not a QDialog: a modal dialog moved inside its
-    own parent makes Qt treat the main window as blocked, which kills the
-    keyboard and mouse.  Instead, Run() runs a local event loop and an
-    application event filter ignores input aimed at the main window's
-    controls while the panel is up (no dimming).
+    It is a plain widget, not a QDialog, and like SelectWindow it is not
+    modal; see PickerLoop.
     """
     def __init__(self, parent):
         super().__init__(parent)
@@ -1588,7 +1585,7 @@ class SelectPanel(QtWidgets.QFrame, ModePickerButtons, mode_window.Ui_SelectWind
         self.setLineWidth(2)
         self.setAutoFillBackground(True)
         self.setFixedSize(self.size())
-        self._Loop = None
+        self._PickerLoop = PickerLoop(self, parent)
         self.hide()
 
     def CenterOnParent(self):
@@ -1604,7 +1601,6 @@ class SelectPanel(QtWidgets.QFrame, ModePickerButtons, mode_window.Ui_SelectWind
         Show the panel and wait until a mode is picked (or the panel is
         hidden for some other reason, e.g. the 'F' key).
         """
-        App = QApplication.instance()
         self.CenterOnParent()
         self.show()
         # The video is a native (mpv) window; native windows stack above
@@ -1614,21 +1610,26 @@ class SelectPanel(QtWidgets.QFrame, ModePickerButtons, mode_window.Ui_SelectWind
         self.raise_()
         self.parentWidget().activateWindow()
         self.EasyModeStartButton.setFocus()
-        App.installEventFilter(self)
-        try:
-            self._Loop = QtCore.QEventLoop()
-            if self.isVisible():
-                self._Loop.exec()
-        finally:
-            self._Loop = None
-            App.removeEventFilter(self)
-            self.hide()
+        self._PickerLoop.Run()
 
     def hideEvent(self, event):
         super().hideEvent(event)
-        if self._Loop is not None:
-            self._Loop.quit()
+        self._PickerLoop.Quit()
 
+
+class PickerLoop(QtCore.QObject):
+    """
+    Waits for the user to pick a mode, standing in for a modal exec().
+
+    Neither form of the mode picker is modal.  A modal dialog makes Qt
+    treat the main window as blocked: it drops the main window's close
+    button (window manager close requests) and, for the embedded panel,
+    all of its keyboard and mouse input.  Instead, Run() runs a local
+    event loop until the picker is hidden, and an application event
+    filter does the modal dialog's job of ignoring clicks and keys aimed
+    at the main window's controls.  Closing the main window still works:
+    its closeEvent() calls QApplication.quit(), which ends this loop too.
+    """
     BLOCKED_EVENTS = (
         QEvent.Type.MouseButtonPress,
         QEvent.Type.MouseButtonRelease,
@@ -1641,15 +1642,48 @@ class SelectPanel(QtWidgets.QFrame, ModePickerButtons, mode_window.Ui_SelectWind
         QEvent.Type.TouchEnd,
     )
 
+    def __init__(self, Picker, Main):
+        """
+        :param Picker: The picker widget (SelectWindow or SelectPanel)
+        :param Main: The main window
+        """
+        super().__init__(Picker)
+        self.Picker = Picker
+        self.Main = Main
+        self._Loop = None
+
+    def Run(self):
+        """
+        Wait until the picker is hidden.  The caller has already shown it.
+        """
+        App = QApplication.instance()
+        App.installEventFilter(self)
+        try:
+            self._Loop = QtCore.QEventLoop()
+            if self.Picker.isVisible():
+                self._Loop.exec()
+        finally:
+            self._Loop = None
+            App.removeEventFilter(self)
+            self.Picker.hide()
+
+    def Quit(self):
+        """
+        End Run() (called when the picker is hidden).
+        """
+        if self._Loop is not None:
+            self._Loop.quit()
+
     def eventFilter(self, obj, event):
         """
-        While the panel is up:
-          'F'                    -- toggle full screen (from anywhere in
-                                    the main window)
+        While the picker is up:
+          'F' in the main window -- toggle full screen
           other input aimed at the main window's controls -- ignored
-        Input to the panel itself, and to other windows (Help), passes.
+        Input to the picker itself, and to other windows (Help), passes.
+        Window manager events (close, move, resize) are not touched.
         """
-        Main = self.parentWidget()
+        Main = self.Main
+        Picker = self.Picker
         Type = event.type()
         if (Type == QEvent.Type.KeyPress) and (event.key() == Qt.Key.Key_F) \
                 and (not event.isAutoRepeat()) \
@@ -1658,7 +1692,7 @@ class SelectPanel(QtWidgets.QFrame, ModePickerButtons, mode_window.Ui_SelectWind
             return True
         if (Type in self.BLOCKED_EVENTS) and isinstance(obj, QtWidgets.QWidget) \
                 and (obj.window() is Main) \
-                and (obj is not self) and (not self.isAncestorOf(obj)):
+                and (obj is not Picker) and (not Picker.isAncestorOf(obj)):
             return True
         return False
 
@@ -1677,8 +1711,14 @@ class SelectWindow(QDialog, ModePickerButtons, mode_window.Ui_SelectWindow):
         global ModeId 
         super().__init__(parent)
         self.setupUi(self)
+        # setupUi() makes this application-modal.  That stops the main
+        # window's close button from working while the picker is up, so
+        # run non-modal and let PickerLoop block the main window's input.
+        self.setWindowModality(Qt.WindowModality.NonModal)
+        self.setModal(False)
         ModeId = ModeEnum.EASY
         self._Panel = None      # SelectPanel, made when first needed
+        self._PickerLoop = PickerLoop(self, parent)
 
     def UseEmbedded(self):
         """
@@ -1699,7 +1739,24 @@ class SelectWindow(QDialog, ModePickerButtons, mode_window.Ui_SelectWindow):
                 self._Panel = SelectPanel(self.parentWidget())
             self._Panel.Run()
             return 0
-        return super().exec()
+        self.show()
+        self.raise_()
+        self.activateWindow()
+        self._PickerLoop.Run()
+        return 0
+
+    def hideEvent(self, event):
+        super().hideEvent(event)
+        self._PickerLoop.Quit()
+
+    def CloseAll(self):
+        """
+        The main window is closing: hide the picker in either form, which
+        ends its wait loop (PickerLoop.Run()).
+        """
+        self.hide()
+        if self._Panel is not None:
+            self._Panel.hide()
 
     def IsShowing(self):
         """
@@ -2656,6 +2713,13 @@ class Window(QMainWindow, sim_ui4.Ui_MainWindow):
                 pass
             self.CommandPipe = None     # closeEvent can run twice (Ctrl-C)
         event.accept()
+        # If the mode picker is up, end its wait loop.  QApplication.quit()
+        # can't: at startup the picker runs before app.exec(), and quit()
+        # does nothing then.  MainReset() then sees no mode was picked and
+        # the main window gone, and exits.
+        Picker = getattr(self, "SelectWindow", None)
+        if Picker is not None:
+            Picker.CloseAll()
         QtWidgets.QApplication.quit()
 
     def AddWarning(self, Message):
