@@ -3231,5 +3231,18 @@ if __name__ == "__main__":
     MainWindow.raise_()
     state.Log("New run----------------------------------------------------------------")
 
-    app.exec()
-    sys.exit(0)
+    ExitCode = app.exec()
+
+    # Leave with os._exit() rather than sys.exit().  closeEvent() has
+    # already stopped the timer and torn down mpv, so there is nothing left
+    # to clean up.  sys.exit() would run Python's interpreter shutdown,
+    # which destroys the QApplication and unloads the Qt DLLs in an
+    # arbitrary order.  On Windows that tears down Qt's per-thread storage
+    # while the main thread still holds entries in it, and Qt prints
+    #   QThreadStorage: entry N destroyed before end of thread 0x...
+    # on every exit.  os._exit() skips that teardown, the same way
+    # HandleSigInt() and SelectWindow.closeEvent() already exit.
+    state.Log("Normal exit, code %d" % ExitCode)
+    sys.stdout.flush()
+    sys.stderr.flush()
+    os._exit(ExitCode)
